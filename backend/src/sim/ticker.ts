@@ -13,7 +13,7 @@ type AdvanceAssetsParams = {
 };
 
 /** Move each asset one tick; respawn at boundary when a track exits the operating area. */
-function advanceAssets({
+export function advanceAssets({
   assets,
   deltaSeconds,
   seedRegion,
