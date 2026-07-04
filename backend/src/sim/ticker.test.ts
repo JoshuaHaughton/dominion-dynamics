@@ -12,7 +12,7 @@ describe("advanceAssets", () => {
   };
 
   const baseAsset: Asset = {
-    id: "sim-1",
+    id: "track-inside",
     lat: 45.4,
     lon: -75.7,
     alt: 5000,
@@ -33,7 +33,7 @@ describe("advanceAssets", () => {
     expect(isInsideSeedRegion(next, ottawaRegion)).toBe(true);
   });
 
-  it("respawns with the same id when a track exits the seed region", () => {
+  it("respawns with a new id when a track exits the seed region", () => {
     const exitingAsset: Asset = {
       ...baseAsset,
       lat: 45.599,
@@ -47,7 +47,8 @@ describe("advanceAssets", () => {
       seedRegion: ottawaRegion,
     });
 
-    expect(next.id).toBe(exitingAsset.id);
+    expect(next.id).not.toBe(exitingAsset.id);
+    expect(next.id).toMatch(/^syn-/);
     expect(isInsideSeedRegion(next, ottawaRegion)).toBe(true);
   });
 });

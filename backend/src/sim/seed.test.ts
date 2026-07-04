@@ -16,6 +16,15 @@ describe("isInsideSeedRegion", () => {
     );
   });
 
+  it("returns true for a point on the bbox boundary", () => {
+    expect(
+      isInsideSeedRegion(
+        { lat: ottawaRegion.maxLat, lon: -75.7 },
+        ottawaRegion,
+      ),
+    ).toBe(true);
+  });
+
   it("returns false for a point outside the bbox", () => {
     expect(isInsideSeedRegion({ lat: 46.0, lon: -75.7 }, ottawaRegion)).toBe(
       false,
@@ -32,7 +41,7 @@ describe("respawnAtBoundary", () => {
   };
 
   const sampleAsset: Asset = {
-    id: "sim-42",
+    id: "legacy-track",
     lat: 45.4,
     lon: -75.7,
     alt: 5000,
@@ -45,18 +54,74 @@ describe("respawnAtBoundary", () => {
     vi.restoreAllMocks();
   });
 
-  it("keeps the same id and places the asset on the north edge", () => {
+  it.each([
+    {
+      edgeRandom: 0,
+      expectedLat: ottawaRegion.maxLat,
+      expectedLon: -75.7,
+      label: "north",
+    },
+    {
+      edgeRandom: 0.25,
+      expectedLat: ottawaRegion.minLat,
+      expectedLon: -75.7,
+      label: "south",
+    },
+    {
+      edgeRandom: 0.5,
+      expectedLat: 45.4,
+      expectedLon: ottawaRegion.maxLon,
+      label: "east",
+    },
+    {
+      edgeRandom: 0.75,
+      expectedLat: 45.4,
+      expectedLon: ottawaRegion.minLon,
+      label: "west",
+    },
+  ])(
+    "assigns a new id on the $label edge",
+    ({ edgeRandom, expectedLat, expectedLon }) => {
+      vi.spyOn(Math, "random")
+        .mockReturnValueOnce(edgeRandom)
+        .mockReturnValueOnce(0.5)
+        .mockReturnValueOnce(0);
+
+      const respawned = respawnAtBoundary(sampleAsset, ottawaRegion);
+
+      expect(respawned.id).not.toBe(sampleAsset.id);
+      expect(respawned.id).toMatch(/^syn-/);
+      expect(respawned.lat).toBeCloseTo(expectedLat, 5);
+      expect(respawned.lon).toBeCloseTo(expectedLon, 5);
+      expect(respawned.heading).toBeGreaterThanOrEqual(0);
+      expect(respawned.heading).toBeLessThan(360);
+    },
+  );
+
+  it("preserves altitude and speed from the exiting track", () => {
     vi.spyOn(Math, "random")
-      .mockReturnValueOnce(0) // north edge
-      .mockReturnValueOnce(0.5) // lon along edge
-      .mockReturnValueOnce(0); // heading jitter
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0);
 
     const respawned = respawnAtBoundary(sampleAsset, ottawaRegion);
 
-    expect(respawned.id).toBe(sampleAsset.id);
-    expect(respawned.lat).toBe(ottawaRegion.maxLat);
-    expect(respawned.lon).toBeCloseTo(-75.7, 5);
-    expect(respawned.heading).toBeGreaterThanOrEqual(0);
-    expect(respawned.heading).toBeLessThan(360);
+    expect(respawned.alt).toBe(sampleAsset.alt);
+    expect(respawned.speed).toBe(sampleAsset.speed);
+    expect(respawned.source).toBe("synthetic");
+  });
+
+  it("sets source to synthetic when the exiting track was from OpenSky", () => {
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0);
+
+    const respawned = respawnAtBoundary(
+      { ...sampleAsset, id: "abc123", source: "opensky" },
+      ottawaRegion,
+    );
+
+    expect(respawned.source).toBe("synthetic");
   });
 });

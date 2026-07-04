@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import bearing from "@turf/bearing";
 import bboxPolygon from "@turf/bbox-polygon";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
@@ -13,8 +14,9 @@ import {
 } from "./config.js";
 import type { Asset, SimBounds } from "./types.js";
 
-function randomInRange(min: number, max: number): number {
-  return min + Math.random() * (max - min);
+/** Unique id for a sim-generated track at seed or boundary respawn. */
+function createSyntheticId(): string {
+  return `syn-${randomUUID()}`;
 }
 
 /**
@@ -74,11 +76,11 @@ export function isInsideSeedRegion(
   );
 }
 
-function createSyntheticAsset(index: number): Asset {
+function createSyntheticAsset(): Asset {
   const { seedRegion } = simConfig;
 
   return {
-    id: `sim-${index}`,
+    id: createSyntheticId(),
     lat: randomInRange(seedRegion.minLat, seedRegion.maxLat),
     lon: randomInRange(seedRegion.minLon, seedRegion.maxLon),
     alt: randomInRange(SYNTHETIC_ALT_MIN_M, SYNTHETIC_ALT_MAX_M),
@@ -90,12 +92,12 @@ function createSyntheticAsset(index: number): Asset {
 
 /** Create synthetic assets at random positions inside the seed region. */
 export function seedAssets(count: number): Asset[] {
-  return Array.from({ length: count }, (_, i) => createSyntheticAsset(i + 1));
+  return Array.from({ length: count }, () => createSyntheticAsset());
 }
 
 /**
- * Place the track on a random boundary point with heading toward region center.
- * Keeps the same id so clients treat it as one continuous track.
+ * Place a new track on a random boundary point with heading toward region center.
+ * Assigns a fresh id and synthetic source so clients treat boundary entry as a new aircraft.
  */
 export function respawnAtBoundary(asset: Asset, region: SimBounds): Asset {
   const { lat, lon } = randomEdgePoint(region);
@@ -111,5 +113,16 @@ export function respawnAtBoundary(asset: Asset, region: SimBounds): Asset {
       360) %
     360;
 
-  return { ...asset, lat, lon, heading };
+  return {
+    ...asset,
+    id: createSyntheticId(),
+    lat,
+    lon,
+    heading,
+    source: "synthetic",
+  };
+}
+
+function randomInRange(min: number, max: number): number {
+  return min + Math.random() * (max - min);
 }
