@@ -12,6 +12,7 @@ import {
   ASSET_HEADING_GAP_PX,
   ASSET_HEADING_ICON_SIZE,
   ASSET_SOURCE_COLORS,
+  ASSET_THREAT_COLORS,
   MAP_LAYERS,
 } from "../../lib/constants/mapConstants.js";
 
@@ -37,6 +38,7 @@ export function assetsToFeatureCollection(
         id: asset.id,
         source: asset.source,
         heading: asset.heading,
+        threat: asset.threat,
       },
     })),
   };
@@ -71,7 +73,7 @@ export async function ensureAssetHeadingIcon(map: Map): Promise<void> {
   }
 
   // Chevron shape: open V pointing up (MapLibre rotates via icon-rotate).
-  // tipY / wingY / wingSpread control angle — atan(wingSpread / (wingY - tipY)).
+  // tipY / wingY / wingSpread control angle: atan(wingSpread / (wingY - tipY)).
   const centerX = width / 2;
   const wingInsetFromBottom =
     ((ASSET_CIRCLE_RADIUS + ASSET_HEADING_GAP_PX) * scale) /
@@ -108,20 +110,22 @@ const assetsSource = (
   promoteId: "id",
 });
 
-/** Position dot colored by properties.source (opensky vs synthetic). */
+/** Position dot colored by server-computed threat level. */
 const assetsCircleLayer: CircleLayerSpecification = {
   id: MAP_LAYERS.assetsCircles,
   type: "circle",
   source: MAP_LAYERS.assetsSource,
   paint: {
     "circle-radius": ASSET_CIRCLE_RADIUS,
-    // match is like: source === "opensky" ? blue : orange (last value is the default)
+    // match: threat === "critical" ? red : "warning" ? amber : slate (last value is default)
     "circle-color": [
       "match",
-      ["get", "source"],
-      "opensky",
-      ASSET_SOURCE_COLORS.opensky,
-      ASSET_SOURCE_COLORS.synthetic,
+      ["get", "threat"],
+      "critical",
+      ASSET_THREAT_COLORS.critical,
+      "warning",
+      ASSET_THREAT_COLORS.warning,
+      ASSET_THREAT_COLORS.normal,
     ],
     "circle-stroke-width": 1,
     "circle-stroke-color": ASSET_SOURCE_COLORS.stroke,
@@ -143,12 +147,15 @@ const assetsHeadingLayer: SymbolLayerSpecification = {
     "icon-ignore-placement": true,
   },
   paint: {
+    // Same threat palette as the position dot.
     "icon-color": [
       "match",
-      ["get", "source"],
-      "opensky",
-      ASSET_SOURCE_COLORS.opensky,
-      ASSET_SOURCE_COLORS.synthetic,
+      ["get", "threat"],
+      "critical",
+      ASSET_THREAT_COLORS.critical,
+      "warning",
+      ASSET_THREAT_COLORS.warning,
+      ASSET_THREAT_COLORS.normal,
     ],
   },
 };

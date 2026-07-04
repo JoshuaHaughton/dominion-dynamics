@@ -55,6 +55,8 @@ describe("useLiveAssets", () => {
             heading: 0,
             speed: 100,
             source: "synthetic",
+            threat: "normal",
+            tteSeconds: null,
           },
         ],
       }),

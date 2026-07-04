@@ -37,3 +37,10 @@ export const ASSET_SOURCE_COLORS = {
   synthetic: "#f97316",
   stroke: "#f8fafc",
 } as const;
+
+/** Server threat symbology (P9: revisit dual encoding with source). */
+export const ASSET_THREAT_COLORS = {
+  normal: "#64748b",
+  warning: "#f59e0b",
+  critical: "#ef4444",
+} as const;
