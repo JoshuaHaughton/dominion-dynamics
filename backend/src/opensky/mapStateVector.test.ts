@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
 import {
   OPEN_SKY_STATE_FIXTURES,
 } from "./fixtures.js";
@@ -18,6 +19,7 @@ describe("mapOpenSkyStateToAsset", () => {
       heading: 275,
       speed: 230.5,
       source: "opensky",
+      ...UNEVALUATED_THREAT,
     });
   });
 
@@ -30,6 +32,7 @@ describe("mapOpenSkyStateToAsset", () => {
       heading: 90,
       speed: 12,
       source: "opensky",
+      ...UNEVALUATED_THREAT,
     });
 
     expect(mapOpenSkyStateToAsset(OPEN_SKY_STATE_FIXTURES.drone)).toEqual({
@@ -40,6 +43,7 @@ describe("mapOpenSkyStateToAsset", () => {
       heading: 180,
       speed: 18,
       source: "opensky",
+      ...UNEVALUATED_THREAT,
     });
   });
 

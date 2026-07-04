@@ -10,6 +10,7 @@ import {
   closeWebSocketServer,
   WS_LIVE_PATH,
 } from "./realtime/ws.server.js";
+import { loadZoneGeometryCache } from "./threat/zoneGeometryCache.js";
 import { getAssets, startSim, stopSim } from "./sim/service.js";
 
 const app = express();
@@ -25,9 +26,11 @@ app.use(express.json());
 app.use("/api/health", healthRouter);
 app.use("/api/zones", zonesRouter);
 
+loadZoneGeometryCache();
+
 const server = http.createServer(app);
 
-attachWebSocket(server, { getAssets });
+attachWebSocket({ server, getConnectSnapshot: getAssets });
 
 startSim({ onTick: broadcastSnapshot });
 

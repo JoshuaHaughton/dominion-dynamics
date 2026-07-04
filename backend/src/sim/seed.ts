@@ -12,6 +12,7 @@ import {
 } from "./config.js";
 import { sampleSyntheticSpeed } from "./speedProfiles.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
+import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
 
 /** Unique id for a sim-generated track at seed or boundary respawn. */
 function createSyntheticId(): string {
@@ -86,6 +87,7 @@ function createSyntheticAsset(): Asset {
     heading: randomInRange(0, 360),
     speed: sampleSyntheticSpeed(),
     source: "synthetic",
+    ...UNEVALUATED_THREAT,
   };
 }
 

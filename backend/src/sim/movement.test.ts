@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stepAsset } from "./movement.js";
 import type { Asset } from "@dominion-dynamics/shared";
+import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
 
 describe("stepAsset", () => {
   const baseAsset: Asset = {
@@ -11,6 +12,7 @@ describe("stepAsset", () => {
     heading: 0,
     speed: 250,
     source: "synthetic",
+    ...UNEVALUATED_THREAT,
   };
 
   it("moves north along heading 0", () => {

@@ -1029,6 +1029,16 @@
     "@types/geojson" "^7946.0.10"
     tslib "^2.8.1"
 
+"@turf/bbox@^7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/bbox/-/bbox-7.3.5.tgz#bf93e0a81aa98ca8809bea1bfa6cdfd03ce2470a"
+  integrity sha512-oG1ya/HtBjAIg4TimbWx+nOYPbY0bCvt82Bq8tm6sBw3qqtbOyRSfDz79Sq90TnH7DXJprJ1qnVGKNtZ6jemfw==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@turf/meta" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
 "@turf/bearing@^7.3.5":
   version "7.3.5"
   resolved "https://registry.yarnpkg.com/@turf/bearing/-/bearing-7.3.5.tgz#cd50935b3aa8afdc5865b28b2dce993f2bebe5f4"
@@ -1060,6 +1070,16 @@
     "@types/geojson" "^7946.0.10"
     tslib "^2.8.1"
 
+"@turf/distance@^7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/distance/-/distance-7.3.5.tgz#3aa16a1fde30e5cf4cf40b7e497be8cc5d6bbaaf"
+  integrity sha512-uQAC63zg/l91KUxzfhqio7Ii3+UXTrPOVJScIdRj6EO6+9XHI4kC+AdyIS4cPAv14sZfJLIBxzMnzcGrss+kEA==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@turf/invariant" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
 "@turf/helpers@7.3.5", "@turf/helpers@^7.3.5":
   version "7.3.5"
   resolved "https://registry.yarnpkg.com/@turf/helpers/-/helpers-7.3.5.tgz#051928c03cdf9ffcc7ae36581c317afc49bfd999"
@@ -1072,6 +1092,25 @@
   version "7.3.5"
   resolved "https://registry.yarnpkg.com/@turf/invariant/-/invariant-7.3.5.tgz#5619d0e0ef3755e2be69855bad47e10158a1820b"
   integrity sha512-ZVIvsBvjr8lO7WxC5zYNjRsjSDvyGvWkJMjuWaJjTU8x+1tmfNnw3gDX/TI2Sit83gcRYLYkNo23lB/udqx/Hg==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
+"@turf/line-intersect@^7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/line-intersect/-/line-intersect-7.3.5.tgz#841f8f713218cbd4532269754e3e1f6a15d4e374"
+  integrity sha512-2Cl4oPsjaDdfIwz/5IRDdG2fNdfp3W6atICm81vnzl/GwURoVP+CLjXJ64QWWzpzIbgX2XprJQTmamByDt5MDw==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    sweepline-intersections "^1.5.0"
+    tslib "^2.8.1"
+
+"@turf/meta@7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/meta/-/meta-7.3.5.tgz#c498a6f1e8603e014e8bfbc9a4b2760b6219edb9"
+  integrity sha512-r+ohqxoyqeigFB0oFrQx/YEHIkOKqcKpCjvZkvZs7Tkv+IFco5MezAd2zd4rzK+0DfFgDP3KpJc7HqrYjvEjhg==
   dependencies:
     "@turf/helpers" "7.3.5"
     "@types/geojson" "^7946.0.10"
@@ -2743,6 +2782,13 @@ strip-json-comments@~2.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==
 
+sweepline-intersections@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/sweepline-intersections/-/sweepline-intersections-1.5.0.tgz#85ab3629a291875926fae0acd508496430d8a647"
+  integrity sha512-AoVmx72QHpKtItPu72TzFL+kcYjd67BPLDoR0LarIk+xyaRg+pDTMFXndIEvZf9xEKnJv6JdhgRMnocoG0D3AQ==
+  dependencies:
+    tinyqueue "^2.0.0"
+
 symbol-tree@^3.2.4:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
@@ -2791,6 +2837,11 @@ tinyglobby@^0.2.15, tinyglobby@^0.2.17:
   dependencies:
     fdir "^6.5.0"
     picomatch "^4.0.4"
+
+tinyqueue@^2.0.0:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/tinyqueue/-/tinyqueue-2.0.3.tgz#64d8492ebf39e7801d7bd34062e29b45b2035f08"
+  integrity sha512-ppJZNDuKGgxzkHihX8v9v9G5f+18gzaTfrukGrq6ueg0lmH4nqVnA2IPG0AEH3jKEk2GRJCUhDoqpoiw3PHLBA==
 
 tinyqueue@^3.0.0:
   version "3.0.0"

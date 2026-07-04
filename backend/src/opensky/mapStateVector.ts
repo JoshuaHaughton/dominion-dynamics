@@ -1,4 +1,5 @@
 import type { Asset } from "@dominion-dynamics/shared";
+import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
 import type { OpenSkyStateVector } from "./types.js";
 
 export type MapOpenSkyStateOptions = {
@@ -49,6 +50,7 @@ export function mapOpenSkyStateToAsset(
     heading: normalizeHeading(heading),
     speed,
     source: "opensky",
+    ...UNEVALUATED_THREAT,
   };
 }
 

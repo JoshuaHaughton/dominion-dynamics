@@ -27,6 +27,6 @@ dist/
 .vscode/
 *.swp
 
-# Python (removed — keep ignore if stray files)
+# Python (removed; keep ignore if stray files)
 .venv/
 __pycache__/

@@ -7,8 +7,10 @@ export const WS_LIVE_PATH = "/ws/live";
 
 let wss: WebSocketServer | undefined;
 
-type AttachWebSocketOptions = {
-  getAssets: () => readonly Asset[];
+type AttachWebSocketParams = {
+  server: Server;
+  /** Positions and threat fields sent when a client connects. */
+  getConnectSnapshot: () => readonly Asset[];
 };
 
 /** JSON-encode a snapshot message for the wire. */
@@ -26,14 +28,14 @@ function sendSnapshot(ws: WebSocket, assets: readonly Asset[]): void {
 }
 
 /** Attach a WebSocket server to the shared HTTP server. */
-export function attachWebSocket(
-  server: Server,
-  options: AttachWebSocketOptions,
-): void {
+export function attachWebSocket({
+  server,
+  getConnectSnapshot,
+}: AttachWebSocketParams): void {
   wss = new WebSocketServer({ server, path: WS_LIVE_PATH });
 
   wss.on("connection", (ws) => {
-    sendSnapshot(ws, options.getAssets());
+    sendSnapshot(ws, getConnectSnapshot());
   });
 }
 

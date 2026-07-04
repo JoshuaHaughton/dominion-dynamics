@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { advanceAssets } from "./ticker.js";
 import { isInsideSeedRegion } from "./seed.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
+import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
 
 describe("advanceAssets", () => {
   const ottawaRegion: SimBounds = {
@@ -19,6 +20,7 @@ describe("advanceAssets", () => {
     heading: 90,
     speed: 100,
     source: "synthetic",
+    ...UNEVALUATED_THREAT,
   };
 
   it("advances assets that remain inside the seed region", () => {

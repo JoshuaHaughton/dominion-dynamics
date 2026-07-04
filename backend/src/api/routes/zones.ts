@@ -1,4 +1,8 @@
 import { Router } from "express";
+import { broadcastSnapshot } from "../../realtime/ws.server.js";
+import { getAssetList, setAssets } from "../../sim/store.js";
+import { enrichAssetsWithThreat } from "../../threat/evaluateAsset.js";
+import { appendZoneToCache, getCachedZones } from "../../threat/zoneGeometryCache.js";
 import { createZone, getZones } from "../../zones/zoneService.js";
 import { validateCreateZoneBody } from "../../zones/validateZoneGeojson.js";
 
@@ -17,5 +21,15 @@ zonesRouter.post("/", (req, res) => {
   }
 
   const zone = createZone(parsed.value);
+  appendZoneToCache(zone);
+
+  const zones = getCachedZones();
+  const positions = getAssetList();
+  const assets = enrichAssetsWithThreat(positions, zones);
+
+  setAssets(assets);
+  // Threat eval runs on the sim tick; push now so colors update without waiting.
+  broadcastSnapshot(assets);
+
   res.status(201).json(zone);
 });

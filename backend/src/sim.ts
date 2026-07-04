@@ -4,10 +4,10 @@ import { startSim, stopSim } from "./sim/service.js";
 const { seedRegion } = simConfig;
 
 console.log(
-  `Sim starting — ${simConfig.assetCount} assets, ${simConfig.tickMs}ms tick, mode=${simConfig.ingestMode}`,
+  `Sim starting: ${simConfig.assetCount} assets, ${simConfig.tickMs}ms tick, mode=${simConfig.ingestMode}`,
 );
 console.log(
-  `Seed region (Ottawa AOI): lat ${seedRegion.minLat}–${seedRegion.maxLat}, lon ${seedRegion.minLon}–${seedRegion.maxLon}`,
+  `Seed region (Ottawa AOI): lat ${seedRegion.minLat}-${seedRegion.maxLat}, lon ${seedRegion.minLon}-${seedRegion.maxLon}`,
 );
 
 let tickCount = 0;
