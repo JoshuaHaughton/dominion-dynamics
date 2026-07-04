@@ -1,4 +1,10 @@
-export type { Asset, AssetSource, SimBounds } from "./asset.js";
+export {
+  UNEVALUATED_THREAT,
+  type Asset,
+  type AssetSource,
+  type SimBounds,
+  type ThreatLevel,
+} from "./asset.js";
 export type { SnapshotMessage } from "./wire.js";
 export type {
   CreateZoneRequest,
