@@ -26,26 +26,17 @@ describe("assetsToFeatureCollection", () => {
     });
   });
 
-  it("maps asset coordinates to GeoJSON format", () => {
-    const collection = assetsToFeatureCollection([syntheticAsset]);
-
-    expect(collection.features[0]?.geometry.coordinates).toEqual([-75.7, 45.4]);
-    expect(collection.features[0]?.properties?.source).toBe("synthetic");
-  });
-
-  it("preserves feature ids and source for multiple assets", () => {
-    const collection = assetsToFeatureCollection([
-      syntheticAsset,
-      openskyAsset,
-    ]);
+  it("maps assets to GeoJSON points with lon/lat order and layer properties", () => {
+    const collection = assetsToFeatureCollection([syntheticAsset, openskyAsset]);
 
     expect(collection.features).toHaveLength(2);
-    expect(collection.features.map((feature) => feature.id)).toEqual([
-      "syn-test",
-      "os-test",
-    ]);
-    expect(
-      collection.features.map((feature) => feature.properties?.source),
-    ).toEqual(["synthetic", "opensky"]);
+    expect(collection.features[0]?.geometry.coordinates).toEqual([-75.7, 45.4]);
+    expect(collection.features[0]?.properties).toEqual({
+      id: "syn-test",
+      source: "synthetic",
+      heading: 90,
+    });
+    expect(collection.features[1]?.id).toBe("os-test");
+    expect(collection.features[1]?.properties?.source).toBe("opensky");
   });
 });

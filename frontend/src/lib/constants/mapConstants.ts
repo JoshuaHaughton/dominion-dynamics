@@ -8,12 +8,16 @@ export const DEMO_SEED_REGION: SimBounds = {
   maxLon: -75.3,
 };
 
-export const MAP_STYLE_URL = "https://demotiles.maplibre.org/style.json";
-
 export const MAP_LAYERS = {
   assetsSource: "assets",
   assetsCircles: "assets-circles",
+  assetsHeading: "assets-heading",
 } as const;
+
+export const ASSET_CIRCLE_RADIUS = 6;
+export const ASSET_HEADING_ICON_SIZE = 0.55;
+/** Screen pixels between the circle edge and the chevron wing base. */
+export const ASSET_HEADING_GAP_PX = 2;
 
 /** Pixel padding when fitting the map to the demo region. */
 export const MAP_FIT_PADDING = 48;
@@ -23,5 +27,5 @@ export const INITIAL_MAP_ZOOM = 9;
 export const ASSET_SOURCE_COLORS = {
   opensky: "#38bdf8",
   synthetic: "#f97316",
-  stroke: "#0f172a",
+  stroke: "#f8fafc",
 } as const;
