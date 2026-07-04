@@ -1,21 +1,30 @@
 import maplibregl, { type Map } from "maplibre-gl";
 import type { Asset } from "@dominion-dynamics/shared";
+import type { MapStyleId } from "../../lib/constants/mapStyles.js";
 import { useEffect, useRef, type RefObject } from "react";
 import {
   DEMO_SEED_REGION,
   INITIAL_MAP_ZOOM,
   MAP_FIT_PADDING,
-  MAP_STYLE_URL,
 } from "../../lib/constants/mapConstants.js";
+import { getMapStyleUrl } from "../../lib/constants/mapStyles.js";
 import { getRegionCenter, toFitBounds } from "../../lib/utils/mapUtils.js";
-import { addAssetLayers, updateAssetLayerData } from "./liveMapUtils.js";
+import { syncAssetLayers, updateAssetLayerData } from "./liveMapUtils.js";
+
+export type LiveMapInput = {
+  assets: readonly Asset[];
+  styleId: MapStyleId;
+};
 
 type UseLiveMapResult = {
   containerRef: RefObject<HTMLDivElement | null>;
 };
 
 /** Manage MapLibre lifecycle and sync asset snapshots onto the map. */
-export function useLiveMap(assets: readonly Asset[]): UseLiveMapResult {
+export function useLiveMap({
+  assets,
+  styleId,
+}: LiveMapInput): UseLiveMapResult {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const hasFitBoundsRef = useRef(false);
@@ -31,7 +40,7 @@ export function useLiveMap(assets: readonly Asset[]): UseLiveMapResult {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: MAP_STYLE_URL,
+      style: getMapStyleUrl(styleId),
       center: getRegionCenter(DEMO_SEED_REGION),
       zoom: INITIAL_MAP_ZOOM,
     });
@@ -39,8 +48,9 @@ export function useLiveMap(assets: readonly Asset[]): UseLiveMapResult {
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on("load", () => {
-      addAssetLayers(map, assetsRef.current);
-      fitDemoRegionIfNeeded(map, assetsRef.current.length);
+      void syncAssetLayers(map, assetsRef.current).then(() => {
+        fitDemoRegionIfNeeded(map, assetsRef.current.length);
+      });
     });
 
     mapRef.current = map;
@@ -52,11 +62,38 @@ export function useLiveMap(assets: readonly Asset[]): UseLiveMapResult {
     };
   }, []);
 
+  // Swap basemap when the user picks a different style.
+  const skipNextStyleSwapRef = useRef(true);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) return;
+
+    if (skipNextStyleSwapRef.current) {
+      skipNextStyleSwapRef.current = false;
+      return;
+    }
+
+    map.setStyle(getMapStyleUrl(styleId));
+
+    const onStyleLoad = () => {
+      void syncAssetLayers(map, assetsRef.current).then(() => {
+        fitDemoRegionIfNeeded(map, assetsRef.current.length);
+      });
+    };
+
+    map.once("style.load", onStyleLoad);
+
+    return () => {
+      map.off("style.load", onStyleLoad);
+    };
+  }, [styleId]);
+
   // Apply each WebSocket snapshot without recreating the map.
   useEffect(() => {
     const map = mapRef.current;
 
-    // Source/layer are only available after the style finishes loading.
     if (!map?.isStyleLoaded()) {
       return;
     }

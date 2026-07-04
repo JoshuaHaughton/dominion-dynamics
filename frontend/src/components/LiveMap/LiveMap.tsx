@@ -1,13 +1,9 @@
-import type { Asset } from "@dominion-dynamics/shared";
-import { useLiveMap } from "./useLiveMap.js";
-
-type LiveMapProps = {
-  assets: readonly Asset[];
-};
+import { useLiveMap, type LiveMapInput } from "./useLiveMap.js";
+import styles from "./LiveMap.module.css";
 
 /** MapLibre map with live asset positions from WebSocket snapshots. */
-export function LiveMap({ assets }: LiveMapProps) {
-  const { containerRef } = useLiveMap(assets);
+export function LiveMap({ assets, styleId }: LiveMapInput) {
+  const { containerRef } = useLiveMap({ assets, styleId });
 
-  return <div ref={containerRef} className="live-map" />;
+  return <div ref={containerRef} className={styles.map} />;
 }
