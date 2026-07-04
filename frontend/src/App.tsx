@@ -2,11 +2,14 @@ import { LiveMap } from "./components/LiveMap/LiveMap.js";
 import { MapStyleSelect } from "./components/MapStyleSelect/MapStyleSelect.js";
 import { useLiveAssets } from "./lib/hooks/useLiveAssets.js";
 import { useMapStyle } from "./lib/hooks/useMapStyle.js";
+import { useZones } from "./lib/hooks/useZones.js";
 import styles from "./App.module.css";
 
 export function App() {
   const { assets, connected, lastUpdatedAt } = useLiveAssets();
   const { styleId, setStyleId } = useMapStyle();
+  const { zones, error: zoneDrawError, addZoneFromDraw, reportDrawError } =
+    useZones();
 
   return (
     <div className={styles.app}>
@@ -19,6 +22,7 @@ export function App() {
           />
           <span>{connected ? "Live" : "Reconnecting…"}</span>
           <span>{assets.length} assets</span>
+          <span>{zones.length} zones</span>
           {lastUpdatedAt !== null && (
             <span className={styles.statusMuted}>
               updated {new Date(lastUpdatedAt).toLocaleTimeString()}
@@ -27,7 +31,14 @@ export function App() {
         </div>
       </header>
       <main className={styles.main}>
-        <LiveMap assets={assets} styleId={styleId} />
+        <LiveMap
+          assets={assets}
+          styleId={styleId}
+          zones={zones}
+          onZoneDrawn={addZoneFromDraw}
+          onZoneDrawError={reportDrawError}
+          zoneDrawError={zoneDrawError}
+        />
       </main>
     </div>
   );

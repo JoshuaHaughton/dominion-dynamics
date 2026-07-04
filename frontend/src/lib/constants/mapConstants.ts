@@ -12,7 +12,15 @@ export const MAP_LAYERS = {
   assetsSource: "assets",
   assetsCircles: "assets-circles",
   assetsHeading: "assets-heading",
+  zonesSource: "zones",
+  zonesFill: "zones-fill",
+  zonesOutline: "zones-outline",
 } as const;
+
+export const ZONE_FILL_COLOR = "#ef4444";
+export const ZONE_FILL_OPACITY = 0.18;
+export const ZONE_OUTLINE_COLOR = "#ef4444";
+export const ZONE_OUTLINE_WIDTH = 2;
 
 export const ASSET_CIRCLE_RADIUS = 6;
 export const ASSET_HEADING_ICON_SIZE = 0.55;
