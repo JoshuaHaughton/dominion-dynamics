@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@dominion-dynamics/shared": "1.0.0",
+    "@watergis/maplibre-gl-terradraw": "^1.14.1",
     "maplibre-gl": "^5.16.0",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "terra-draw": "^1.31.2"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

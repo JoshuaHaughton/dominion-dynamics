@@ -1321,6 +1321,11 @@
     convert-source-map "^2.0.0"
     tinyrainbow "^3.1.0"
 
+"@watergis/maplibre-gl-terradraw@^1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@watergis/maplibre-gl-terradraw/-/maplibre-gl-terradraw-1.14.1.tgz#f5bb07be77286182c41a26f82ab650e97adc3ffa"
+  integrity sha512-RdraPShaDp4mwjTYXx5cNdLo/7uKVnCZS/Gy/7hBzSPOBOF612AurGN3uuzy204vna+tlMuFf172g7ixfyZmJw==
+
 accepts@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/accepts/-/accepts-2.0.0.tgz#bbcf4ba5075467f3f2131eab3cffc73c2f5d7895"
@@ -2763,6 +2768,11 @@ tar-stream@^2.1.4:
     fs-constants "^1.0.0"
     inherits "^2.0.3"
     readable-stream "^3.1.1"
+
+terra-draw@^1.31.2:
+  version "1.31.2"
+  resolved "https://registry.yarnpkg.com/terra-draw/-/terra-draw-1.31.2.tgz#e32782acf88e9d455562845e07d8e33378671557"
+  integrity sha512-jyHodIOZVsyqUeZpkZCrsrLrEgcnWxZNlwZH64RUwKWP0o77qhub+iSCpV1XTESXOi2c1LQ87cHe1slk30L1ig==
 
 tinybench@^2.9.0:
   version "2.9.0"

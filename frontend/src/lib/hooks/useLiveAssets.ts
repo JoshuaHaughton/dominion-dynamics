@@ -11,6 +11,31 @@ type LiveAssetsState = {
   lastUpdatedAt: number | null;
 };
 
+/** Close without racing a socket that is still connecting (Strict Mode safe). */
+function closeLiveSocket(socket: WebSocket | undefined): void {
+  if (!socket) {
+    return;
+  }
+
+  if (socket.readyState === WebSocket.CONNECTING) {
+    socket.addEventListener(
+      "open",
+      () => {
+        socket.close();
+      },
+      { once: true },
+    );
+    return;
+  }
+
+  if (
+    socket.readyState === WebSocket.OPEN ||
+    socket.readyState === WebSocket.CLOSING
+  ) {
+    socket.close();
+  }
+}
+
 /** Subscribe to the backend live snapshot WebSocket stream. */
 export function useLiveAssets(): LiveAssetsState {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -20,14 +45,16 @@ export function useLiveAssets(): LiveAssetsState {
   useEffect(() => {
     let ws: WebSocket | undefined;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-    // Ignore socket events after unmount
     let cancelled = false;
 
     function connect(): void {
       ws = new WebSocket(getLiveWebSocketUrl());
 
       ws.onopen = () => {
-        if (cancelled) return;
+        if (cancelled) {
+          closeLiveSocket(ws);
+          return;
+        }
 
         setConnected(true);
       };
@@ -55,7 +82,7 @@ export function useLiveAssets(): LiveAssetsState {
       };
 
       ws.onerror = () => {
-        ws?.close();
+        closeLiveSocket(ws);
       };
     }
 
@@ -64,7 +91,7 @@ export function useLiveAssets(): LiveAssetsState {
     return () => {
       cancelled = true;
       clearTimeout(reconnectTimer);
-      ws?.close();
+      closeLiveSocket(ws);
     };
   }, []);
 

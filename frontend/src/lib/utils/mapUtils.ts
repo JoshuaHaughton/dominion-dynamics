@@ -1,4 +1,4 @@
-import type { LngLatBoundsLike, LngLatLike } from "maplibre-gl";
+import type { LngLatBoundsLike, LngLatLike, Map } from "maplibre-gl";
 import type { SimBounds } from "@dominion-dynamics/shared";
 
 /** Longitude/latitude center of a geographic rectangle. */
@@ -18,4 +18,11 @@ export function toFitBounds(region: SimBounds): LngLatBoundsLike {
     [region.minLon, region.minLat],
     [region.maxLon, region.maxLat],
   ];
+}
+
+/** Disable style-packaged 3D terrain until P4 explicitly opts in. */
+export function disableBasemapTerrain(map: Map): void {
+  if (map.getTerrain()) {
+    map.setTerrain(null);
+  }
 }
