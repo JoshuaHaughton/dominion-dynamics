@@ -10,8 +10,6 @@ export const DEFAULT_POLL_INTERVAL_MS = 30_000;
 // Random ranges for synthetic aircraft at seed time.
 export const SYNTHETIC_ALT_MIN_M = 500;
 export const SYNTHETIC_ALT_MAX_M = 12_000;
-export const SYNTHETIC_SPEED_MIN_MPS = 80;
-export const SYNTHETIC_SPEED_MAX_MPS = 250;
 
 // Spread entry headings so respawned tracks don't all aim at the region center.
 export const RESPAWN_HEADING_JITTER_DEG = 30;

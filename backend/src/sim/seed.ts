@@ -9,9 +9,8 @@ import {
   simConfig,
   SYNTHETIC_ALT_MAX_M,
   SYNTHETIC_ALT_MIN_M,
-  SYNTHETIC_SPEED_MAX_MPS,
-  SYNTHETIC_SPEED_MIN_MPS,
 } from "./config.js";
+import { sampleSyntheticSpeed } from "./speedProfiles.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
 /** Unique id for a sim-generated track at seed or boundary respawn. */
@@ -85,7 +84,7 @@ function createSyntheticAsset(): Asset {
     lon: randomInRange(seedRegion.minLon, seedRegion.maxLon),
     alt: randomInRange(SYNTHETIC_ALT_MIN_M, SYNTHETIC_ALT_MAX_M),
     heading: randomInRange(0, 360),
-    speed: randomInRange(SYNTHETIC_SPEED_MIN_MPS, SYNTHETIC_SPEED_MAX_MPS),
+    speed: sampleSyntheticSpeed(),
     source: "synthetic",
   };
 }
