@@ -1,7 +1,7 @@
 import cors from "cors";
 import express from "express";
 import "./db/index.js";
-import { healthRouter } from "./routes/health.js";
+import { healthRouter } from "./api/routes/health.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 8000);
