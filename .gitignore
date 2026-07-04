@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+
+# SQLite
+data/
+*.db
+*.sqlite3
+
+# Build
+dist/
+*.log
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Python (removed — keep ignore if stray files)
+.venv/
+__pycache__/
