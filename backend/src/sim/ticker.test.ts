@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { advanceAssets } from "./ticker.js";
 import { isInsideSeedRegion } from "./seed.js";
-import type { Asset, SimBounds } from "./types.js";
+import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
 describe("advanceAssets", () => {
   const ottawaRegion: SimBounds = {

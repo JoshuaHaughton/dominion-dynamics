@@ -1,4 +1,4 @@
-import type { Asset } from "./types.js";
+import type { Asset } from "@dominion-dynamics/shared";
 
 /** In-memory Map of assets keyed by id. */
 const assets = new Map<string, Asset>();

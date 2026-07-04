@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { isInsideSeedRegion, respawnAtBoundary } from "./seed.js";
-import type { Asset, SimBounds } from "./types.js";
+import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
 describe("isInsideSeedRegion", () => {
   const ottawaRegion: SimBounds = {

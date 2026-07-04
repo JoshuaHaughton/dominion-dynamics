@@ -1,5 +1,5 @@
 import type { Server } from "node:http";
-import type { Asset } from "../sim/types.js";
+import type { Asset } from "@dominion-dynamics/shared";
 import { WebSocket, WebSocketServer } from "ws";
 import { buildSnapshotMessage } from "./messages.js";
 

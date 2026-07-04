@@ -1,0 +1,9 @@
+{
+  "name": "dominion-dynamics",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "packages/*"
+  ]
+}

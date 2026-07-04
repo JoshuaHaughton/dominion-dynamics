@@ -2,7 +2,7 @@ import { simConfig } from "./config.js";
 import { seedAssets } from "./seed.js";
 import { setAssets, getAssetList } from "./store.js";
 import { startTicker, stopTicker } from "./ticker.js";
-import type { Asset } from "./types.js";
+import type { Asset } from "@dominion-dynamics/shared";
 
 export type StartSimOptions = {
   onTick?: (assets: Asset[]) => void;

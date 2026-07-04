@@ -1,4 +1,4 @@
-import type { SimBounds } from "./types.js";
+import type { SimBounds } from "@dominion-dynamics/shared";
 
 export type IngestMode = "seed" | "poll";
 

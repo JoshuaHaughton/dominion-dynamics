@@ -1,9 +1,15 @@
 # Dependencies
 node_modules/
 
+# Build
+dist/
+*.log
+*.tsbuildinfo
+
 # Environment
 .env
 .env.*
+!.env.example
 
 # SQLite
 data/
@@ -13,6 +19,7 @@ data/
 # Build
 dist/
 *.log
+*.tsbuildinfo
 
 # IDE / OS
 .DS_Store

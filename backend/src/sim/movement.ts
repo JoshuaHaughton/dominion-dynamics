@@ -1,6 +1,6 @@
 import destination from "@turf/destination";
 import { point } from "@turf/helpers";
-import type { Asset } from "./types.js";
+import type { Asset } from "@dominion-dynamics/shared";
 
 export type StepAssetParams = {
   asset: Asset;

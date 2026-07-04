@@ -2,7 +2,7 @@ import { simConfig } from "./config.js";
 import { stepAsset } from "./movement.js";
 import { isInsideSeedRegion, respawnAtBoundary } from "./seed.js";
 import { getAssetList, setAssets } from "./store.js";
-import type { Asset, SimBounds } from "./types.js";
+import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 

@@ -14,7 +14,7 @@ export type Asset = {
   source: AssetSource;
 };
 
-/** Geographic rectangle — can be either the sim seed region or an OpenSky query bbox*/
+/** Geographic rectangle for sim seed regions or OpenSky query bboxes. */
 export type SimBounds = {
   minLat: number;
   maxLat: number;

@@ -1,5 +1,6 @@
 {
   "name": "@dominion-dynamics/backend",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +12,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@dominion-dynamics/shared": "1.0.0",
     "@turf/bbox-polygon": "^7.3.5",
     "@turf/bearing": "^7.3.5",
     "@turf/boolean-point-in-polygon": "^7.3.5",

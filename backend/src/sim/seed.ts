@@ -12,7 +12,7 @@ import {
   SYNTHETIC_SPEED_MAX_MPS,
   SYNTHETIC_SPEED_MIN_MPS,
 } from "./config.js";
-import type { Asset, SimBounds } from "./types.js";
+import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
 /** Unique id for a sim-generated track at seed or boundary respawn. */
 function createSyntheticId(): string {
