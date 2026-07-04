@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import "./db/index.js";
 import { healthRouter } from "./api/routes/health.js";
+import { zonesRouter } from "./api/routes/zones.js";
 import {
   attachWebSocket,
   broadcastSnapshot,
@@ -22,6 +23,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api/health", healthRouter);
+app.use("/api/zones", zonesRouter);
 
 const server = http.createServer(app);
 
