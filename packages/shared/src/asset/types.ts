@@ -1,6 +1,5 @@
-export type { Asset } from "./schemas/wire.js";
-
-export type AssetSource = "opensky" | "synthetic";
+/** Operational role of a live map asset. */
+export type AssetRole = "traffic" | "patrol";
 
 export type ThreatLevel = "normal" | "warning" | "critical";
 

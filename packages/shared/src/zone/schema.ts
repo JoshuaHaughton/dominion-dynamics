@@ -1,10 +1,6 @@
 import { z } from "zod";
 import type { Feature, Polygon } from "geojson";
-
-const lonLatPairSchema = z.tuple([
-  z.number().finite().min(-180).max(180),
-  z.number().finite().min(-90).max(90),
-]);
+import { lonLatPairSchema } from "../lib/coordinates.js";
 
 function isClosedRing(ring: [number, number][]): boolean {
   if (ring.length < 4) {

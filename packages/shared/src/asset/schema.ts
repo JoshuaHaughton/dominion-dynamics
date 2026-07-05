@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { AssetTrackDetailSchema, SelectedTrackDeltaSchema } from "./assetTrack.js";
+import { AssetTrackDetailSchema, SelectedTrackDeltaSchema } from "./track.js";
+
+export const AssetPatrolStateSchema = z.object({
+  mode: z.enum(["patrol", "shadow"]),
+  shadowTargetId: z.string().nullable(),
+  /** Set when the route is persisted; omitted for the in-memory default oval. */
+  pathId: z.number().int().positive().optional(),
+});
 
 export const AssetSchema = z.object({
   id: z.string(),
@@ -8,7 +15,7 @@ export const AssetSchema = z.object({
   alt: z.number().finite(),
   heading: z.number().finite(),
   speed: z.number().finite(),
-  source: z.enum(["opensky", "synthetic"]),
+  role: z.enum(["traffic", "patrol"]),
   category: z.number().int().min(0).max(20),
   callsign: z.string().nullable(),
   originCountry: z.string().nullable(),
@@ -16,6 +23,8 @@ export const AssetSchema = z.object({
   threat: z.enum(["normal", "warning", "critical"]),
   tteSeconds: z.number().finite().nullable(),
   nearestZoneDistanceM: z.number().finite().min(0).nullable(),
+  /** Present when {@link AssetSchema.shape.role} is `"patrol"`. */
+  patrol: AssetPatrolStateSchema.optional(),
 });
 
 /** WebSocket live snapshot message. */
@@ -29,6 +38,7 @@ export const SnapshotMessageSchema = z.object({
   selectedTrackDelta: SelectedTrackDeltaSchema.optional(),
 });
 
+export type AssetPatrolState = z.infer<typeof AssetPatrolStateSchema>;
 export type Asset = z.infer<typeof AssetSchema>;
 export type SnapshotMessage = z.infer<typeof SnapshotMessageSchema>;
 export type LiveServerMessage = SnapshotMessage;

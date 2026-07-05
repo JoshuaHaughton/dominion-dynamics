@@ -1,31 +1,31 @@
-export {
-  type AssetSource,
-  type SimBounds,
-  type ThreatLevel,
-} from "./asset.js";
+export type { AssetRole, SimBounds, ThreatLevel } from "./asset/types.js";
 
-export type { Asset } from "./schemas/wire.js";
+export type {
+  Asset,
+  AssetPatrolState,
+  LiveServerMessage,
+  SnapshotMessage,
+} from "./asset/schema.js";
 export {
+  AssetPatrolStateSchema,
   AssetSchema,
   LiveServerMessageSchema,
   SnapshotMessageSchema,
-  type LiveServerMessage,
-  type SnapshotMessage,
-} from "./schemas/wire.js";
+} from "./asset/schema.js";
 
 export type {
   AssetHistoryPoint,
   AssetTrackDetail,
   PredictedPathLine,
   SelectedTrackDelta,
-} from "./schemas/assetTrack.js";
+} from "./asset/track.js";
 export {
   AssetHistoryPointSchema,
   AssetIdParamSchema,
   AssetTrackDetailSchema,
   PredictedPathLineSchema,
   SelectedTrackDeltaSchema,
-} from "./schemas/assetTrack.js";
+} from "./asset/track.js";
 
 export {
   DEFAULT_SIM_TICK_MS,
@@ -38,20 +38,38 @@ export type {
   ClientLiveMessage,
   DeselectAssetMessage,
   SelectAssetMessage,
-} from "./schemas/liveClient.js";
+} from "./live/client.js";
 export {
   ClientLiveMessageSchema,
   DeselectAssetMessageSchema,
   SelectAssetMessageSchema,
-} from "./schemas/liveClient.js";
+} from "./live/client.js";
 
-export type { CreateZoneRequest, Zone, ZoneGeoJson } from "./schemas/zone.js";
+export type { CreateZoneRequest, Zone, ZoneGeoJson } from "./zone/schema.js";
 export {
   CreateZoneRequestSchema,
   ZoneGeoJsonSchema,
   ZoneListSchema,
   ZoneSchema,
-} from "./schemas/zone.js";
+} from "./zone/schema.js";
+
+export type {
+  PathGeoJson,
+  PathKind,
+  PathRecord,
+  PatrolPath,
+  SavePatrolPathRequest,
+} from "./patrol/path.js";
+export {
+  PathGeoJsonSchema,
+  PathKindSchema,
+  PathRecordSchema,
+  PatrolPathSchema,
+  SavePatrolPathRequestSchema,
+} from "./patrol/path.js";
+
+export type { PatrolMode } from "./patrol/constants.js";
+export { PATROL_ASSET_ID } from "./patrol/constants.js";
 
 export type { IcaoEmitterCategory } from "./icao/emitterCategory.js";
 export {
