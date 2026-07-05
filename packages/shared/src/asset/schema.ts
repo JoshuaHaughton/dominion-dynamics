@@ -2,9 +2,9 @@ import { z } from "zod";
 import { AssetTrackDetailSchema, SelectedTrackDeltaSchema } from "./track.js";
 
 export const AssetPatrolStateSchema = z.object({
-  mode: z.enum(["patrol", "shadow"]),
+  mode: z.enum(["patrol", "shadow", "rejoin"]),
   shadowTargetId: z.string().nullable(),
-  /** Set when the route is persisted; omitted for the in-memory default oval. */
+  /** Set when the route is persisted; omitted until the user saves a patrol path. */
   pathId: z.number().int().positive().optional(),
 });
 
@@ -21,7 +21,7 @@ export const AssetSchema = z.object({
   originCountry: z.string().nullable(),
   onGround: z.boolean(),
   threat: z.enum(["normal", "warning", "critical"]),
-  tteSeconds: z.number().finite().nullable(),
+  zoneTteSeconds: z.number().finite().nullable(),
   nearestZoneDistanceM: z.number().finite().min(0).nullable(),
   /** Present when {@link AssetSchema.shape.role} is `"patrol"`. */
   patrol: AssetPatrolStateSchema.optional(),
