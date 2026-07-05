@@ -1,4 +1,4 @@
-import type { Asset } from "@dominion-dynamics/shared";
+import type { Asset, AssetZoneState, ThreatLevel } from "@dominion-dynamics/shared";
 import { icaoCategoryLabel } from "@dominion-dynamics/shared";
 import { ASSET_THREAT_COLORS } from "../../lib/constants/mapConstants.js";
 import styles from "./AssetInfoPanel.module.css";
@@ -8,25 +8,25 @@ type AssetInfoPanelProps = {
   onClose: () => void;
 };
 
-function formatThreat(threat: Asset["threat"]): string {
+function formatThreat(threat: ThreatLevel): string {
   return threat.charAt(0).toUpperCase() + threat.slice(1);
 }
 
-function formatTte(asset: Asset): string {
-  if (asset.threat === "critical") {
+function formatTte(zone: AssetZoneState): string {
+  if (zone.threat === "critical") {
     return "Inside zone";
   }
 
-  if (asset.zoneTteSeconds === null) {
+  if (zone.tteSeconds === null) {
     return "None";
   }
 
-  if (asset.zoneTteSeconds < 60) {
-    return `${Math.round(asset.zoneTteSeconds)}s`;
+  if (zone.tteSeconds < 60) {
+    return `${Math.round(zone.tteSeconds)}s`;
   }
 
-  const minutes = Math.floor(asset.zoneTteSeconds / 60);
-  const seconds = Math.round(asset.zoneTteSeconds % 60);
+  const minutes = Math.floor(zone.tteSeconds / 60);
+  const seconds = Math.round(zone.tteSeconds % 60);
 
   return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
 }
@@ -63,9 +63,11 @@ function formatAltitude(altM: number): string {
   return `${Math.round(altM)} m`;
 }
 
-/** Selected asset summary; threat and TTE follow the live WS stream. */
+/** Selected asset summary; zone fields follow the live WS stream. */
 export function AssetInfoPanel({ asset, onClose }: AssetInfoPanelProps) {
-  const threatColor = ASSET_THREAT_COLORS[asset.threat];
+  const zone = asset.zone;
+  const threatColor =
+    zone !== null ? ASSET_THREAT_COLORS[zone.threat] : ASSET_THREAT_COLORS.normal;
 
   return (
     <aside className={styles.panel} aria-label="Asset details">
@@ -112,18 +114,22 @@ export function AssetInfoPanel({ asset, onClose }: AssetInfoPanelProps) {
           <dt>Heading</dt>
           <dd>{formatHeading(asset.heading)}</dd>
         </div>
-        <div className={styles.row}>
-          <dt>Threat</dt>
-          <dd style={{ color: threatColor }}>{formatThreat(asset.threat)}</dd>
-        </div>
-        <div className={styles.row}>
-          <dt>TTE</dt>
-          <dd style={{ color: threatColor }}>{formatTte(asset)}</dd>
-        </div>
-        <div className={styles.row}>
-          <dt>Nearest zone</dt>
-          <dd>{formatDistanceM(asset.nearestZoneDistanceM)}</dd>
-        </div>
+        {zone !== null ? (
+          <>
+            <div className={styles.row}>
+              <dt>Threat</dt>
+              <dd style={{ color: threatColor }}>{formatThreat(zone.threat)}</dd>
+            </div>
+            <div className={styles.row}>
+              <dt>Zone TTE</dt>
+              <dd style={{ color: threatColor }}>{formatTte(zone)}</dd>
+            </div>
+            <div className={styles.row}>
+              <dt>Nearest zone</dt>
+              <dd>{formatDistanceM(zone.nearestBoundaryM)}</dd>
+            </div>
+          </>
+        ) : null}
       </dl>
     </aside>
   );

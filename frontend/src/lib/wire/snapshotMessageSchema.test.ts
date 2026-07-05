@@ -14,9 +14,11 @@ describe("SnapshotMessageSchema", () => {
     callsign: null,
     originCountry: null,
     onGround: false,
-    threat: "normal" as const,
-    zoneTteSeconds: null,
-    nearestZoneDistanceM: null,
+    zone: {
+      threat: "normal" as const,
+      tteSeconds: null,
+      nearestBoundaryM: null,
+    },
   };
 
   const selectedTrack = {
@@ -39,6 +41,24 @@ describe("SnapshotMessageSchema", () => {
     });
 
     expect(message).toEqual({ type: "snapshot", ts: 123, assets: [baseAsset] });
+  });
+
+  it("accepts patrol assets with null zone state", () => {
+    const message = SnapshotMessageSchema.parse({
+      type: "snapshot",
+      ts: 123,
+      assets: [
+        {
+          ...baseAsset,
+          id: "patrol-drone",
+          role: "patrol" as const,
+          zone: null,
+          patrol: { mode: "patrol" as const, shadowTargetId: null },
+        },
+      ],
+    });
+
+    expect(message.assets[0]?.zone).toBeNull();
   });
 
   it("accepts snapshots with selectedTrackDelta for synced clients", () => {
@@ -67,23 +87,25 @@ describe("SnapshotMessageSchema", () => {
     expect(message.selectedTrack).toEqual(selectedTrack);
   });
 
-  it("accepts warning assets with zoneTteSeconds and nearest zone distance", () => {
+  it("accepts warning assets with nested zone state", () => {
     const message = SnapshotMessageSchema.parse({
       type: "snapshot",
       ts: 123,
       assets: [
         {
           ...baseAsset,
-          threat: "warning",
-          zoneTteSeconds: 45,
-          nearestZoneDistanceM: 1200,
+          zone: {
+            threat: "warning" as const,
+            tteSeconds: 45,
+            nearestBoundaryM: 1200,
+          },
         },
       ],
     });
 
-    expect(message.assets[0]?.threat).toBe("warning");
-    expect(message.assets[0]?.zoneTteSeconds).toBe(45);
-    expect(message.assets[0]?.nearestZoneDistanceM).toBe(1200);
+    expect(message.assets[0]?.zone?.threat).toBe("warning");
+    expect(message.assets[0]?.zone?.tteSeconds).toBe(45);
+    expect(message.assets[0]?.zone?.nearestBoundaryM).toBe(1200);
   });
 
   it("rejects payloads with the wrong type", () => {
@@ -99,13 +121,8 @@ describe("SnapshotMessageSchema", () => {
     ).toBe(false);
   });
 
-  it("rejects assets missing threat fields", () => {
-    const {
-      threat: _threat,
-      zoneTteSeconds: _tte,
-      nearestZoneDistanceM: _distance,
-      ...legacyAsset
-    } = baseAsset;
+  it("rejects assets missing zone state", () => {
+    const { zone: _zone, ...legacyAsset } = baseAsset;
 
     expect(
       SnapshotMessageSchema.safeParse({

@@ -38,7 +38,7 @@ export function assetsToFeatureCollection(
         id: asset.id,
         role: asset.role,
         heading: asset.heading,
-        threat: asset.threat,
+        threat: asset.zone?.threat ?? "normal",
       },
     })),
   };

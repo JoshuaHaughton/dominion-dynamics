@@ -62,7 +62,7 @@ function getSelectedThreat(
     return "normal";
   }
 
-  return assets.find((asset) => asset.id === selectedAssetId)?.threat ?? "normal";
+  return assets.find((asset) => asset.id === selectedAssetId)?.zone?.threat ?? "normal";
 }
 
 /** Manage MapLibre lifecycle and sync assets + zones onto the map. */
