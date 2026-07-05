@@ -11,8 +11,13 @@ describe("assetsToFeatureCollection", () => {
     heading: 90,
     speed: 120,
     source: "synthetic",
+    category: 0,
+    callsign: null,
+    originCountry: null,
+    onGround: false,
     threat: "normal",
     tteSeconds: null,
+    nearestZoneDistanceM: null,
   };
 
   const warningAsset: Asset = {

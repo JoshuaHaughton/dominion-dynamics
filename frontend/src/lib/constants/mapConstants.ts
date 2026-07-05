@@ -8,13 +8,20 @@ export const DEMO_SEED_REGION: SimBounds = {
   maxLon: -75.3,
 };
 
+/** Prefix for custom MapLibre sources and layers preserved across basemap swaps. */
+export const CUSTOM_MAP_PREFIX = "dd-";
+
 export const MAP_LAYERS = {
-  assetsSource: "assets",
-  assetsCircles: "assets-circles",
-  assetsHeading: "assets-heading",
-  zonesSource: "zones",
-  zonesFill: "zones-fill",
-  zonesOutline: "zones-outline",
+  assetsSource: `${CUSTOM_MAP_PREFIX}assets`,
+  assetsCircles: `${CUSTOM_MAP_PREFIX}assets-circles`,
+  assetsHeading: `${CUSTOM_MAP_PREFIX}assets-heading`,
+  zonesSource: `${CUSTOM_MAP_PREFIX}zones`,
+  zonesFill: `${CUSTOM_MAP_PREFIX}zones-fill`,
+  zonesOutline: `${CUSTOM_MAP_PREFIX}zones-outline`,
+  assetHistorySource: `${CUSTOM_MAP_PREFIX}asset-history`,
+  assetHistoryLine: `${CUSTOM_MAP_PREFIX}asset-history-line`,
+  assetPredictionSource: `${CUSTOM_MAP_PREFIX}asset-prediction`,
+  assetPredictionLine: `${CUSTOM_MAP_PREFIX}asset-prediction-line`,
 } as const;
 
 export const ZONE_FILL_COLOR = "#ef4444";
@@ -44,3 +51,11 @@ export const ASSET_THREAT_COLORS = {
   warning: "#f59e0b",
   critical: "#ef4444",
 } as const;
+
+export const ASSET_HISTORY_LINE_COLOR = "#94a3b8";
+export const ASSET_HISTORY_LINE_WIDTH = 3;
+export const ASSET_HISTORY_LINE_OPACITY = 0.55;
+
+export const ASSET_PREDICTION_LINE_COLOR = "#e2e8f0";
+export const ASSET_PREDICTION_LINE_WIDTH = 2;
+export const ASSET_PREDICTION_DASHARRAY: [number, number] = [2, 2];

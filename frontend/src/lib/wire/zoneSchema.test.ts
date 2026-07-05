@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseZone, parseZones } from "./parseZone.js";
+import { ZoneListSchema, ZoneSchema } from "@dominion-dynamics/shared";
 
 const validZone = {
   id: 1,
@@ -22,9 +22,9 @@ const validZone = {
   },
 } as const;
 
-describe("parseZone", () => {
+describe("ZoneSchema", () => {
   it("accepts a valid zone payload", () => {
-    expect(parseZone(validZone)).toEqual(validZone);
+    expect(ZoneSchema.parse(validZone)).toEqual(validZone);
   });
 
   it.each([
@@ -32,19 +32,35 @@ describe("parseZone", () => {
     ["missing id", { name: "Zone 1", geojson: validZone.geojson }],
     ["missing name", { id: 1, geojson: validZone.geojson }],
     ["non-integer id", { id: 1.5, name: "Zone 1", geojson: validZone.geojson }],
-    ["non-polygon geojson", { id: 1, name: "Zone 1", geojson: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [0, 0] } } }],
+    [
+      "non-polygon geojson",
+      {
+        id: 1,
+        name: "Zone 1",
+        geojson: {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "Point", coordinates: [0, 0] },
+        },
+      },
+    ],
   ])("rejects %s", (_label, payload) => {
-    expect(parseZone(payload)).toBeNull();
+    expect(ZoneSchema.safeParse(payload).success).toBe(false);
   });
 });
 
-describe("parseZones", () => {
+describe("ZoneListSchema", () => {
   it("accepts a valid zone list", () => {
-    expect(parseZones([validZone])).toEqual([validZone]);
+    expect(ZoneListSchema.parse([validZone])).toEqual([validZone]);
   });
 
   it("rejects malformed lists", () => {
-    expect(parseZones("zones")).toBeNull();
-    expect(parseZones([validZone, { id: "bad", name: "Zone 2", geojson: validZone.geojson }])).toBeNull();
+    expect(ZoneListSchema.safeParse("zones").success).toBe(false);
+    expect(
+      ZoneListSchema.safeParse([
+        validZone,
+        { id: "bad", name: "Zone 2", geojson: validZone.geojson },
+      ]).success,
+    ).toBe(false);
   });
 });

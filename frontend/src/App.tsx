@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { LiveMap } from "./components/LiveMap/LiveMap.js";
 import { MapStyleSelect } from "./components/MapStyleSelect/MapStyleSelect.js";
 import { useLiveAssets } from "./lib/hooks/useLiveAssets.js";
@@ -6,7 +7,9 @@ import { useZones } from "./lib/hooks/useZones.js";
 import styles from "./App.module.css";
 
 export function App() {
-  const { assets, connected, lastUpdatedAt } = useLiveAssets();
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const { assets, connected, lastUpdatedAt, trackDetail } =
+    useLiveAssets(selectedAssetId);
   const { styleId, setStyleId } = useMapStyle();
   const { zones, error: zoneDrawError, addZoneFromDraw, reportDrawError } =
     useZones();
@@ -35,6 +38,9 @@ export function App() {
           assets={assets}
           styleId={styleId}
           zones={zones}
+          selectedAssetId={selectedAssetId}
+          trackDetail={trackDetail}
+          onAssetSelect={setSelectedAssetId}
           onZoneDrawn={addZoneFromDraw}
           onZoneDrawError={reportDrawError}
           zoneDrawError={zoneDrawError}

@@ -1,7 +1,20 @@
-import { useLiveMap, type LiveMapInput } from "./useLiveMap.js";
+import { useEffect, useMemo } from "react";
+import type { Asset, AssetTrackDetail, ZoneGeoJson } from "@dominion-dynamics/shared";
+import type { MapStyleId } from "../../lib/constants/mapStyles.js";
+import type { ZoneView } from "../../lib/hooks/useZones.js";
+import { AssetInfoPanel } from "./AssetInfoPanel.js";
+import { useLiveMap } from "./useLiveMap.js";
 import styles from "./LiveMap.module.css";
 
-type LiveMapProps = LiveMapInput & {
+type LiveMapProps = {
+  assets: readonly Asset[];
+  styleId: MapStyleId;
+  zones: readonly ZoneView[];
+  selectedAssetId: string | null;
+  trackDetail: AssetTrackDetail | null;
+  onAssetSelect: (assetId: string | null) => void;
+  onZoneDrawn: (geojson: ZoneGeoJson) => void;
+  onZoneDrawError: (message: string) => void;
   zoneDrawError: string | null;
 };
 
@@ -10,14 +23,31 @@ export function LiveMap({
   assets,
   styleId,
   zones,
+  selectedAssetId,
+  trackDetail,
+  onAssetSelect,
   onZoneDrawn,
   zoneDrawError,
   onZoneDrawError,
 }: LiveMapProps) {
+  const selectedAsset = useMemo(
+    () => assets.find((asset) => asset.id === selectedAssetId) ?? null,
+    [assets, selectedAssetId],
+  );
+
+  useEffect(() => {
+    if (selectedAssetId !== null && selectedAsset === null) {
+      onAssetSelect(null);
+    }
+  }, [onAssetSelect, selectedAsset, selectedAssetId]);
+
   const { containerRef, beginZoneDraw, isDrawingZone } = useLiveMap({
     assets,
     styleId,
     zones,
+    trackDetail,
+    selectedAssetId,
+    onAssetSelect,
     onZoneDrawn,
     onZoneDrawError,
   });
@@ -47,6 +77,14 @@ export function LiveMap({
           </span>
         )}
       </div>
+      {selectedAsset !== null && (
+        <AssetInfoPanel
+          asset={selectedAsset}
+          onClose={() => {
+            onAssetSelect(null);
+          }}
+        />
+      )}
     </div>
   );
 }

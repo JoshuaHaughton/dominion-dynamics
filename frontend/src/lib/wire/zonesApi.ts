@@ -1,6 +1,7 @@
 import type { Zone } from "@dominion-dynamics/shared";
+import { ZoneListSchema, ZoneSchema } from "@dominion-dynamics/shared";
 import { API_ORIGIN } from "../config/env.js";
-import { parseZone, parseZones } from "./parseZone.js";
+import { parseWire } from "./parseWire.js";
 
 async function readApiError(
   response: Response,
@@ -31,13 +32,9 @@ export async function fetchZones(): Promise<Zone[]> {
     throw new Error(await readApiError(response, "Failed to load zones"));
   }
 
-  const zones = parseZones(await response.json());
+  const body: unknown = await response.json();
 
-  if (!zones) {
-    throw new Error("Invalid zones response");
-  }
-
-  return zones;
+  return parseWire(ZoneListSchema, body, "zones response");
 }
 
 /** Persist a newly drawn restricted zone polygon. */
@@ -55,11 +52,7 @@ export async function createZone(input: {
     throw new Error(await readApiError(response, "Failed to save zone"));
   }
 
-  const zone = parseZone(await response.json());
+  const body: unknown = await response.json();
 
-  if (!zone) {
-    throw new Error("Invalid zone response");
-  }
-
-  return zone;
+  return parseWire(ZoneSchema, body, "zone response");
 }

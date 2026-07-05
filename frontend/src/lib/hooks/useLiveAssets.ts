@@ -1,15 +1,55 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getLiveWebSocketUrl } from "../config/env.js";
-import { parseSnapshotMessage } from "../wire/parseSnapshotMessage.js";
-import type { Asset } from "@dominion-dynamics/shared";
+import {
+  AssetSchema,
+  LiveServerMessageSchema,
+  trackHistoryCapacity,
+  type Asset,
+  type AssetHistoryPoint,
+  type AssetTrackDetail,
+} from "@dominion-dynamics/shared";
+import { z } from "zod";
 
 const RECONNECT_MS = 2_000;
+
+/** Matches backend default TICK_MS (1000). */
+const DEFAULT_TRACK_HISTORY_CAPACITY = trackHistoryCapacity(1_000);
+
+const SnapshotAssetsSchema = z.object({
+  type: z.literal("snapshot"),
+  ts: z.number().finite(),
+  assets: z.array(AssetSchema),
+});
 
 type LiveAssetsState = {
   assets: Asset[];
   connected: boolean;
   lastUpdatedAt: number | null;
+  trackDetail: AssetTrackDetail | null;
 };
+
+function sendSelection(ws: WebSocket, assetId: string | null): void {
+  if (assetId === null) {
+    ws.send(JSON.stringify({ type: "deselect_asset" }));
+    return;
+  }
+
+  ws.send(JSON.stringify({ type: "select_asset", assetId }));
+}
+
+function appendHistoryPoint(
+  history: readonly AssetHistoryPoint[],
+  point: AssetHistoryPoint,
+  maxPoints: number,
+): AssetHistoryPoint[] {
+  const next = [...history, point];
+
+  if (next.length <= maxPoints) {
+    return next;
+  }
+
+  return next.slice(next.length - maxPoints);
+}
 
 /** Close without racing a socket that is still connecting (Strict Mode safe). */
 function closeLiveSocket(socket: WebSocket | undefined): void {
@@ -36,11 +76,36 @@ function closeLiveSocket(socket: WebSocket | undefined): void {
   }
 }
 
-/** Subscribe to the backend live snapshot WebSocket stream. */
-export function useLiveAssets(): LiveAssetsState {
+/** Subscribe to the backend live WebSocket stream and track overlay pushes. */
+export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [connected, setConnected] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [trackDetail, setTrackDetail] = useState<AssetTrackDetail | null>(null);
+  const wsRef = useRef<WebSocket | undefined>(undefined);
+  const selectedAssetIdRef = useRef(selectedAssetId);
+  const historyCapRef = useRef(DEFAULT_TRACK_HISTORY_CAPACITY);
+  selectedAssetIdRef.current = selectedAssetId;
+
+  useEffect(() => {
+    if (selectedAssetId === null) {
+      setTrackDetail(null);
+    }
+  }, [selectedAssetId]);
+
+  useEffect(() => {
+    const ws = wsRef.current;
+
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    sendSelection(ws, selectedAssetId);
+
+    if (selectedAssetId !== null) {
+      setTrackDetail(null);
+    }
+  }, [selectedAssetId]);
 
   useEffect(() => {
     let ws: WebSocket | undefined;
@@ -49,6 +114,7 @@ export function useLiveAssets(): LiveAssetsState {
 
     function connect(): void {
       ws = new WebSocket(getLiveWebSocketUrl());
+      wsRef.current = ws;
 
       ws.onopen = () => {
         if (cancelled) {
@@ -57,20 +123,72 @@ export function useLiveAssets(): LiveAssetsState {
         }
 
         setConnected(true);
+        sendSelection(ws!, selectedAssetIdRef.current);
+
+        if (selectedAssetIdRef.current !== null) {
+          setTrackDetail(null);
+        }
       };
 
       ws.onmessage = (event) => {
         if (cancelled) return;
 
         try {
-          const message = parseSnapshotMessage(JSON.parse(String(event.data)));
+          const body = JSON.parse(String(event.data));
+          const base = SnapshotAssetsSchema.safeParse(body);
 
-          if (!message) return;
+          if (!base.success) {
+            return;
+          }
 
-          setAssets(message.assets);
-          setLastUpdatedAt(message.ts);
+          setAssets(base.data.assets);
+          setLastUpdatedAt(base.data.ts);
+
+          const selectedId = selectedAssetIdRef.current;
+
+          if (selectedId === null) {
+            setTrackDetail(null);
+            return;
+          }
+
+          const parsed = LiveServerMessageSchema.safeParse(body);
+
+          if (!parsed.success) {
+            return;
+          }
+
+          const message = parsed.data;
+
+          if (message.selectedTrack?.assetId === selectedId) {
+            historyCapRef.current = Math.max(
+              historyCapRef.current,
+              message.selectedTrack.history.length,
+            );
+            setTrackDetail(message.selectedTrack);
+            return;
+          }
+
+          if (message.selectedTrackDelta?.assetId === selectedId) {
+            const delta = message.selectedTrackDelta;
+
+            setTrackDetail((current) => {
+              if (current?.assetId !== selectedId) {
+                return current;
+              }
+
+              return {
+                assetId: selectedId,
+                history: appendHistoryPoint(
+                  current.history,
+                  delta.point,
+                  historyCapRef.current,
+                ),
+                predictedPath: delta.predictedPath,
+              };
+            });
+          }
         } catch {
-          // Ignore malformed frames until the next snapshot tick.
+          return;
         }
       };
 
@@ -92,8 +210,9 @@ export function useLiveAssets(): LiveAssetsState {
       cancelled = true;
       clearTimeout(reconnectTimer);
       closeLiveSocket(ws);
+      wsRef.current = undefined;
     };
   }, []);
 
-  return { assets, connected, lastUpdatedAt };
+  return { assets, connected, lastUpdatedAt, trackDetail };
 }
