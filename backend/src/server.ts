@@ -2,6 +2,7 @@ import http from "node:http";
 import cors from "cors";
 import express from "express";
 import "./db/index.js";
+import { assetsRouter } from "./api/routes/assets.js";
 import { healthRouter } from "./api/routes/health.js";
 import { zonesRouter } from "./api/routes/zones.js";
 import {
@@ -26,6 +27,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api/health", healthRouter);
+app.use("/api/assets", assetsRouter);
 app.use("/api/zones", zonesRouter);
 
 loadZoneGeometryCache();
