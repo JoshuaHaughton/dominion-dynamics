@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
-import { createZone, listZones } from "../../services/zones/zoneService.js";
+import { getAssets } from "../../modules/sim/simControl.js";
 import { publishLiveSnapshot } from "../../modules/realtime/publishLiveSnapshot.js";
+import { createZone, listZones } from "../../services/zones/zoneService.js";
 import { validateCreateZoneBody } from "../../services/zones/validateZoneGeojson.js";
 
 /** GET /api/zones */
@@ -19,8 +20,8 @@ export function createZoneHandler(req: Request, res: Response): void {
 
   const zone = createZone(parsed.value);
 
-  // Threat eval runs on the sim tick; push now so colors update without waiting.
-  publishLiveSnapshot();
+  const positions = getAssets();
+  publishLiveSnapshot(positions);
 
   res.status(201).json(zone);
 }

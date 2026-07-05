@@ -10,7 +10,7 @@ import {
   WS_LIVE_PATH,
 } from "./modules/realtime/ws.server.js";
 import { loadZoneGeometryCache } from "./modules/threat/zoneGeometryCache.js";
-import { getAssets, startSim, stopSim } from "./modules/sim/service.js";
+import { getAssets, startSim, stopSim } from "./modules/sim/simControl.js";
 
 const port = Number(process.env.PORT ?? 8000);
 

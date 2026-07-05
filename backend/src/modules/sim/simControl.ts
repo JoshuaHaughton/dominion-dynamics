@@ -13,9 +13,7 @@ let running = false;
 
 /** Seeds assets and starts the ticker. No-op if already running. */
 export function startSim(options: StartSimOptions = {}): void {
-  if (running) {
-    return;
-  }
+  if (running) return;
 
   running = true;
 
