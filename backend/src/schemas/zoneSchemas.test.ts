@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  isValidZoneGeoJson,
-  validateCreateZoneBody,
-} from "./validateZoneGeojson.js";
+  CreateZoneRequestSchema,
+  ZoneGeoJsonSchema,
+} from "@dominion-dynamics/shared";
 
 const validPolygon = {
   type: "Feature",
@@ -21,13 +21,16 @@ const validPolygon = {
   },
 } as const;
 
-describe("validateCreateZoneBody", () => {
+describe("CreateZoneRequestSchema", () => {
   it("accepts a valid zone payload and trims the name", () => {
     expect(
-      validateCreateZoneBody({ name: "  North cap  ", geojson: validPolygon }),
+      CreateZoneRequestSchema.parse({
+        name: "  North cap  ",
+        geojson: validPolygon,
+      }),
     ).toEqual({
-      ok: true,
-      value: { name: "North cap", geojson: validPolygon },
+      name: "North cap",
+      geojson: validPolygon,
     });
   });
 
@@ -36,20 +39,22 @@ describe("validateCreateZoneBody", () => {
     ["missing name", { geojson: validPolygon }],
     ["non-object body", "zone"],
   ])("rejects %s", (_label, body) => {
-    expect(validateCreateZoneBody(body).ok).toBe(false);
+    expect(CreateZoneRequestSchema.safeParse(body).success).toBe(false);
   });
 
   it("rejects invalid geojson", () => {
     expect(
-      validateCreateZoneBody({ name: "Zone 1", geojson: { type: "Feature" } })
-        .ok,
+      CreateZoneRequestSchema.safeParse({
+        name: "Zone 1",
+        geojson: { type: "Feature" },
+      }).success,
     ).toBe(false);
   });
 });
 
-describe("isValidZoneGeoJson", () => {
+describe("ZoneGeoJsonSchema", () => {
   it("accepts a closed polygon feature", () => {
-    expect(isValidZoneGeoJson(validPolygon)).toBe(true);
+    expect(ZoneGeoJsonSchema.safeParse(validPolygon).success).toBe(true);
   });
 
   it.each([
@@ -101,6 +106,6 @@ describe("isValidZoneGeoJson", () => {
       },
     ],
   ])("rejects %s", (_label, geojson) => {
-    expect(isValidZoneGeoJson(geojson)).toBe(false);
+    expect(ZoneGeoJsonSchema.safeParse(geojson).success).toBe(false);
   });
 });

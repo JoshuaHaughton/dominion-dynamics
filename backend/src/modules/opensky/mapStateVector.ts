@@ -1,6 +1,7 @@
 import type { Asset } from "@dominion-dynamics/shared";
-import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
+import { isIcaoEmitterCategory } from "@dominion-dynamics/shared";
 import type { OpenSkyStateVector } from "./types.js";
+import { OPEN_SKY_STATE_INDEX as I } from "./types.js";
 
 export type MapOpenSkyStateOptions = {
   /** Skip rows without a usable lat/lon fix. Default true. */
@@ -13,22 +14,8 @@ export function mapOpenSkyStateToAsset(
   options: MapOpenSkyStateOptions = {},
 ): Asset | null {
   const requirePosition = options.requirePosition ?? true;
-  const [
-    icao24,
-    ,
-    ,
-    ,
-    ,
-    lon,
-    lat,
-    baroAltitude,
-    ,
-    velocity,
-    trueTrack,
-    ,
-    ,
-    geoAltitude,
-  ] = state;
+  const lat = state[I.latitude];
+  const lon = state[I.longitude];
 
   if (requirePosition && (lat === null || lon === null)) {
     return null;
@@ -38,19 +25,32 @@ export function mapOpenSkyStateToAsset(
     return null;
   }
 
+  const baroAltitude = state[I.baroAltitude];
+  const geoAltitude = state[I.geoAltitude];
   const alt = baroAltitude ?? geoAltitude ?? 0;
-  const speed = velocity ?? 0;
-  const heading = trueTrack ?? 0;
+  const speed = state[I.velocity] ?? 0;
+  const heading = state[I.trueTrack] ?? 0;
+  const rawCategory = state[I.category];
+  const category = isIcaoEmitterCategory(rawCategory) ? rawCategory : 0;
+  const callsignRaw = state[I.callsign];
+  const callsign =
+    callsignRaw === null ? null : callsignRaw.trim() || null;
 
   return {
-    id: icao24.toLowerCase(),
+    id: state[I.icao24].toLowerCase(),
     lat,
     lon,
     alt,
     heading: normalizeHeading(heading),
     speed,
     source: "opensky",
-    ...UNEVALUATED_THREAT,
+    category,
+    callsign,
+    originCountry: state[I.originCountry],
+    onGround: state[I.onGround],
+    threat: "normal",
+    tteSeconds: null,
+    nearestZoneDistanceM: null,
   };
 }
 

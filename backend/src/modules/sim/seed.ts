@@ -10,9 +10,8 @@ import {
   SYNTHETIC_ALT_MAX_M,
   SYNTHETIC_ALT_MIN_M,
 } from "./config.js";
-import { sampleSyntheticSpeed } from "./speedProfiles.js";
+import { sampleSyntheticMotion } from "./syntheticCategorySpawn.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
-import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
 
 /** Unique id for a sim-generated track at seed or boundary respawn. */
 function createSyntheticId(): string {
@@ -78,6 +77,7 @@ export function isInsideSeedRegion(
 
 function createSyntheticAsset(): Asset {
   const { seedRegion } = simConfig;
+  const { category, speed } = sampleSyntheticMotion();
 
   return {
     id: createSyntheticId(),
@@ -85,9 +85,15 @@ function createSyntheticAsset(): Asset {
     lon: randomInRange(seedRegion.minLon, seedRegion.maxLon),
     alt: randomInRange(SYNTHETIC_ALT_MIN_M, SYNTHETIC_ALT_MAX_M),
     heading: randomInRange(0, 360),
-    speed: sampleSyntheticSpeed(),
+    speed,
+    category,
     source: "synthetic",
-    ...UNEVALUATED_THREAT,
+    callsign: null,
+    originCountry: null,
+    onGround: false,
+    threat: "normal",
+    tteSeconds: null,
+    nearestZoneDistanceM: null,
   };
 }
 
@@ -114,13 +120,20 @@ export function respawnAtBoundary(asset: Asset, region: SimBounds): Asset {
       360) %
     360;
 
+  const { category, speed } = sampleSyntheticMotion();
+
   return {
     ...asset,
     id: createSyntheticId(),
     lat,
     lon,
     heading,
+    speed,
+    category,
     source: "synthetic",
+    callsign: null,
+    originCountry: null,
+    onGround: false,
   };
 }
 

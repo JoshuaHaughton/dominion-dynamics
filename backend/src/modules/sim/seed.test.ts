@@ -1,7 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { isInsideSeedRegion, respawnAtBoundary } from "./seed.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
-import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
+import { SPEED_RANGE_BY_CATEGORY } from "./syntheticCategorySpawn.js";
+
+function mockRespawnRandom(
+  edgeRandom: number,
+  edgePositionRandom = 0.5,
+  headingJitterRandom = 0,
+  categoryRandom = 0.99,
+  speedRandom = 0,
+): void {
+  vi.spyOn(Math, "random")
+    .mockReturnValueOnce(edgeRandom)
+    .mockReturnValueOnce(edgePositionRandom)
+    .mockReturnValueOnce(headingJitterRandom)
+    .mockReturnValueOnce(categoryRandom)
+    .mockReturnValueOnce(speedRandom);
+}
 
 describe("isInsideSeedRegion", () => {
   const ottawaRegion: SimBounds = {
@@ -49,7 +64,13 @@ describe("respawnAtBoundary", () => {
     heading: 180,
     speed: 120,
     source: "synthetic",
-    ...UNEVALUATED_THREAT,
+    category: 4,
+    callsign: null,
+    originCountry: null,
+    onGround: false,
+    threat: "normal",
+    tteSeconds: null,
+    nearestZoneDistanceM: null,
   };
 
   afterEach(() => {
@@ -84,10 +105,7 @@ describe("respawnAtBoundary", () => {
   ])(
     "assigns a new id on the $label edge",
     ({ edgeRandom, expectedLat, expectedLon }) => {
-      vi.spyOn(Math, "random")
-        .mockReturnValueOnce(edgeRandom)
-        .mockReturnValueOnce(0.5)
-        .mockReturnValueOnce(0);
+      mockRespawnRandom(edgeRandom);
 
       const respawned = respawnAtBoundary(sampleAsset, ottawaRegion);
 
@@ -100,30 +118,38 @@ describe("respawnAtBoundary", () => {
     },
   );
 
-  it("preserves altitude and speed from the exiting track", () => {
-    vi.spyOn(Math, "random")
-      .mockReturnValueOnce(0)
-      .mockReturnValueOnce(0.5)
-      .mockReturnValueOnce(0);
+  it("preserves altitude and assigns a new category and speed", () => {
+    mockRespawnRandom(0);
 
     const respawned = respawnAtBoundary(sampleAsset, ottawaRegion);
 
     expect(respawned.alt).toBe(sampleAsset.alt);
-    expect(respawned.speed).toBe(sampleAsset.speed);
+    expect(respawned.category).toBe(14);
+    expect(respawned.speed).toBe(SPEED_RANGE_BY_CATEGORY[14].minMps);
+    expect(respawned.callsign).toBeNull();
+    expect(respawned.originCountry).toBeNull();
+    expect(respawned.onGround).toBe(false);
     expect(respawned.source).toBe("synthetic");
   });
 
   it("sets source to synthetic when the exiting track was from OpenSky", () => {
-    vi.spyOn(Math, "random")
-      .mockReturnValueOnce(0)
-      .mockReturnValueOnce(0.5)
-      .mockReturnValueOnce(0);
+    mockRespawnRandom(0);
 
     const respawned = respawnAtBoundary(
-      { ...sampleAsset, id: "abc123", source: "opensky" },
+      {
+        ...sampleAsset,
+        id: "abc123",
+        source: "opensky",
+        category: 8,
+        callsign: "CFCO",
+        originCountry: "Canada",
+        onGround: false,
+      },
       ottawaRegion,
     );
 
     expect(respawned.source).toBe("synthetic");
+    expect(respawned.callsign).toBeNull();
+    expect(respawned.originCountry).toBeNull();
   });
 });

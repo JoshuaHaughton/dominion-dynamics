@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
-import {
-  OPEN_SKY_STATE_FIXTURES,
-} from "./fixtures.js";
+import { OPEN_SKY_STATE_FIXTURES } from "./fixtures.js";
 import { mapOpenSkyStateToAsset } from "./mapStateVector.js";
+
+const unevaluatedThreat = {
+  threat: "normal" as const,
+  tteSeconds: null,
+  nearestZoneDistanceM: null,
+};
 
 describe("mapOpenSkyStateToAsset", () => {
   it("maps a commercial in-flight row to an opensky asset", () => {
@@ -19,7 +22,11 @@ describe("mapOpenSkyStateToAsset", () => {
       heading: 275,
       speed: 230.5,
       source: "opensky",
-      ...UNEVALUATED_THREAT,
+      category: 4,
+      callsign: "ACA123",
+      originCountry: "Canada",
+      onGround: false,
+      ...unevaluatedThreat,
     });
   });
 
@@ -32,7 +39,11 @@ describe("mapOpenSkyStateToAsset", () => {
       heading: 90,
       speed: 12,
       source: "opensky",
-      ...UNEVALUATED_THREAT,
+      category: 8,
+      callsign: "CFCO",
+      originCountry: "Canada",
+      onGround: false,
+      ...unevaluatedThreat,
     });
 
     expect(mapOpenSkyStateToAsset(OPEN_SKY_STATE_FIXTURES.drone)).toEqual({
@@ -43,7 +54,11 @@ describe("mapOpenSkyStateToAsset", () => {
       heading: 180,
       speed: 18,
       source: "opensky",
-      ...UNEVALUATED_THREAT,
+      category: 14,
+      callsign: null,
+      originCountry: "Canada",
+      onGround: false,
+      ...unevaluatedThreat,
     });
   });
 
@@ -52,6 +67,10 @@ describe("mapOpenSkyStateToAsset", () => {
       id: "parked1",
       speed: 0,
       source: "opensky",
+      category: 3,
+      callsign: "WJA456",
+      originCountry: "Canada",
+      onGround: true,
     });
   });
 
