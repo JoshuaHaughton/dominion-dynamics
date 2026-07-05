@@ -6,7 +6,7 @@ import { WARNING_WINDOW_SECONDS } from "./constants.js";
 import { rayTteSeconds } from "./rayTte.js";
 import type { CachedZone } from "./types.js";
 
-type ThreatEvaluation = Pick<Asset, "threat" | "tteSeconds">;
+export type ThreatEvaluation = Pick<Asset, "threat" | "zoneTteSeconds">;
 
 /** Whether the asset position is inside the zone polygon. */
 function isInsideZone(
@@ -25,7 +25,7 @@ export function evaluateAssetThreat(
   zones: readonly CachedZone[],
 ): ThreatEvaluation {
   if (zones.length === 0) {
-    return { threat: "normal", tteSeconds: null };
+    return { threat: "normal", zoneTteSeconds: null };
   }
 
   // Breach check first: inside any zone is critical regardless of heading.
@@ -35,7 +35,7 @@ export function evaluateAssetThreat(
     }
 
     if (isInsideZone(asset, zone)) {
-      return { threat: "critical", tteSeconds: 0 };
+      return { threat: "critical", zoneTteSeconds: 0 };
     }
   }
 
@@ -57,10 +57,10 @@ export function evaluateAssetThreat(
   }
 
   if (minTteSeconds !== null && minTteSeconds <= WARNING_WINDOW_SECONDS) {
-    return { threat: "warning", tteSeconds: minTteSeconds };
+    return { threat: "warning", zoneTteSeconds: minTteSeconds };
   }
 
   const threat: ThreatLevel = "normal";
 
-  return { threat, tteSeconds: null };
+  return { threat, zoneTteSeconds: null };
 }

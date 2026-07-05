@@ -2,7 +2,7 @@ import type { Feature, Polygon } from "geojson";
 import { describe, expect, it } from "vitest";
 import type { AssetHistoryPoint } from "@dominion-dynamics/shared";
 import { testAsset } from "../../testFixtures/asset.js";
-import { nearestZoneDistanceM } from "./nearestZoneDistance.js";
+import { getNearestZoneDistanceM } from "./nearestZoneDistance.js";
 import { predictAssetPath } from "./predictPath.js";
 import { toCachedZone } from "./zoneGeometryCache.js";
 
@@ -33,11 +33,11 @@ describe("asset track helpers", () => {
     speed: 100,
   });
 
-  describe("nearestZoneDistanceM", () => {
+  describe("getNearestZoneDistanceM", () => {
     it("returns 0 when the asset is inside a zone", () => {
       const inside = { ...baseAsset, lat: 45.4, lon: -75.7 };
 
-      expect(nearestZoneDistanceM(inside, [toCachedZone({
+      expect(getNearestZoneDistanceM(inside, [toCachedZone({
         id: 1,
         name: "Z1",
         geojson: zonePolygon,
@@ -46,7 +46,7 @@ describe("asset track helpers", () => {
 
     it("returns a positive distance when outside", () => {
       const outside = { ...baseAsset, lat: 45.25, lon: -75.7 };
-      const distanceM = nearestZoneDistanceM(outside, [
+      const distanceM = getNearestZoneDistanceM(outside, [
         toCachedZone({ id: 1, name: "Z1", geojson: zonePolygon }),
       ]);
 

@@ -1,10 +1,10 @@
 import type { Asset } from "@dominion-dynamics/shared";
 import { evaluateAssetThreat } from "./evaluateAsset.js";
-import { nearestZoneDistanceM } from "./nearestZoneDistance.js";
+import { getNearestZoneDistanceM } from "./nearestZoneDistance.js";
 import type { CachedZone } from "./types.js";
 
-/** Attach zone-derived live fields to every asset in a snapshot. */
-export function enrichLiveAssets(
+/** Attach zone threat, zone TTE, and nearest-zone distance to traffic assets. */
+export function enrichTrafficWithZoneThreat(
   assets: readonly Asset[],
   zones: readonly CachedZone[],
 ): Asset[] {
@@ -14,7 +14,7 @@ export function enrichLiveAssets(
     return {
       ...asset,
       ...threat,
-      nearestZoneDistanceM: nearestZoneDistanceM(asset, zones),
+      nearestZoneDistanceM: getNearestZoneDistanceM(asset, zones),
     };
   });
 }

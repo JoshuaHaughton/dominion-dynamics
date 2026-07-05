@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { evaluateAssetThreat } from "./evaluateAsset.js";
-import { enrichLiveAssets } from "./enrichLiveAssets.js";
+import { enrichTrafficWithZoneThreat } from "./enrichTrafficWithZoneThreat.js";
 import { toCachedZone } from "./zoneGeometryCache.js";
 import type { Asset } from "@dominion-dynamics/shared";
 import { testAsset as makeAsset } from "../../testFixtures/asset.js";
@@ -45,16 +45,16 @@ describe("evaluateAssetThreat", () => {
 
     expect(evaluateAssetThreat(asset, [])).toEqual({
       threat: "normal",
-      tteSeconds: null,
+      zoneTteSeconds: null,
     });
   });
 
-  it("returns critical with tte 0 when the asset is inside a zone", () => {
+  it("returns critical with zone TTE 0 when the asset is inside a zone", () => {
     const asset = testAsset({ lat: 45.4, lon: -75.7, heading: 90, speed: 120 });
 
     expect(evaluateAssetThreat(asset, [cachedZone])).toEqual({
       threat: "critical",
-      tteSeconds: 0,
+      zoneTteSeconds: 0,
     });
   });
 
@@ -64,9 +64,9 @@ describe("evaluateAssetThreat", () => {
     const result = evaluateAssetThreat(asset, [cachedZone]);
 
     expect(result.threat).toBe("warning");
-    expect(result.tteSeconds).not.toBeNull();
-    expect(result.tteSeconds!).toBeGreaterThan(0);
-    expect(result.tteSeconds!).toBeLessThanOrEqual(300);
+    expect(result.zoneTteSeconds).not.toBeNull();
+    expect(result.zoneTteSeconds!).toBeGreaterThan(0);
+    expect(result.zoneTteSeconds!).toBeLessThanOrEqual(300);
   });
 
   it("returns normal when the asset flies parallel to the zone", () => {
@@ -74,7 +74,7 @@ describe("evaluateAssetThreat", () => {
 
     expect(evaluateAssetThreat(asset, [cachedZone])).toEqual({
       threat: "normal",
-      tteSeconds: null,
+      zoneTteSeconds: null,
     });
   });
 
@@ -104,11 +104,11 @@ describe("evaluateAssetThreat", () => {
     const result = evaluateAssetThreat(asset, [cachedZone, nearerZone]);
 
     expect(result.threat).toBe("warning");
-    expect(result.tteSeconds).not.toBeNull();
+    expect(result.zoneTteSeconds).not.toBeNull();
   });
 });
 
-describe("enrichLiveAssets", () => {
+describe("enrichTrafficWithZoneThreat", () => {
   const ottawaTestZoneGeojson: Feature<Polygon> = {
     type: "Feature",
     properties: {},
@@ -145,12 +145,12 @@ describe("enrichLiveAssets", () => {
   it("merges zone-derived fields onto each asset", () => {
     const asset = testAsset({ lat: 45.4, lon: -75.7, heading: 0, speed: 100 });
 
-    const [enriched] = enrichLiveAssets([asset], [cachedZone]);
+    const [enriched] = enrichTrafficWithZoneThreat([asset], [cachedZone]);
 
     expect(enriched).toMatchObject({
       id: "test-asset",
       threat: "critical",
-      tteSeconds: 0,
+      zoneTteSeconds: 0,
       nearestZoneDistanceM: 0,
     });
   });

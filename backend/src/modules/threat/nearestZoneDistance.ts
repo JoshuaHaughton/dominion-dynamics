@@ -51,7 +51,7 @@ function boundaryDistanceKm(
 }
 
 /** Shortest distance in meters from the asset to any restricted zone boundary. */
-export function nearestZoneDistanceM(
+export function getNearestZoneDistanceM(
   asset: Pick<Asset, "lat" | "lon">,
   zones: readonly CachedZone[],
 ): number | null {
