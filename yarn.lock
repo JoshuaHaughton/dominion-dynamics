@@ -1039,7 +1039,7 @@
     "@types/geojson" "^7946.0.10"
     tslib "^2.8.1"
 
-"@turf/bearing@^7.3.5":
+"@turf/bearing@7.3.5", "@turf/bearing@^7.3.5":
   version "7.3.5"
   resolved "https://registry.yarnpkg.com/@turf/bearing/-/bearing-7.3.5.tgz#cd50935b3aa8afdc5865b28b2dce993f2bebe5f4"
   integrity sha512-/qabIt/IuPsGlE6RukJ0zOirc6afNxoK7fK1WBNVnHuJjeOpSkW+7q1QW5XQGXBMv3odcD0ZgRR+MBiAHduYSA==
@@ -1060,6 +1060,15 @@
     point-in-polygon-hao "^1.1.0"
     tslib "^2.8.1"
 
+"@turf/clone@7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/clone/-/clone-7.3.5.tgz#87906386ebf7e17b528eba79e766d945ffa88a5e"
+  integrity sha512-qfIaHj3410QEcTpiCRnTzhq8YrUp2gWrUIPLBAEFykopNxJkq1du1VrRzvuAo36ap2UV7KppkS6wGNypbcxswQ==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
 "@turf/destination@^7.3.5":
   version "7.3.5"
   resolved "https://registry.yarnpkg.com/@turf/destination/-/destination-7.3.5.tgz#1537feed29875e915db27228a60d5dcc290ecfc6"
@@ -1070,7 +1079,7 @@
     "@types/geojson" "^7946.0.10"
     tslib "^2.8.1"
 
-"@turf/distance@^7.3.5":
+"@turf/distance@7.3.5", "@turf/distance@^7.3.5":
   version "7.3.5"
   resolved "https://registry.yarnpkg.com/@turf/distance/-/distance-7.3.5.tgz#3aa16a1fde30e5cf4cf40b7e497be8cc5d6bbaaf"
   integrity sha512-uQAC63zg/l91KUxzfhqio7Ii3+UXTrPOVJScIdRj6EO6+9XHI4kC+AdyIS4cPAv14sZfJLIBxzMnzcGrss+kEA==
@@ -1113,6 +1122,76 @@
   integrity sha512-r+ohqxoyqeigFB0oFrQx/YEHIkOKqcKpCjvZkvZs7Tkv+IFco5MezAd2zd4rzK+0DfFgDP3KpJc7HqrYjvEjhg==
   dependencies:
     "@turf/helpers" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
+"@turf/nearest-point-on-line@7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/nearest-point-on-line/-/nearest-point-on-line-7.3.5.tgz#e74515e017feff2c8d7c208b634a5cbfdbebe998"
+  integrity sha512-MZn6OkEFZpjS6BNUANfqiHMIbQSivu7TNji3a+OAIrnPJ71vp8cbz0N2aVEa5M7I8ipvxoxAPIV3eqg3h280Vg==
+  dependencies:
+    "@turf/distance" "7.3.5"
+    "@turf/helpers" "7.3.5"
+    "@turf/invariant" "7.3.5"
+    "@turf/meta" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
+"@turf/point-to-line-distance@^7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/point-to-line-distance/-/point-to-line-distance-7.3.5.tgz#d3e8991debad7f9a5953e3a48c8b9c4ab6a9f6a5"
+  integrity sha512-mR1NAIX+JfpYAJQ9u3gpIV37QzYvBOefDP+/16uBCAOM8Fp12goT8l7WdenT0dvB4wPibbqM2+2kyEl5u9XJog==
+  dependencies:
+    "@turf/bearing" "7.3.5"
+    "@turf/distance" "7.3.5"
+    "@turf/helpers" "7.3.5"
+    "@turf/invariant" "7.3.5"
+    "@turf/meta" "7.3.5"
+    "@turf/nearest-point-on-line" "7.3.5"
+    "@turf/projection" "7.3.5"
+    "@turf/rhumb-bearing" "7.3.5"
+    "@turf/rhumb-distance" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
+"@turf/polygon-to-line@^7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/polygon-to-line/-/polygon-to-line-7.3.5.tgz#93c2a42ad52ab33d5733c0cb414de179ea28318f"
+  integrity sha512-Mat5tvJcW3grpXCNFcMvjHL3d8hO4eoIgF3qYpXj25BHx/S7SJUOgyCV5x3arC0rCfM/cB71VmNDm9k57ec7bw==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@turf/invariant" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
+"@turf/projection@7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/projection/-/projection-7.3.5.tgz#5de65db16cf4f9e789b2beec1f25e8482981f958"
+  integrity sha512-G4bejYKT0vCQZryMhEoS9aLmP7ThDg6nb3zi3wPzELiTrGNOd2YgkWVheQDGCk4hcqEIWZc9fI2alaRSSkkLVw==
+  dependencies:
+    "@turf/clone" "7.3.5"
+    "@turf/helpers" "7.3.5"
+    "@turf/meta" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
+"@turf/rhumb-bearing@7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/rhumb-bearing/-/rhumb-bearing-7.3.5.tgz#6b4668d0f486ee67faa996762f17ad44b8417c8d"
+  integrity sha512-pYjBAuQTND0+6Y+v+zlQ7Y68SGjP4iG8qJ5QKjFRbB/yeorTY3m9yiXIN4lSyno3TPzEgBeNULuo26H6ygDyng==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@turf/invariant" "7.3.5"
+    "@types/geojson" "^7946.0.10"
+    tslib "^2.8.1"
+
+"@turf/rhumb-distance@7.3.5":
+  version "7.3.5"
+  resolved "https://registry.yarnpkg.com/@turf/rhumb-distance/-/rhumb-distance-7.3.5.tgz#da2848911ea2655aa6b34f47e54415ffde895849"
+  integrity sha512-dBFxmKrjRaAdwc4SCmGyAS2BDPCH35IBNl++Ypd1RB8JR2D3khl3zrTvxrlJ5qoN1WDvyPbvDYCrt2UnTX+8Nw==
+  dependencies:
+    "@turf/helpers" "7.3.5"
+    "@turf/invariant" "7.3.5"
     "@types/geojson" "^7946.0.10"
     tslib "^2.8.1"
 
@@ -3063,3 +3142,8 @@ yallist@^3.0.2:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.1.1.tgz#dbb7daf9bfd8bac9ab45ebf602b8cbad0d5d08fd"
   integrity sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==
+
+zod@^3.24.2:
+  version "3.25.76"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.25.76.tgz#26841c3f6fd22a6a2760e7ccb719179768471e34"
+  integrity sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==
