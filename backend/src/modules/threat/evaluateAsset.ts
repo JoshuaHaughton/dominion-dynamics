@@ -64,15 +64,3 @@ export function evaluateAssetThreat(
 
   return { threat, tteSeconds: null };
 }
-
-/** Attach server-computed threat fields to every asset in a live snapshot. */
-export function enrichAssetsWithThreat(
-  assets: readonly Asset[],
-  zones: readonly CachedZone[],
-): Asset[] {
-  return assets.map((asset) => {
-    const threat = evaluateAssetThreat(asset, zones);
-
-    return { ...asset, ...threat };
-  });
-}

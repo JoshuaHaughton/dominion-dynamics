@@ -1,19 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { stepAsset } from "./movement.js";
 import type { Asset } from "@dominion-dynamics/shared";
-import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
+import { testAsset } from "../../testFixtures/asset.js";
 
 describe("stepAsset", () => {
-  const baseAsset: Asset = {
+  const baseAsset: Asset = testAsset({
     id: "test-1",
     lat: 45.4,
     lon: -75.7,
     alt: 1000,
     heading: 0,
     speed: 250,
-    source: "synthetic",
-    ...UNEVALUATED_THREAT,
-  };
+  });
 
   it("moves north along heading 0", () => {
     const next = stepAsset({ asset: baseAsset, deltaSeconds: 1 });

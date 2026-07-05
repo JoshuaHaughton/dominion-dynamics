@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { advanceAssets } from "./ticker.js";
 import { isInsideSeedRegion } from "./seed.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
-import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
+import { testAsset } from "../../testFixtures/asset.js";
 
 describe("advanceAssets", () => {
   const ottawaRegion: SimBounds = {
@@ -12,16 +12,14 @@ describe("advanceAssets", () => {
     maxLon: -75.3,
   };
 
-  const baseAsset: Asset = {
+  const baseAsset: Asset = testAsset({
     id: "track-inside",
     lat: 45.4,
     lon: -75.7,
     alt: 5000,
     heading: 90,
     speed: 100,
-    source: "synthetic",
-    ...UNEVALUATED_THREAT,
-  };
+  });
 
   it("advances assets that remain inside the seed region", () => {
     const [next] = advanceAssets({

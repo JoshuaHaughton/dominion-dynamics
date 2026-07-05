@@ -1,9 +1,10 @@
-import type { Feature, Polygon } from "geojson";
 import { describe, expect, it } from "vitest";
-import type { Asset } from "@dominion-dynamics/shared";
-import { UNEVALUATED_THREAT } from "@dominion-dynamics/shared";
-import { evaluateAssetThreat, enrichAssetsWithThreat } from "./evaluateAsset.js";
+import { evaluateAssetThreat } from "./evaluateAsset.js";
+import { enrichLiveAssets } from "./enrichLiveAssets.js";
 import { toCachedZone } from "./zoneGeometryCache.js";
+import type { Asset } from "@dominion-dynamics/shared";
+import { testAsset as makeAsset } from "../../testFixtures/asset.js";
+import type { Feature, Polygon } from "geojson";
 
 /** Small square zone near Ottawa used across threat tests. */
 const OTTAWA_TEST_ZONE_GEOJSON: Feature<Polygon> = {
@@ -32,13 +33,11 @@ const cachedZone = toCachedZone({
 function testAsset(
   overrides: Partial<Asset> & Pick<Asset, "lat" | "lon" | "heading" | "speed">,
 ): Asset {
-  return {
+  return makeAsset({
     id: "test-asset",
     alt: 5000,
-    source: "synthetic",
-    ...UNEVALUATED_THREAT,
     ...overrides,
-  };
+  });
 }
 
 describe("evaluateAssetThreat", () => {
@@ -110,16 +109,17 @@ describe("evaluateAssetThreat", () => {
   });
 });
 
-describe("enrichAssetsWithThreat", () => {
-  it("merges threat fields onto each asset", () => {
+describe("enrichLiveAssets", () => {
+  it("merges zone-derived fields onto each asset", () => {
     const asset = testAsset({ lat: 45.4, lon: -75.7, heading: 0, speed: 100 });
 
-    const [enriched] = enrichAssetsWithThreat([asset], [cachedZone]);
+    const [enriched] = enrichLiveAssets([asset], [cachedZone]);
 
     expect(enriched).toMatchObject({
       id: "test-asset",
       threat: "critical",
       tteSeconds: 0,
+      nearestZoneDistanceM: 0,
     });
   });
 });

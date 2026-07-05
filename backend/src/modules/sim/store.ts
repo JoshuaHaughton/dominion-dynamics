@@ -16,3 +16,8 @@ export function setAssets(next: Asset[]): void {
 export function getAssetList(): Asset[] {
   return [...assets.values()];
 }
+
+/** Lookup one asset by id (undefined when missing or respawned). */
+export function getAssetById(id: string): Asset | undefined {
+  return assets.get(id);
+}
