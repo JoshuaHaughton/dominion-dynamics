@@ -1,36 +1,36 @@
 import { describe, expect, it } from "vitest";
 import { SnapshotMessageSchema } from "@dominion-dynamics/shared";
 
-const baseAsset = {
-  id: "syn-1",
-  lat: 45.4,
-  lon: -75.7,
-  alt: 1000,
-  heading: 90,
-  speed: 120,
-  source: "synthetic" as const,
-  category: 0,
-  callsign: null,
-  originCountry: null,
-  onGround: false,
-  threat: "normal" as const,
-  tteSeconds: null,
-  nearestZoneDistanceM: null,
-};
-
-const selectedTrack = {
-  assetId: "syn-1",
-  history: [{ lat: 45.4, lon: -75.7, ts: 1000 }],
-  predictedPath: {
-    type: "LineString" as const,
-    coordinates: [
-      [-75.7, 45.4],
-      [-75.65, 45.4],
-    ],
-  },
-};
-
 describe("SnapshotMessageSchema", () => {
+  const baseAsset = {
+    id: "syn-1",
+    lat: 45.4,
+    lon: -75.7,
+    alt: 1000,
+    heading: 90,
+    speed: 120,
+    source: "synthetic" as const,
+    category: 0,
+    callsign: null,
+    originCountry: null,
+    onGround: false,
+    threat: "normal" as const,
+    tteSeconds: null,
+    nearestZoneDistanceM: null,
+  };
+
+  const selectedTrack = {
+    assetId: "syn-1",
+    history: [{ lat: 45.4, lon: -75.7, ts: 1000 }],
+    predictedPath: {
+      type: "LineString" as const,
+      coordinates: [
+        [-75.7, 45.4],
+        [-75.65, 45.4],
+      ],
+    },
+  };
+
   it("accepts a valid snapshot payload", () => {
     const message = SnapshotMessageSchema.parse({
       type: "snapshot",

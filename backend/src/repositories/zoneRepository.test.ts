@@ -4,23 +4,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import * as schema from "../db/schema.js";
 import { findAllZones, insertZone } from "./zoneRepository.js";
 
-const validPolygon = {
-  type: "Feature" as const,
-  properties: {},
-  geometry: {
-    type: "Polygon" as const,
-    coordinates: [
-      [
-        [-75.8, 45.3],
-        [-75.6, 45.3],
-        [-75.6, 45.45],
-        [-75.8, 45.45],
-        [-75.8, 45.3],
-      ],
-    ],
-  },
-};
-
 function createTestDb(): {
   database: BetterSQLite3Database<typeof schema>;
   sqlite: Database.Database;
@@ -43,6 +26,23 @@ function createTestDb(): {
 }
 
 describe("zoneRepository", () => {
+  const validPolygon = {
+    type: "Feature" as const,
+    properties: {},
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: [
+        [
+          [-75.8, 45.3],
+          [-75.6, 45.3],
+          [-75.6, 45.45],
+          [-75.8, 45.45],
+          [-75.8, 45.3],
+        ],
+      ],
+    },
+  };
+
   let sqlite: Database.Database | undefined;
 
   afterEach(() => {

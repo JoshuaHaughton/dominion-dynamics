@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { AssetTrackDetailSchema } from "@dominion-dynamics/shared";
 
-const validDetail = {
-  assetId: "syn-1",
-  history: [{ lat: 45.4, lon: -75.7, ts: 1000 }],
-  predictedPath: {
-    type: "LineString" as const,
-    coordinates: [
-      [-75.7, 45.4],
-      [-75.65, 45.4],
-    ],
-  },
-};
-
 describe("AssetTrackDetailSchema", () => {
+  const validDetail = {
+    assetId: "syn-1",
+    history: [{ lat: 45.4, lon: -75.7, ts: 1000 }],
+    predictedPath: {
+      type: "LineString" as const,
+      coordinates: [
+        [-75.7, 45.4],
+        [-75.65, 45.4],
+      ],
+    },
+  };
+
   it("accepts a valid asset detail payload", () => {
     expect(AssetTrackDetailSchema.parse(validDetail)).toEqual(validDetail);
   });
@@ -31,7 +31,7 @@ describe("AssetTrackDetailSchema", () => {
     expect(
       AssetTrackDetailSchema.safeParse({
         ...validDetail,
-        predictedPath: { type: "Point", coordinates: [-75.7, 45.4] },
+        predictedPath: { type: "LineString", coordinates: [[-75.7, 45.4]] },
       }).success,
     ).toBe(false);
   });

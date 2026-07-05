@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { OPEN_SKY_STATE_FIXTURES } from "./fixtures.js";
 import { mapOpenSkyStateToAsset } from "./mapStateVector.js";
 
-const unevaluatedThreat = {
-  threat: "normal" as const,
-  tteSeconds: null,
-  nearestZoneDistanceM: null,
-};
-
 describe("mapOpenSkyStateToAsset", () => {
+  const unevaluatedThreat = {
+    threat: "normal" as const,
+    tteSeconds: null,
+    nearestZoneDistanceM: null,
+  };
+
   it("maps a commercial in-flight row to an opensky asset", () => {
     const asset = mapOpenSkyStateToAsset(
       OPEN_SKY_STATE_FIXTURES.commercialInFlight,

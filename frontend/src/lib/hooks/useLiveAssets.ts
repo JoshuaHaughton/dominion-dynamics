@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { getLiveWebSocketUrl } from "../config/env.js";
 import {
   AssetSchema,
+  DEFAULT_TRACK_HISTORY_CAPACITY,
   LiveServerMessageSchema,
-  trackHistoryCapacity,
   type Asset,
   type AssetHistoryPoint,
   type AssetTrackDetail,
@@ -11,9 +11,6 @@ import {
 import { z } from "zod";
 
 const RECONNECT_MS = 2_000;
-
-/** Matches backend default TICK_MS (1000). */
-const DEFAULT_TRACK_HISTORY_CAPACITY = trackHistoryCapacity(1_000);
 
 const SnapshotAssetsSchema = z.object({
   type: z.literal("snapshot"),

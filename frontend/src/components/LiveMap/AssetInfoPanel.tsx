@@ -91,7 +91,7 @@ export function AssetInfoPanel({ asset, onClose }: AssetInfoPanelProps) {
           </div>
         ) : null}
         <div className={styles.row}>
-          <dt>Aircraft Category</dt>
+          <dt>Category</dt>
           <dd>{icaoCategoryLabel(asset.category)}</dd>
         </div>
         <div className={styles.row}>

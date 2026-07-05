@@ -7,16 +7,16 @@ import {
 } from "./assetTrackHistory.js";
 import { testAsset } from "../../testFixtures/asset.js";
 
-const sampleAsset = testAsset({
-  id: "a1",
-  lat: 45.4,
-  lon: -75.7,
-  alt: 1000,
-  heading: 90,
-  speed: 100,
-});
-
 describe("assetTrackHistory", () => {
+  const sampleAsset = testAsset({
+    id: "a1",
+    lat: 45.4,
+    lon: -75.7,
+    alt: 1000,
+    heading: 90,
+    speed: 100,
+  });
+
   it("stores chronological points per asset", () => {
     clearAssetTrackHistory();
 

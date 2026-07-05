@@ -6,41 +6,40 @@ import type { Asset } from "@dominion-dynamics/shared";
 import { testAsset as makeAsset } from "../../testFixtures/asset.js";
 import type { Feature, Polygon } from "geojson";
 
-/** Small square zone near Ottawa used across threat tests. */
-const OTTAWA_TEST_ZONE_GEOJSON: Feature<Polygon> = {
-  type: "Feature",
-  properties: {},
-  geometry: {
-    type: "Polygon",
-    coordinates: [
-      [
-        [-75.71, 45.39],
-        [-75.69, 45.39],
-        [-75.69, 45.41],
-        [-75.71, 45.41],
-        [-75.71, 45.39],
-      ],
-    ],
-  },
-};
-
-const cachedZone = toCachedZone({
-  id: 1,
-  name: "Test zone",
-  geojson: OTTAWA_TEST_ZONE_GEOJSON,
-});
-
-function testAsset(
-  overrides: Partial<Asset> & Pick<Asset, "lat" | "lon" | "heading" | "speed">,
-): Asset {
-  return makeAsset({
-    id: "test-asset",
-    alt: 5000,
-    ...overrides,
-  });
-}
-
 describe("evaluateAssetThreat", () => {
+  const ottawaTestZoneGeojson: Feature<Polygon> = {
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [-75.71, 45.39],
+          [-75.69, 45.39],
+          [-75.69, 45.41],
+          [-75.71, 45.41],
+          [-75.71, 45.39],
+        ],
+      ],
+    },
+  };
+
+  const cachedZone = toCachedZone({
+    id: 1,
+    name: "Test zone",
+    geojson: ottawaTestZoneGeojson,
+  });
+
+  function testAsset(
+    overrides: Partial<Asset> & Pick<Asset, "lat" | "lon" | "heading" | "speed">,
+  ): Asset {
+    return makeAsset({
+      id: "test-asset",
+      alt: 5000,
+      ...overrides,
+    });
+  }
+
   it("returns normal when there are no zones", () => {
     const asset = testAsset({ lat: 45.4, lon: -75.7, heading: 90, speed: 120 });
 
@@ -110,6 +109,39 @@ describe("evaluateAssetThreat", () => {
 });
 
 describe("enrichLiveAssets", () => {
+  const ottawaTestZoneGeojson: Feature<Polygon> = {
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [-75.71, 45.39],
+          [-75.69, 45.39],
+          [-75.69, 45.41],
+          [-75.71, 45.41],
+          [-75.71, 45.39],
+        ],
+      ],
+    },
+  };
+
+  const cachedZone = toCachedZone({
+    id: 1,
+    name: "Test zone",
+    geojson: ottawaTestZoneGeojson,
+  });
+
+  function testAsset(
+    overrides: Partial<Asset> & Pick<Asset, "lat" | "lon" | "heading" | "speed">,
+  ): Asset {
+    return makeAsset({
+      id: "test-asset",
+      alt: 5000,
+      ...overrides,
+    });
+  }
+
   it("merges zone-derived fields onto each asset", () => {
     const asset = testAsset({ lat: 45.4, lon: -75.7, heading: 0, speed: 100 });
 

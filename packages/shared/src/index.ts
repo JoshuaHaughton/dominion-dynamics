@@ -28,6 +28,8 @@ export {
 } from "./schemas/assetTrack.js";
 
 export {
+  DEFAULT_SIM_TICK_MS,
+  DEFAULT_TRACK_HISTORY_CAPACITY,
   TRACK_HISTORY_WINDOW_SECONDS,
   trackHistoryCapacity,
 } from "./liveTrack.js";

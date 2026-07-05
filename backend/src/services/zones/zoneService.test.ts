@@ -5,23 +5,6 @@ import * as schema from "../../db/schema.js";
 import { clearZoneGeometryCache, getCachedZones } from "../../modules/threat/zoneGeometryCache.js";
 import { createZone, listZones } from "./zoneService.js";
 
-const validPolygon = {
-  type: "Feature" as const,
-  properties: {},
-  geometry: {
-    type: "Polygon" as const,
-    coordinates: [
-      [
-        [-75.8, 45.3],
-        [-75.6, 45.3],
-        [-75.6, 45.45],
-        [-75.8, 45.45],
-        [-75.8, 45.3],
-      ],
-    ],
-  },
-};
-
 function createTestDb(): {
   database: BetterSQLite3Database<typeof schema>;
   sqlite: Database.Database;
@@ -44,6 +27,23 @@ function createTestDb(): {
 }
 
 describe("zoneService", () => {
+  const validPolygon = {
+    type: "Feature" as const,
+    properties: {},
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: [
+        [
+          [-75.8, 45.3],
+          [-75.6, 45.3],
+          [-75.6, 45.45],
+          [-75.8, 45.45],
+          [-75.8, 45.3],
+        ],
+      ],
+    },
+  };
+
   let sqlite: Database.Database | undefined;
 
   afterEach(() => {
