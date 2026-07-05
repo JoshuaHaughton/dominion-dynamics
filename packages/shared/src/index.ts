@@ -50,3 +50,12 @@ export {
   ZoneListSchema,
   ZoneSchema,
 } from "./schemas/zone.js";
+
+export type { IcaoEmitterCategory } from "./icaoCategory.js";
+export {
+  ICAO_EMITTER_CATEGORY_LABELS,
+  ICAO_EMITTER_CATEGORY_SHORT_LABELS,
+  icaoCategoryLabel,
+  icaoCategoryShortLabel,
+  isIcaoEmitterCategory,
+} from "./icaoCategory.js";
