@@ -1,14 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { OPEN_SKY_STATE_FIXTURES } from "./fixtures.js";
 import { mapOpenSkyStateToAsset } from "./mapStateVector.js";
+import { DEFAULT_TRAFFIC_ZONE } from "../threat/constants.js";
 
 describe("mapOpenSkyStateToAsset", () => {
-  const unevaluatedThreat = {
-    threat: "normal" as const,
-    zoneTteSeconds: null,
-    nearestZoneDistanceM: null,
-  };
-
   it("maps a commercial in-flight row to an opensky asset", () => {
     const asset = mapOpenSkyStateToAsset(
       OPEN_SKY_STATE_FIXTURES.commercialInFlight,
@@ -26,7 +21,7 @@ describe("mapOpenSkyStateToAsset", () => {
       callsign: "ACA123",
       originCountry: "Canada",
       onGround: false,
-      ...unevaluatedThreat,
+      zone: DEFAULT_TRAFFIC_ZONE,
     });
   });
 
@@ -43,7 +38,7 @@ describe("mapOpenSkyStateToAsset", () => {
       callsign: "CFCO",
       originCountry: "Canada",
       onGround: false,
-      ...unevaluatedThreat,
+      zone: DEFAULT_TRAFFIC_ZONE,
     });
 
     expect(mapOpenSkyStateToAsset(OPEN_SKY_STATE_FIXTURES.drone)).toEqual({
@@ -58,7 +53,7 @@ describe("mapOpenSkyStateToAsset", () => {
       callsign: null,
       originCountry: "Canada",
       onGround: false,
-      ...unevaluatedThreat,
+      zone: DEFAULT_TRAFFIC_ZONE,
     });
   });
 

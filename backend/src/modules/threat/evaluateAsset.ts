@@ -1,12 +1,11 @@
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
-import type { Asset, ThreatLevel } from "@dominion-dynamics/shared";
+import type { Asset, AssetZoneState, ThreatLevel } from "@dominion-dynamics/shared";
 import { isAssetNearZoneBbox } from "./bboxPrefilter.js";
-import { WARNING_WINDOW_SECONDS } from "./constants.js";
+import { WARNING_WINDOW_SECONDS, DEFAULT_TRAFFIC_ZONE } from "./constants.js";
 import { rayTteSeconds } from "./rayTte.js";
+import { distancePointToBoundaryM } from "./zoneBoundaryDistance.js";
 import type { CachedZone } from "./types.js";
-
-export type ThreatEvaluation = Pick<Asset, "threat" | "zoneTteSeconds">;
 
 /** Whether the asset position is inside the zone polygon. */
 function isInsideZone(
@@ -17,32 +16,32 @@ function isInsideZone(
 }
 
 /**
- * Classify one asset against all restricted zones.
+ * Classify one traffic asset against all restricted zones in a single pass.
  * Critical when inside any zone; warning when ray TTE is within five minutes.
  */
-export function evaluateAssetThreat(
+export function evaluateZoneThreat(
   asset: Asset,
   zones: readonly CachedZone[],
-): ThreatEvaluation {
+): AssetZoneState {
   if (zones.length === 0) {
-    return { threat: "normal", zoneTteSeconds: null };
+    return DEFAULT_TRAFFIC_ZONE;
   }
 
-  // Breach check first: inside any zone is critical regardless of heading.
-  for (const zone of zones) {
-    if (!isAssetNearZoneBbox(asset, zone, WARNING_WINDOW_SECONDS)) {
-      continue;
-    }
-
-    if (isInsideZone(asset, zone)) {
-      return { threat: "critical", zoneTteSeconds: 0 };
-    }
-  }
-
-  // Ray TTE per nearby zone; shortest entry time wins for warning.
+  const assetPoint = point([asset.lon, asset.lat]);
   let minTteSeconds: number | null = null;
+  let nearestBoundaryM: number | null = null;
 
   for (const zone of zones) {
+    if (booleanPointInPolygon(assetPoint, zone.polygon)) {
+      return { threat: "critical", tteSeconds: 0, nearestBoundaryM: 0 };
+    }
+
+    const boundaryM = distancePointToBoundaryM(assetPoint, zone.boundary);
+
+    if (nearestBoundaryM === null || boundaryM < nearestBoundaryM) {
+      nearestBoundaryM = boundaryM;
+    }
+
     if (!isAssetNearZoneBbox(asset, zone, WARNING_WINDOW_SECONDS)) {
       continue;
     }
@@ -57,10 +56,14 @@ export function evaluateAssetThreat(
   }
 
   if (minTteSeconds !== null && minTteSeconds <= WARNING_WINDOW_SECONDS) {
-    return { threat: "warning", zoneTteSeconds: minTteSeconds };
+    return {
+      threat: "warning",
+      tteSeconds: minTteSeconds,
+      nearestBoundaryM,
+    };
   }
 
   const threat: ThreatLevel = "normal";
 
-  return { threat, zoneTteSeconds: null };
+  return { threat, tteSeconds: null, nearestBoundaryM };
 }

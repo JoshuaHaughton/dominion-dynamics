@@ -1,4 +1,5 @@
 import type { Asset } from "@dominion-dynamics/shared";
+import { DEFAULT_TRAFFIC_ZONE } from "../modules/threat/constants.js";
 
 /** Minimal synthetic asset for backend unit tests. */
 export function testAsset(
@@ -10,9 +11,7 @@ export function testAsset(
     callsign: null,
     originCountry: null,
     onGround: false,
-    threat: "normal",
-    zoneTteSeconds: null,
-    nearestZoneDistanceM: null,
+    zone: DEFAULT_TRAFFIC_ZONE,
     ...overrides,
   };
 }

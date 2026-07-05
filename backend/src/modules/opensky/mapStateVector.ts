@@ -1,5 +1,6 @@
 import type { Asset } from "@dominion-dynamics/shared";
 import { isIcaoEmitterCategory } from "@dominion-dynamics/shared";
+import { DEFAULT_TRAFFIC_ZONE } from "../threat/constants.js";
 import type { OpenSkyStateVector } from "./types.js";
 import { OPEN_SKY_STATE_INDEX as I } from "./types.js";
 
@@ -48,9 +49,7 @@ export function mapOpenSkyStateToAsset(
     callsign,
     originCountry: state[I.originCountry],
     onGround: state[I.onGround],
-    threat: "normal",
-    zoneTteSeconds: null,
-    nearestZoneDistanceM: null,
+    zone: DEFAULT_TRAFFIC_ZONE,
   };
 }
 

@@ -2,7 +2,7 @@ import type { Feature, Polygon } from "geojson";
 import { describe, expect, it } from "vitest";
 import type { AssetHistoryPoint } from "@dominion-dynamics/shared";
 import { testAsset } from "../../testFixtures/asset.js";
-import { getNearestZoneDistanceM } from "./nearestZoneDistance.js";
+import { evaluateZoneThreat } from "./evaluateAsset.js";
 import { predictAssetPath } from "./predictPath.js";
 import { toCachedZone } from "./zoneGeometryCache.js";
 
@@ -33,25 +33,29 @@ describe("asset track helpers", () => {
     speed: 100,
   });
 
-  describe("getNearestZoneDistanceM", () => {
+  describe("evaluateZoneThreat nearestBoundaryM", () => {
     it("returns 0 when the asset is inside a zone", () => {
       const inside = { ...baseAsset, lat: 45.4, lon: -75.7 };
 
-      expect(getNearestZoneDistanceM(inside, [toCachedZone({
-        id: 1,
-        name: "Z1",
-        geojson: zonePolygon,
-      })])).toBe(0);
+      expect(
+        evaluateZoneThreat(inside, [
+          toCachedZone({
+            id: 1,
+            name: "Z1",
+            geojson: zonePolygon,
+          }),
+        ]).nearestBoundaryM,
+      ).toBe(0);
     });
 
     it("returns a positive distance when outside", () => {
       const outside = { ...baseAsset, lat: 45.25, lon: -75.7 };
-      const distanceM = getNearestZoneDistanceM(outside, [
+      const nearestBoundaryM = evaluateZoneThreat(outside, [
         toCachedZone({ id: 1, name: "Z1", geojson: zonePolygon }),
-      ]);
+      ]).nearestBoundaryM;
 
-      expect(distanceM).not.toBeNull();
-      expect(distanceM!).toBeGreaterThan(0);
+      expect(nearestBoundaryM).not.toBeNull();
+      expect(nearestBoundaryM!).toBeGreaterThan(0);
     });
   });
 

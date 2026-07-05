@@ -11,6 +11,8 @@ import {
   SYNTHETIC_ALT_MIN_M,
 } from "./config.js";
 import { sampleSyntheticMotion } from "./syntheticCategorySpawn.js";
+import { turfBearingToHeading } from "../../lib/geo/distanceAndHeading.js";
+import { DEFAULT_TRAFFIC_ZONE } from "../threat/constants.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
 /** Unique id for a sim-generated track at seed or boundary respawn. */
@@ -29,11 +31,6 @@ function toRegionPolygon(region: SimBounds): Feature<Polygon> {
     region.maxLon,
     region.maxLat,
   ]);
-}
-
-/** Turf bearing is -180..180; asset heading is 0..360 clockwise from north. */
-function turfBearingToHeading(bearingDeg: number): number {
-  return (bearingDeg + 360) % 360;
 }
 
 // Pick a random point on one of the four seed region edges (north, south, east, west).
@@ -91,9 +88,7 @@ function createSyntheticAsset(): Asset {
     callsign: null,
     originCountry: null,
     onGround: false,
-    threat: "normal",
-    zoneTteSeconds: null,
-    nearestZoneDistanceM: null,
+    zone: DEFAULT_TRAFFIC_ZONE,
   };
 }
 

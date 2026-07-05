@@ -1,20 +1,21 @@
 import type { Asset } from "@dominion-dynamics/shared";
-import { evaluateAssetThreat } from "./evaluateAsset.js";
-import { getNearestZoneDistanceM } from "./nearestZoneDistance.js";
+import { isPatrolAsset } from "../sim/store.js";
+import { evaluateZoneThreat } from "./evaluateAsset.js";
 import type { CachedZone } from "./types.js";
 
-/** Attach zone threat, zone TTE, and nearest-zone distance to traffic assets. */
+/** Attach zone threat state to traffic assets; patrol assets get zone null. */
 export function enrichTrafficWithZoneThreat(
   assets: readonly Asset[],
   zones: readonly CachedZone[],
 ): Asset[] {
   return assets.map((asset) => {
-    const threat = evaluateAssetThreat(asset, zones);
+    if (isPatrolAsset(asset)) {
+      return { ...asset, zone: null };
+    }
 
     return {
       ...asset,
-      ...threat,
-      nearestZoneDistanceM: getNearestZoneDistanceM(asset, zones),
+      zone: evaluateZoneThreat(asset, zones),
     };
   });
 }

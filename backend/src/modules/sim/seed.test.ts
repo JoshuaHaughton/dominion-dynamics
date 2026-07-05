@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_TRAFFIC_ZONE } from "../threat/constants.js";
 import { isInsideSeedRegion, respawnAtBoundary } from "./seed.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 import { SPEED_RANGE_BY_CATEGORY } from "./syntheticCategorySpawn.js";
@@ -68,9 +69,7 @@ describe("respawnAtBoundary", () => {
     callsign: null,
     originCountry: null,
     onGround: false,
-    threat: "normal",
-    zoneTteSeconds: null,
-    nearestZoneDistanceM: null,
+    zone: DEFAULT_TRAFFIC_ZONE,
   };
 
   afterEach(() => {

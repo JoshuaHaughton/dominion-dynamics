@@ -6,8 +6,7 @@ import { getAssetTrackHistory } from "../sim/assetTrackHistory.js";
 import { getAssetById } from "../sim/store.js";
 import { predictAssetPath } from "../threat/predictPath.js";
 
-/** Build history and prediction for one live asset. */
-export function getAssetTrackDetail(assetId: string): AssetTrackDetail | null {
+function loadTrackContext(assetId: string) {
   const asset = getAssetById(assetId);
 
   if (!asset) {
@@ -17,9 +16,24 @@ export function getAssetTrackDetail(assetId: string): AssetTrackDetail | null {
   const history = getAssetTrackHistory(assetId);
 
   return {
-    assetId,
+    asset,
     history,
     predictedPath: predictAssetPath(asset, history),
+  };
+}
+
+/** Build history and prediction for one live asset. */
+export function getAssetTrackDetail(assetId: string): AssetTrackDetail | null {
+  const context = loadTrackContext(assetId);
+
+  if (!context) {
+    return null;
+  }
+
+  return {
+    assetId,
+    history: context.history,
+    predictedPath: context.predictedPath,
   };
 }
 
@@ -27,20 +41,19 @@ export function getAssetTrackDetail(assetId: string): AssetTrackDetail | null {
 export function buildSelectedTrackDelta(
   assetId: string,
 ): SelectedTrackDelta | null {
-  const asset = getAssetById(assetId);
+  const context = loadTrackContext(assetId);
 
-  if (!asset) {
+  if (!context) {
     return null;
   }
 
-  const history = getAssetTrackHistory(assetId);
-  const point = history.at(-1);
+  const point = context.history.at(-1);
 
   if (!point) return null;
 
   return {
     assetId,
     point,
-    predictedPath: predictAssetPath(asset, history),
+    predictedPath: context.predictedPath,
   };
 }
