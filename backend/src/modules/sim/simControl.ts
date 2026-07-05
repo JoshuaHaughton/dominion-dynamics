@@ -1,7 +1,7 @@
 import { simConfig } from "./config.js";
 import { seedAssets } from "./seed.js";
 import { getAssetList } from "./store.js";
-import { publishLiveSnapshot } from "../realtime/publishLiveSnapshot.js";
+import { publishTrafficSnapshot } from "../realtime/publishLiveSnapshot.js";
 import { startTicker, stopTicker } from "./ticker.js";
 import type { Asset } from "@dominion-dynamics/shared";
 
@@ -17,8 +17,7 @@ export function startSim(options: StartSimOptions = {}): void {
 
   running = true;
 
-  const seeded = seedAssets(simConfig.assetCount);
-  publishLiveSnapshot(seeded);
+  publishTrafficSnapshot(seedAssets(simConfig.assetCount));
 
   startTicker((assets) => {
     options.onTick?.(assets);

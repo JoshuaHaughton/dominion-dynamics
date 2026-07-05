@@ -11,7 +11,7 @@ export function testAsset(
     originCountry: null,
     onGround: false,
     threat: "normal",
-    tteSeconds: null,
+    zoneTteSeconds: null,
     nearestZoneDistanceM: null,
     ...overrides,
   };

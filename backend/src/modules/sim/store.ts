@@ -17,7 +17,16 @@ export function getAssetList(): Asset[] {
   return [...assets.values()];
 }
 
+/** Traffic assets from the sim store (excludes the patrol drone). */
+export function getTrafficAssets(): Asset[] {
+  return getAssetList().filter((asset) => !isPatrolAsset(asset));
+}
+
 /** Lookup one asset by id (undefined when missing or respawned). */
 export function getAssetById(id: string): Asset | undefined {
   return assets.get(id);
+}
+
+export function isPatrolAsset(asset: Asset): boolean {
+  return asset.role === "patrol";
 }

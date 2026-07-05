@@ -49,7 +49,7 @@ export function mapOpenSkyStateToAsset(
     originCountry: state[I.originCountry],
     onGround: state[I.onGround],
     threat: "normal",
-    tteSeconds: null,
+    zoneTteSeconds: null,
     nearestZoneDistanceM: null,
   };
 }

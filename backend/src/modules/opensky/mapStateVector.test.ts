@@ -5,7 +5,7 @@ import { mapOpenSkyStateToAsset } from "./mapStateVector.js";
 describe("mapOpenSkyStateToAsset", () => {
   const unevaluatedThreat = {
     threat: "normal" as const,
-    tteSeconds: null,
+    zoneTteSeconds: null,
     nearestZoneDistanceM: null,
   };
 
