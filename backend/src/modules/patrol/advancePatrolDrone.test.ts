@@ -30,7 +30,7 @@ describe("advancePatrolDrone", () => {
     expect(state.asset.lat).toBe(45.3);
     expect(state.asset.lon).toBe(-75.8);
     expect(state.mode).toBe("patrol");
-    expect(state.segmentIndex).toBe(1);
+    expect(state.targetWaypointIndex).toBe(1);
     expect(state.pathId).toBe(1);
     expect(state.asset.heading).toBeGreaterThan(0);
   });
@@ -60,7 +60,7 @@ describe("advancePatrolDrone", () => {
       alt: 1000,
       heading: 90,
       speed: 200,
-      threat: "critical",
+      zone: { threat: "critical", tteSeconds: 0, nearestBoundaryM: 0 },
     });
 
     const farCritical: Asset = testAsset({
@@ -70,7 +70,7 @@ describe("advancePatrolDrone", () => {
       alt: 1000,
       heading: 90,
       speed: 200,
-      threat: "critical",
+      zone: { threat: "critical", tteSeconds: 0, nearestBoundaryM: 0 },
     });
 
     const shadowing = advancePatrolDrone({
@@ -96,7 +96,7 @@ describe("advancePatrolDrone", () => {
       alt: 1000,
       heading: 90,
       speed: 200,
-      threat: "critical",
+      zone: { threat: "critical", tteSeconds: 0, nearestBoundaryM: 0 },
     });
 
     const shadowing = advancePatrolDrone({
@@ -126,7 +126,7 @@ describe("advancePatrolDrone", () => {
       id: "patrol-2",
       lat: initial.asset.lat + 0.001,
       lon: initial.asset.lon + 0.001,
-      threat: "critical",
+      zone: { threat: "critical", tteSeconds: 0, nearestBoundaryM: 0 },
     };
 
     expect(findNearestCriticalAsset(initial.asset, [otherPatrol])).toBeNull();

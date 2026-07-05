@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import * as schema from "../../db/schema.js";
 import { savePatrolPath } from "../../services/patrol/patrolPathService.js";
 import { clearPatrolDroneStates, getPatrolDroneState } from "./droneStore.js";
-import { resetPatrolDrone, tickPatrolDrone } from "./patrolTick.js";
+import { initializePatrolDrone, tickPatrolDrone } from "./patrolTick.js";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 
 function createTestDb(): {
@@ -57,10 +57,10 @@ describe("patrolTick", () => {
     const { database, sqlite: testSqlite } = createTestDb();
     sqlite = testSqlite;
 
-    resetPatrolDrone(database);
+    initializePatrolDrone(database);
 
     expect(getPatrolDroneState(PATROL_ASSET_ID)).toBeUndefined();
-    expect(tickPatrolDrone([], 1, database)).toBeNull();
+    expect(tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, database })).toBeNull();
   });
 
   it("initializes the patrol drone at the saved route start", () => {
@@ -68,12 +68,13 @@ describe("patrolTick", () => {
     sqlite = testSqlite;
 
     savePatrolPath({ geojson: customLine }, database);
-    resetPatrolDrone(database);
+    initializePatrolDrone(database);
 
     const state = getPatrolDroneState(PATROL_ASSET_ID);
 
     expect(state?.asset.role).toBe("patrol");
     expect(state?.mode).toBe("patrol");
+    expect(state?.asset.zone).toBeNull();
   });
 
   it("returns a patrol wire asset that moves on tick", () => {
@@ -81,10 +82,10 @@ describe("patrolTick", () => {
     sqlite = testSqlite;
 
     savePatrolPath({ geojson: customLine }, database);
-    resetPatrolDrone(database);
+    initializePatrolDrone(database);
 
-    const first = tickPatrolDrone([], 1, database);
-    const second = tickPatrolDrone([], 1, database);
+    const first = tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, database });
+    const second = tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, database });
 
     expect(first?.id).toBe(PATROL_ASSET_ID);
     expect(first?.role).toBe("patrol");

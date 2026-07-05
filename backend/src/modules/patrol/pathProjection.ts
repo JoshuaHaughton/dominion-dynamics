@@ -1,13 +1,14 @@
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
 import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
+import { isClosedPatrolPath, patrolPathSegmentCount } from "./pathGeometry.js";
 
 export type PathProjection = {
   lon: number;
   lat: number;
   distanceM: number;
-  /** Waypoint index to fly toward when resuming patrol (forward end of the segment). */
-  segmentIndex: number;
+  /** Waypoint index to resume toward after rejoin intercepts the snap point. */
+  targetWaypointIndex: number;
 };
 
 function closestPointOnSegment(
@@ -37,12 +38,18 @@ function closestPointOnSegment(
   };
 }
 
-/** Closest point on the patrol polyline and the forward waypoint index to resume from. */
+/**
+ * Closest point on the patrol polyline and the waypoint to resume toward after rejoin.
+ * Rejoin flies to lon/lat; targetWaypointIndex picks up vertex patrol afterward.
+ */
 export function projectOntoPatrolPath(
   drone: Pick<Asset, "lat" | "lon">,
   path: PathGeoJson,
 ): PathProjection {
   const coordinates = path.geometry.coordinates;
+  const vertexCount = coordinates.length;
+  const closed = isClosedPatrolPath(path);
+  const segmentCount = patrolPathSegmentCount(path);
   const dronePoint = point([drone.lon, drone.lat]);
 
   let bestDistanceM = Infinity;
@@ -50,9 +57,9 @@ export function projectOntoPatrolPath(
   let bestLat = coordinates[0]![1];
   let bestSegmentStart = 0;
 
-  for (let index = 0; index < coordinates.length; index += 1) {
+  for (let index = 0; index < segmentCount; index += 1) {
     const start = coordinates[index]!;
-    const end = coordinates[(index + 1) % coordinates.length]!;
+    const end = coordinates[closed ? (index + 1) % vertexCount : index + 1]!;
     const [startLon, startLat] = start;
     const [endLon, endLat] = end;
 
@@ -78,10 +85,14 @@ export function projectOntoPatrolPath(
     }
   }
 
+  const forwardIndex = closed
+    ? (bestSegmentStart + 1) % vertexCount
+    : bestSegmentStart + 1;
+
   return {
     lon: bestLon,
     lat: bestLat,
     distanceM: bestDistanceM,
-    segmentIndex: (bestSegmentStart + 1) % coordinates.length,
+    targetWaypointIndex: Math.min(forwardIndex, vertexCount - 1),
   };
 }

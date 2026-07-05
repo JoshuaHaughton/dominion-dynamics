@@ -2,47 +2,56 @@ import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import type { Asset } from "@dominion-dynamics/shared";
 import { db } from "../../db/index.js";
 import type { AppDatabase } from "../../db/types.js";
-import {
-  resolvePatrolPathGeoJson,
-  resolvePatrolPathId,
-} from "../../services/patrol/patrolPathService.js";
+import { resolvePatrolPath } from "../../services/patrol/patrolPathService.js";
 import { createInitialPatrolDroneState } from "./createInitialPatrolDroneState.js";
-import { getPatrolDroneState, setPatrolDroneState } from "./droneStore.js";
+import {
+  deletePatrolDroneState,
+  getPatrolDroneState,
+  setPatrolDroneState,
+} from "./droneStore.js";
 import { advancePatrolDrone } from "./advancePatrolDrone.js";
 import { patrolAssetFromState } from "./toWireAsset.js";
 
-/** Place the patrol drone at the start of the saved route. */
-export function resetPatrolDrone(database: AppDatabase = db): void {
-  const geojson = resolvePatrolPathGeoJson(database);
+/** Place the patrol drone at the start of the saved route, or clear it when none exists. */
+export function initializePatrolDrone(database: AppDatabase = db): void {
+  const resolved = resolvePatrolPath(database);
 
-  if (!geojson) return;
+  if (!resolved) {
+    deletePatrolDroneState(PATROL_ASSET_ID);
+    return;
+  }
 
   setPatrolDroneState(
     PATROL_ASSET_ID,
-    createInitialPatrolDroneState(geojson, resolvePatrolPathId(database)),
+    createInitialPatrolDroneState(resolved.geojson, resolved.id),
   );
 }
 
-/** Advance patrol one tick against enriched traffic, or null when no route is saved. */
-export function tickPatrolDrone(
-  liveAssets: readonly Asset[],
-  deltaSeconds: number,
-  database: AppDatabase = db,
-): Asset | null {
-  const geojson = resolvePatrolPathGeoJson(database);
+type TickPatrolDroneParams = {
+  liveAssets: readonly Asset[];
+  deltaSeconds: number;
+  database?: AppDatabase;
+};
 
-  if (!geojson) {
+/** Advance patrol one tick against enriched traffic, or null when no route is saved. */
+export function tickPatrolDrone({
+  liveAssets,
+  deltaSeconds,
+  database = db,
+}: TickPatrolDroneParams): Asset | null {
+  const resolved = resolvePatrolPath(database);
+
+  if (!resolved) {
     return null;
   }
 
-  const pathId = resolvePatrolPathId(database);
   const current =
     getPatrolDroneState(PATROL_ASSET_ID) ??
-    createInitialPatrolDroneState(geojson, pathId);
+    createInitialPatrolDroneState(resolved.geojson, resolved.id);
 
   const next = advancePatrolDrone({
-    state: { ...current, pathId: pathId ?? current.pathId },
-    path: geojson,
+    state: { ...current, pathId: resolved.id },
+    path: resolved.geojson,
     liveAssets,
     deltaSeconds,
   });

@@ -1,28 +1,11 @@
-import bearing from "@turf/bearing";
-import { point } from "@turf/helpers";
 import type { PathGeoJson } from "@dominion-dynamics/shared";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { headingToward } from "../../lib/geo/distanceAndHeading.js";
 import {
   PATROL_DRONE_ALT_M,
   PATROL_DRONE_SPEED_MPS,
 } from "./constants.js";
 import type { PatrolDroneState } from "./types.js";
-
-/** Turf bearing is -180..180; asset heading is 0..360 clockwise from north. */
-function turfBearingToHeading(bearingDeg: number): number {
-  return (bearingDeg + 360) % 360;
-}
-
-function headingToward(
-  fromLon: number,
-  fromLat: number,
-  toLon: number,
-  toLat: number,
-): number {
-  return turfBearingToHeading(
-    bearing(point([fromLon, fromLat]), point([toLon, toLat])),
-  );
-}
 
 /** Build the initial patrol drone state at the first path vertex. */
 export function createInitialPatrolDroneState(
@@ -31,11 +14,12 @@ export function createInitialPatrolDroneState(
 ): PatrolDroneState {
   const coordinates = path.geometry.coordinates;
   const [startLon, startLat] = coordinates[0]!;
-  const [nextLon, nextLat] = coordinates[1]!;
+  const [nextLon, nextLat] = coordinates[Math.min(1, coordinates.length - 1)]!;
 
   return {
     mode: "patrol",
-    segmentIndex: 1,
+    targetWaypointIndex: Math.min(1, coordinates.length - 1),
+    pathDirection: "forward",
     shadowTargetId: null,
     pathId,
     rejoinTarget: null,
@@ -51,9 +35,7 @@ export function createInitialPatrolDroneState(
       callsign: "PATROL1",
       originCountry: null,
       onGround: false,
-      threat: "normal",
-      zoneTteSeconds: null,
-      nearestZoneDistanceM: null,
+      zone: null,
     },
   };
 }

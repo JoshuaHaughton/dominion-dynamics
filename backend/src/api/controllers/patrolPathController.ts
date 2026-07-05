@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { SavePatrolPathRequest } from "@dominion-dynamics/shared";
 import { republishLiveSnapshot } from "../../modules/realtime/publishLiveSnapshot.js";
-import { resetPatrolDrone } from "../../modules/patrol/patrolTick.js";
+import { initializePatrolDrone } from "../../modules/patrol/patrolTick.js";
 import {
   getPatrolPath,
   savePatrolPath,
@@ -24,7 +24,7 @@ export function savePatrolPathHandler(req: Request, res: Response): void {
   const body = req.body as SavePatrolPathRequest;
   const patrolPath = savePatrolPath(body);
 
-  resetPatrolDrone();
+  initializePatrolDrone();
   republishLiveSnapshot();
 
   res.json(patrolPath);

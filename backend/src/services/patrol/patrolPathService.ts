@@ -10,6 +10,11 @@ import {
   savePatrolPath as persistPatrolPath,
 } from "../../repositories/pathRepository.js";
 
+export type ResolvedPatrolPath = {
+  id: number;
+  geojson: PathGeoJson;
+};
+
 /** Saved user patrol route, if any. */
 export function getPatrolPath(database: AppDatabase = db): PatrolPath | null {
   const stored = getStoredPatrolPath(database);
@@ -29,14 +34,13 @@ export function savePatrolPath(
   return { geojson: saved.geojson };
 }
 
-/** Patrol path coordinates for sim modules when a route has been saved. */
-export function resolvePatrolPathGeoJson(
+/** Read the saved patrol path row once for sim modules. */
+export function resolvePatrolPath(
   database: AppDatabase = db,
-): PathGeoJson | null {
-  return getStoredPatrolPath(database)?.geojson ?? null;
-}
+): ResolvedPatrolPath | null {
+  const stored = getStoredPatrolPath(database);
 
-/** Stored patrol path row id, if the user has saved a patrol route. */
-export function resolvePatrolPathId(database: AppDatabase = db): number | null {
-  return getStoredPatrolPath(database)?.id ?? null;
+  if (!stored) return null;
+
+  return { id: stored.id, geojson: stored.geojson };
 }

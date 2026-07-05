@@ -25,7 +25,7 @@ describe("projectOntoPatrolPath", () => {
     expect(projection.lat).toBeCloseTo(45.3, 5);
     expect(projection.lon).toBeCloseTo(-75.8, 5);
     expect(projection.distanceM).toBeLessThan(1);
-    expect(projection.segmentIndex).toBe(1);
+    expect(projection.targetWaypointIndex).toBe(1);
   });
 
   it("snaps to the nearest point on a segment and advances the segment index", () => {
@@ -35,6 +35,6 @@ describe("projectOntoPatrolPath", () => {
     );
 
     expect(projection.distanceM).toBeGreaterThan(1000);
-    expect(projection.segmentIndex).toBeGreaterThanOrEqual(1);
+    expect(projection.targetWaypointIndex).toBeGreaterThanOrEqual(1);
   });
 });

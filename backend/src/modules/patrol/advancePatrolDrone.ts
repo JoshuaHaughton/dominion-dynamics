@@ -1,42 +1,11 @@
-import bearing from "@turf/bearing";
-import distance from "@turf/distance";
-import { point } from "@turf/helpers";
 import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
 import { isPatrolAsset } from "../sim/store.js";
 import { stepAsset } from "../sim/movement.js";
+import { distanceM, headingToward } from "../../lib/geo/distanceAndHeading.js";
 import { PATROL_WAYPOINT_ARRIVAL_M } from "./constants.js";
+import { isClosedPatrolPath } from "./pathGeometry.js";
 import { projectOntoPatrolPath } from "./pathProjection.js";
-import type { PatrolDroneState } from "./types.js";
-
-/** Turf bearing is -180..180; asset heading is 0..360 clockwise from north. */
-function turfBearingToHeading(bearingDeg: number): number {
-  return (bearingDeg + 360) % 360;
-}
-
-/** Haversine distance in meters between two WGS84 points (via Turf). */
-function distanceM(
-  fromLon: number,
-  fromLat: number,
-  toLon: number,
-  toLat: number,
-): number {
-  return (
-    distance(point([fromLon, fromLat]), point([toLon, toLat]), {
-      units: "kilometers",
-    }) * 1000
-  );
-}
-
-function headingToward(
-  fromLon: number,
-  fromLat: number,
-  toLon: number,
-  toLat: number,
-): number {
-  return turfBearingToHeading(
-    bearing(point([fromLon, fromLat]), point([toLon, toLat])),
-  );
-}
+import type { PatrolDroneState, PatrolPathDirection } from "./types.js";
 
 function stepTowardTarget(
   state: PatrolDroneState,
@@ -57,7 +26,7 @@ function stepTowardTarget(
   });
 }
 
-/** Nearest critical asset to the patrol drone, if any. */
+/** Nearest critical traffic asset to the patrol drone, if any. */
 export function findNearestCriticalAsset(
   drone: Pick<Asset, "lat" | "lon">,
   assets: readonly Asset[],
@@ -66,7 +35,7 @@ export function findNearestCriticalAsset(
   let nearestM = Infinity;
 
   for (const asset of assets) {
-    if (isPatrolAsset(asset) || asset.threat !== "critical") {
+    if (isPatrolAsset(asset) || asset.zone?.threat !== "critical") {
       continue;
     }
 
@@ -81,11 +50,45 @@ export function findNearestCriticalAsset(
   return nearest;
 }
 
-function nextSegmentIndex(
-  currentIndex: number,
-  vertexCount: number,
-): number {
-  return (currentIndex + 1) % vertexCount;
+function afterWaypointArrival(
+  state: PatrolDroneState,
+  path: PathGeoJson,
+): Pick<PatrolDroneState, "targetWaypointIndex" | "pathDirection"> {
+  const vertexCount = path.geometry.coordinates.length;
+  const index = state.targetWaypointIndex;
+
+  if (isClosedPatrolPath(path)) {
+    return {
+      targetWaypointIndex: (index + 1) % vertexCount,
+      pathDirection: state.pathDirection,
+    };
+  }
+
+  if (state.pathDirection === "forward") {
+    if (index >= vertexCount - 1) {
+      return {
+        targetWaypointIndex: vertexCount - 2,
+        pathDirection: "reverse",
+      };
+    }
+
+    return {
+      targetWaypointIndex: index + 1,
+      pathDirection: "forward",
+    };
+  }
+
+  if (index <= 0) {
+    return {
+      targetWaypointIndex: 1,
+      pathDirection: "forward",
+    };
+  }
+
+  return {
+    targetWaypointIndex: index - 1,
+    pathDirection: "reverse",
+  };
 }
 
 function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneState {
@@ -97,7 +100,7 @@ function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneSta
       mode: "patrol",
       shadowTargetId: null,
       rejoinTarget: null,
-      segmentIndex: projection.segmentIndex,
+      targetWaypointIndex: projection.targetWaypointIndex,
     };
   }
 
@@ -106,7 +109,7 @@ function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneSta
     mode: "rejoin",
     shadowTargetId: null,
     rejoinTarget: { lon: projection.lon, lat: projection.lat },
-    segmentIndex: projection.segmentIndex,
+    targetWaypointIndex: projection.targetWaypointIndex,
   };
 }
 
@@ -116,7 +119,7 @@ function advancePatrolAlongPath(
   deltaSeconds: number,
 ): PatrolDroneState {
   const coordinates = path.geometry.coordinates;
-  const target = coordinates[state.segmentIndex]!;
+  const target = coordinates[state.targetWaypointIndex]!;
   const [targetLon, targetLat] = target;
 
   const moved = stepTowardTarget(state, targetLon, targetLat, deltaSeconds);
@@ -128,17 +131,20 @@ function advancePatrolAlongPath(
     targetLat,
   );
 
-  const segmentIndex =
+  const waypointAdvance =
     arrivalDistanceM <= PATROL_WAYPOINT_ARRIVAL_M
-      ? nextSegmentIndex(state.segmentIndex, coordinates.length)
-      : state.segmentIndex;
+      ? afterWaypointArrival(state, path)
+      : {
+          targetWaypointIndex: state.targetWaypointIndex,
+          pathDirection: state.pathDirection,
+        };
 
   return {
     ...state,
     mode: "patrol",
     shadowTargetId: null,
     rejoinTarget: null,
-    segmentIndex,
+    ...waypointAdvance,
     asset: moved,
   };
 }
@@ -200,7 +206,7 @@ function advanceShadowingTarget(
 
 /**
  * Advance the patrol drone one sim tick.
- * SHADOW chases critical traffic; REJOIN flies to the path; PATROL follows waypoints.
+ * SHADOW chases critical traffic; REJOIN flies to the path snap point; PATROL follows waypoints.
  */
 export function advancePatrolDrone({
   state,

@@ -22,6 +22,11 @@ export function getPatrolDroneStates(): ReadonlyMap<string, PatrolDroneState> {
   return patrolDrones;
 }
 
+/** Remove one patrol drone from the in-memory store. */
+export function deletePatrolDroneState(droneId: string): void {
+  patrolDrones.delete(droneId);
+}
+
 /** Clear patrol drone state (tests / shutdown). */
 export function clearPatrolDroneStates(): void {
   patrolDrones.clear();
