@@ -32,7 +32,7 @@ export {
   DEFAULT_TRACK_HISTORY_CAPACITY,
   TRACK_HISTORY_WINDOW_SECONDS,
   trackHistoryCapacity,
-} from "./liveTrack.js";
+} from "./track/history.js";
 
 export type {
   ClientLiveMessage,
@@ -53,11 +53,11 @@ export {
   ZoneSchema,
 } from "./schemas/zone.js";
 
-export type { IcaoEmitterCategory } from "./icaoCategory.js";
+export type { IcaoEmitterCategory } from "./icao/emitterCategory.js";
 export {
   ICAO_EMITTER_CATEGORY_LABELS,
   ICAO_EMITTER_CATEGORY_SHORT_LABELS,
   icaoCategoryLabel,
   icaoCategoryShortLabel,
   isIcaoEmitterCategory,
-} from "./icaoCategory.js";
+} from "./icao/emitterCategory.js";

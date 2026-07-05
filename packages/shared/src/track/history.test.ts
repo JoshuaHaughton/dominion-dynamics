@@ -4,7 +4,7 @@ import {
   DEFAULT_TRACK_HISTORY_CAPACITY,
   TRACK_HISTORY_WINDOW_SECONDS,
   trackHistoryCapacity,
-} from "./liveTrack.js";
+} from "./history.js";
 
 describe("trackHistoryCapacity", () => {
   it("matches one sample per second over the history window", () => {

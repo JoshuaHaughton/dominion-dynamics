@@ -4,7 +4,7 @@ import {
   icaoCategoryLabel,
   icaoCategoryShortLabel,
   isIcaoEmitterCategory,
-} from "./icaoCategory.js";
+} from "./emitterCategory.js";
 
 describe("isIcaoEmitterCategory", () => {
   it("accepts official ICAO codes 0 through 20", () => {
