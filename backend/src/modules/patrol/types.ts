@@ -6,6 +6,8 @@ export type PatrolDroneState = {
   segmentIndex: number;
   shadowTargetId: string | null;
   pathId: number | null;
+  /** Fixed snap point on the path while rejoining after shadow. */
+  rejoinTarget: { lon: number; lat: number } | null;
   asset: Asset;
 };
 

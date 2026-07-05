@@ -2,8 +2,10 @@ import bearing from "@turf/bearing";
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
 import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
+import { isPatrolAsset } from "../sim/store.js";
 import { stepAsset } from "../sim/movement.js";
 import { PATROL_WAYPOINT_ARRIVAL_M } from "./constants.js";
+import { projectOntoPatrolPath } from "./pathProjection.js";
 import type { PatrolDroneState } from "./types.js";
 
 /** Turf bearing is -180..180; asset heading is 0..360 clockwise from north. */
@@ -25,8 +27,34 @@ function distanceM(
   );
 }
 
-function isPatrolAsset(asset: Asset): boolean {
-  return asset.role === "patrol";
+function headingToward(
+  fromLon: number,
+  fromLat: number,
+  toLon: number,
+  toLat: number,
+): number {
+  return turfBearingToHeading(
+    bearing(point([fromLon, fromLat]), point([toLon, toLat])),
+  );
+}
+
+function stepTowardTarget(
+  state: PatrolDroneState,
+  targetLon: number,
+  targetLat: number,
+  deltaSeconds: number,
+): Asset {
+  const heading = headingToward(
+    state.asset.lon,
+    state.asset.lat,
+    targetLon,
+    targetLat,
+  );
+
+  return stepAsset({
+    asset: { ...state.asset, heading },
+    deltaSeconds,
+  });
 }
 
 /** Nearest critical asset to the patrol drone, if any. */
@@ -53,33 +81,33 @@ export function findNearestCriticalAsset(
   return nearest;
 }
 
-/** Index of the path vertex closest to the drone (for rejoin after shadow). */
-export function nearestWaypointIndex(
-  drone: Pick<Asset, "lat" | "lon">,
-  path: PathGeoJson,
-): number {
-  const coordinates = path.geometry.coordinates;
-  let bestIndex = 0;
-  let bestM = Infinity;
-
-  for (let index = 0; index < coordinates.length; index += 1) {
-    const [lon, lat] = coordinates[index]!;
-    const vertexDistanceM = distanceM(drone.lon, drone.lat, lon, lat);
-
-    if (vertexDistanceM < bestM) {
-      bestM = vertexDistanceM;
-      bestIndex = index;
-    }
-  }
-
-  return bestIndex;
-}
-
 function nextSegmentIndex(
   currentIndex: number,
   vertexCount: number,
 ): number {
   return (currentIndex + 1) % vertexCount;
+}
+
+function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneState {
+  const projection = projectOntoPatrolPath(state.asset, path);
+
+  if (projection.distanceM <= PATROL_WAYPOINT_ARRIVAL_M) {
+    return {
+      ...state,
+      mode: "patrol",
+      shadowTargetId: null,
+      rejoinTarget: null,
+      segmentIndex: projection.segmentIndex,
+    };
+  }
+
+  return {
+    ...state,
+    mode: "rejoin",
+    shadowTargetId: null,
+    rejoinTarget: { lon: projection.lon, lat: projection.lat },
+    segmentIndex: projection.segmentIndex,
+  };
 }
 
 function advancePatrolAlongPath(
@@ -90,17 +118,8 @@ function advancePatrolAlongPath(
   const coordinates = path.geometry.coordinates;
   const target = coordinates[state.segmentIndex]!;
   const [targetLon, targetLat] = target;
-  const heading = turfBearingToHeading(
-    bearing(
-      point([state.asset.lon, state.asset.lat]),
-      point([targetLon, targetLat]),
-    ),
-  );
 
-  const moved = stepAsset({
-    asset: { ...state.asset, heading },
-    deltaSeconds,
-  });
+  const moved = stepTowardTarget(state, targetLon, targetLat, deltaSeconds);
 
   const arrivalDistanceM = distanceM(
     state.asset.lon,
@@ -118,7 +137,47 @@ function advancePatrolAlongPath(
     ...state,
     mode: "patrol",
     shadowTargetId: null,
+    rejoinTarget: null,
     segmentIndex,
+    asset: moved,
+  };
+}
+
+function advanceRejoinTowardPath(
+  state: PatrolDroneState,
+  path: PathGeoJson,
+  deltaSeconds: number,
+): PatrolDroneState {
+  const target = state.rejoinTarget;
+
+  if (!target) {
+    return advancePatrolAlongPath(state, path, deltaSeconds);
+  }
+
+  const moved = stepTowardTarget(state, target.lon, target.lat, deltaSeconds);
+  const arrivalDistanceM = distanceM(
+    state.asset.lon,
+    state.asset.lat,
+    target.lon,
+    target.lat,
+  );
+
+  if (arrivalDistanceM <= PATROL_WAYPOINT_ARRIVAL_M) {
+    return advancePatrolAlongPath(
+      {
+        ...state,
+        mode: "patrol",
+        rejoinTarget: null,
+        asset: moved,
+      },
+      path,
+      deltaSeconds,
+    );
+  }
+
+  return {
+    ...state,
+    mode: "rejoin",
     asset: moved,
   };
 }
@@ -128,29 +187,20 @@ function advanceShadowingTarget(
   target: Asset,
   deltaSeconds: number,
 ): PatrolDroneState {
-  const heading = turfBearingToHeading(
-    bearing(
-      point([state.asset.lon, state.asset.lat]),
-      point([target.lon, target.lat]),
-    ),
-  );
-
-  const moved = stepAsset({
-    asset: { ...state.asset, heading },
-    deltaSeconds,
-  });
+  const moved = stepTowardTarget(state, target.lon, target.lat, deltaSeconds);
 
   return {
     ...state,
     mode: "shadow",
     shadowTargetId: target.id,
+    rejoinTarget: null,
     asset: moved,
   };
 }
 
 /**
  * Advance the patrol drone one sim tick.
- * PATROL follows path waypoints; SHADOW chases the nearest critical asset.
+ * SHADOW chases critical traffic; REJOIN flies to the path; PATROL follows waypoints.
  */
 export function advancePatrolDrone({
   state,
@@ -166,26 +216,20 @@ export function advancePatrolDrone({
   const shadowTarget = findNearestCriticalAsset(state.asset, liveAssets);
 
   if (shadowTarget) {
+    // Critical traffic nearby — chase takes priority over the route.
     return advanceShadowingTarget(state, shadowTarget, deltaSeconds);
   }
 
   if (state.mode === "shadow") {
-    const rejoinIndex = nearestWaypointIndex(state.asset, path);
-
-    return advancePatrolAlongPath(
-      {
-        ...state,
-        mode: "patrol",
-        shadowTargetId: null,
-        segmentIndex: nextSegmentIndex(
-          rejoinIndex,
-          path.geometry.coordinates.length,
-        ),
-      },
-      path,
-      deltaSeconds,
-    );
+    // Shadow ended — snap onto the path, then fly back toward the route.
+    return advanceRejoinTowardPath(beginRejoin(state, path), path, deltaSeconds);
   }
 
+  if (state.mode === "rejoin") {
+    // Fly toward the saved snap point until back on the path.
+    return advanceRejoinTowardPath(state, path, deltaSeconds);
+  }
+
+  // Normal patrol — follow the next route waypoint.
   return advancePatrolAlongPath(state, path, deltaSeconds);
 }

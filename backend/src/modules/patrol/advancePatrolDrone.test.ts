@@ -115,8 +115,8 @@ describe("advancePatrolDrone", () => {
       deltaSeconds: 1,
     });
 
-    expect(resumed.mode).toBe("patrol");
     expect(resumed.shadowTargetId).toBeNull();
+    expect(["patrol", "rejoin"]).toContain(resumed.mode);
   });
 
   it("ignores other patrol assets when selecting a shadow target", () => {

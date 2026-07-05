@@ -38,6 +38,7 @@ export function createInitialPatrolDroneState(
     segmentIndex: 1,
     shadowTargetId: null,
     pathId,
+    rejoinTarget: null,
     asset: {
       id: PATROL_ASSET_ID,
       lat: startLat,
@@ -51,7 +52,7 @@ export function createInitialPatrolDroneState(
       originCountry: null,
       onGround: false,
       threat: "normal",
-      tteSeconds: null,
+      zoneTteSeconds: null,
       nearestZoneDistanceM: null,
     },
   };
