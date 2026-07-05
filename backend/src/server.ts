@@ -5,6 +5,7 @@ import "./db/index.js";
 import { assetsRouter } from "./api/routes/assets.js";
 import { healthRouter } from "./api/routes/health.js";
 import { zonesRouter } from "./api/routes/zones.js";
+import { patrolPathRouter } from "./api/routes/patrolPath.js";
 import {
   attachWebSocket,
   closeWebSocketServer,
@@ -29,6 +30,7 @@ app.use(express.json());
 app.use("/api/health", healthRouter);
 app.use("/api/assets", assetsRouter);
 app.use("/api/zones", zonesRouter);
+app.use("/api/patrol-path", patrolPathRouter);
 
 loadZoneGeometryCache();
 

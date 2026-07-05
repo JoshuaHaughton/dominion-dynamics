@@ -1,13 +1,10 @@
 import type { CreateZoneRequest, Zone } from "@dominion-dynamics/shared";
-import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { db } from "../db/index.js";
-import * as schema from "../db/schema.js";
+import type { AppDatabase } from "../db/types.js";
 import { zones } from "../db/schema.js";
 
-type Database = BetterSQLite3Database<typeof schema>;
-
 /** Read all restricted zone rows from SQLite. */
-export function findAllZones(database: Database = db): Zone[] {
+export function findAllZones(database: AppDatabase = db): Zone[] {
   const rows = database.select().from(zones).all();
 
   return rows.map((row) => ({
@@ -20,7 +17,7 @@ export function findAllZones(database: Database = db): Zone[] {
 /** Insert a restricted zone row and return the persisted record. */
 export function insertZone(
   input: CreateZoneRequest,
-  database: Database = db,
+  database: AppDatabase = db,
 ): Zone {
   const inserted = database
     .insert(zones)

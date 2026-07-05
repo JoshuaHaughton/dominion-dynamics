@@ -5,7 +5,7 @@ export function testAsset(
   overrides: Partial<Asset> & Pick<Asset, "id" | "lat" | "lon" | "alt" | "heading" | "speed">,
 ): Asset {
   return {
-    source: "synthetic",
+    role: "traffic",
     category: 0,
     callsign: null,
     originCountry: null,

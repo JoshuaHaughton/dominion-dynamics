@@ -43,7 +43,7 @@ export function mapOpenSkyStateToAsset(
     alt,
     heading: normalizeHeading(heading),
     speed,
-    source: "opensky",
+    role: "traffic",
     category,
     callsign,
     originCountry: state[I.originCountry],

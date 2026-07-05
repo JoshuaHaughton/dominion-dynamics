@@ -63,7 +63,7 @@ describe("respawnAtBoundary", () => {
     alt: 5000,
     heading: 180,
     speed: 120,
-    source: "synthetic",
+    role: "traffic",
     category: 4,
     callsign: null,
     originCountry: null,
@@ -129,17 +129,17 @@ describe("respawnAtBoundary", () => {
     expect(respawned.callsign).toBeNull();
     expect(respawned.originCountry).toBeNull();
     expect(respawned.onGround).toBe(false);
-    expect(respawned.source).toBe("synthetic");
+    expect(respawned.role).toBe("traffic");
   });
 
-  it("sets source to synthetic when the exiting track was from OpenSky", () => {
+  it("respawns as traffic when the exiting track was from OpenSky ingest", () => {
     mockRespawnRandom(0);
 
     const respawned = respawnAtBoundary(
       {
         ...sampleAsset,
         id: "abc123",
-        source: "opensky",
+        role: "traffic",
         category: 8,
         callsign: "CFCO",
         originCountry: "Canada",
@@ -148,7 +148,7 @@ describe("respawnAtBoundary", () => {
       ottawaRegion,
     );
 
-    expect(respawned.source).toBe("synthetic");
+    expect(respawned.role).toBe("traffic");
     expect(respawned.callsign).toBeNull();
     expect(respawned.originCountry).toBeNull();
   });

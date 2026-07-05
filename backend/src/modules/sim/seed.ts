@@ -87,7 +87,7 @@ function createSyntheticAsset(): Asset {
     heading: randomInRange(0, 360),
     speed,
     category,
-    source: "synthetic",
+    role: "traffic",
     callsign: null,
     originCountry: null,
     onGround: false,
@@ -104,7 +104,7 @@ export function seedAssets(count: number): Asset[] {
 
 /**
  * Place a new track on a random boundary point with heading toward region center.
- * Assigns a fresh id and synthetic source so clients treat boundary entry as a new aircraft.
+ * Assigns a fresh id so clients treat boundary entry as a new aircraft.
  */
 export function respawnAtBoundary(asset: Asset, region: SimBounds): Asset {
   const { lat, lon } = randomEdgePoint(region);
@@ -130,7 +130,7 @@ export function respawnAtBoundary(asset: Asset, region: SimBounds): Asset {
     heading,
     speed,
     category,
-    source: "synthetic",
+    role: "traffic",
     callsign: null,
     originCountry: null,
     onGround: false,
