@@ -3,12 +3,14 @@ export type { AssetRole, SimBounds, ThreatLevel } from "./asset/types.js";
 export type {
   Asset,
   AssetPatrolState,
+  AssetZoneState,
   LiveServerMessage,
   SnapshotMessage,
 } from "./asset/schema.js";
 export {
   AssetPatrolStateSchema,
   AssetSchema,
+  AssetZoneStateSchema,
   LiveServerMessageSchema,
   SnapshotMessageSchema,
 } from "./asset/schema.js";

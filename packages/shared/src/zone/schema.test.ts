@@ -103,6 +103,31 @@ describe("zone schemas", () => {
           },
         },
       ],
+      [
+        "polygon with holes",
+        {
+          ...validPolygon,
+          geometry: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [-75.8, 45.3],
+                [-75.6, 45.3],
+                [-75.6, 45.45],
+                [-75.8, 45.45],
+                [-75.8, 45.3],
+              ],
+              [
+                [-75.75, 45.35],
+                [-75.65, 45.35],
+                [-75.65, 45.4],
+                [-75.75, 45.4],
+                [-75.75, 45.35],
+              ],
+            ],
+          },
+        },
+      ],
     ])("rejects %s", (_label, geojson) => {
       expect(ZoneGeoJsonSchema.safeParse(geojson).success).toBe(false);
     });

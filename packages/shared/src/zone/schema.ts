@@ -27,6 +27,13 @@ export const ZoneGeoJsonSchema: z.ZodType<ZoneGeoJson> = z
   })
   .passthrough()
   .superRefine((feature, context) => {
+    if (feature.geometry.coordinates.length > 1) {
+      context.addIssue({
+        code: "custom",
+        message: "geojson must be a simple polygon with one outer ring (no holes)",
+      });
+    }
+
     const outerRing = feature.geometry.coordinates[0];
 
     if (!outerRing || !isClosedRing(outerRing)) {
