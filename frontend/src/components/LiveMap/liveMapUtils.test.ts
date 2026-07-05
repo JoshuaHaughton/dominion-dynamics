@@ -16,7 +16,7 @@ describe("assetsToFeatureCollection", () => {
     originCountry: null,
     onGround: false,
     threat: "normal",
-    tteSeconds: null,
+    zoneTteSeconds: null,
     nearestZoneDistanceM: null,
   };
 
@@ -24,7 +24,7 @@ describe("assetsToFeatureCollection", () => {
     ...syntheticAsset,
     id: "warn-test",
     threat: "warning",
-    tteSeconds: 120,
+    zoneTteSeconds: 120,
   };
 
   it("returns an empty collection for no assets", () => {

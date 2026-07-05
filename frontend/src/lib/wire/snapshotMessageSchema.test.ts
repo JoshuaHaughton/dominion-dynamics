@@ -15,7 +15,7 @@ describe("SnapshotMessageSchema", () => {
     originCountry: null,
     onGround: false,
     threat: "normal" as const,
-    tteSeconds: null,
+    zoneTteSeconds: null,
     nearestZoneDistanceM: null,
   };
 
@@ -67,7 +67,7 @@ describe("SnapshotMessageSchema", () => {
     expect(message.selectedTrack).toEqual(selectedTrack);
   });
 
-  it("accepts warning assets with tteSeconds and nearest zone distance", () => {
+  it("accepts warning assets with zoneTteSeconds and nearest zone distance", () => {
     const message = SnapshotMessageSchema.parse({
       type: "snapshot",
       ts: 123,
@@ -75,14 +75,14 @@ describe("SnapshotMessageSchema", () => {
         {
           ...baseAsset,
           threat: "warning",
-          tteSeconds: 45,
+          zoneTteSeconds: 45,
           nearestZoneDistanceM: 1200,
         },
       ],
     });
 
     expect(message.assets[0]?.threat).toBe("warning");
-    expect(message.assets[0]?.tteSeconds).toBe(45);
+    expect(message.assets[0]?.zoneTteSeconds).toBe(45);
     expect(message.assets[0]?.nearestZoneDistanceM).toBe(1200);
   });
 
@@ -102,7 +102,7 @@ describe("SnapshotMessageSchema", () => {
   it("rejects assets missing threat fields", () => {
     const {
       threat: _threat,
-      tteSeconds: _tte,
+      zoneTteSeconds: _tte,
       nearestZoneDistanceM: _distance,
       ...legacyAsset
     } = baseAsset;
