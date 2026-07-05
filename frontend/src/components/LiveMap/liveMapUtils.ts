@@ -36,7 +36,7 @@ export function assetsToFeatureCollection(
       },
       properties: {
         id: asset.id,
-        source: asset.source,
+        role: asset.role,
         heading: asset.heading,
         threat: asset.threat,
       },

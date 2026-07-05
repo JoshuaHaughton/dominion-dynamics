@@ -81,8 +81,8 @@ export function AssetInfoPanel({ asset, onClose }: AssetInfoPanelProps) {
           <dd>{asset.id}</dd>
         </div>
         <div className={styles.row}>
-          <dt>Source</dt>
-          <dd>{asset.source}</dd>
+          <dt>Role</dt>
+          <dd>{asset.role === "patrol" ? "Patrol" : "Traffic"}</dd>
         </div>
         {asset.callsign !== null ? (
           <div className={styles.row}>

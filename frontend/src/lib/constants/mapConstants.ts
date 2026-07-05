@@ -45,7 +45,7 @@ export const ASSET_SOURCE_COLORS = {
   stroke: "#f8fafc",
 } as const;
 
-/** Server threat symbology (P9: revisit dual encoding with source). */
+/** Threat level colors for traffic assets on the map. */
 export const ASSET_THREAT_COLORS = {
   normal: "#64748b",
   warning: "#f59e0b",

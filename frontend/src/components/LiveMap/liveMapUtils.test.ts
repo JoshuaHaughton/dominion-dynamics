@@ -10,7 +10,7 @@ describe("assetsToFeatureCollection", () => {
     alt: 1000,
     heading: 90,
     speed: 120,
-    source: "synthetic",
+    role: "traffic",
     category: 0,
     callsign: null,
     originCountry: null,
@@ -41,7 +41,7 @@ describe("assetsToFeatureCollection", () => {
     expect(collection.features[0]?.geometry.coordinates).toEqual([-75.7, 45.4]);
     expect(collection.features[0]?.properties).toEqual({
       id: "syn-test",
-      source: "synthetic",
+      role: "traffic",
       heading: 90,
       threat: "normal",
     });

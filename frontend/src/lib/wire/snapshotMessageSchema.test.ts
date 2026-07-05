@@ -9,7 +9,7 @@ describe("SnapshotMessageSchema", () => {
     alt: 1000,
     heading: 90,
     speed: 120,
-    source: "synthetic" as const,
+    role: "traffic" as const,
     category: 0,
     callsign: null,
     originCountry: null,
