@@ -1,9 +1,8 @@
 import { simConfig } from "./config.js";
 import { stepAsset } from "./movement.js";
 import { isInsideSeedRegion, respawnAtBoundary } from "./seed.js";
-import { getAssetList, setAssets } from "./store.js";
-import { enrichAssetsWithThreat } from "../threat/evaluateAsset.js";
-import { getCachedZones } from "../threat/zoneGeometryCache.js";
+import { getAssetList } from "./store.js";
+import { publishLiveSnapshot } from "../realtime/publishLiveSnapshot.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -46,10 +45,8 @@ export function startTicker(onTick: (assets: Asset[]) => void): void {
       deltaSeconds,
       seedRegion,
     });
-    const zones = getCachedZones();
-    const assets = enrichAssetsWithThreat(moved, zones);
+    const assets = publishLiveSnapshot(moved);
 
-    setAssets(assets);
     onTick(assets);
   }, simConfig.tickMs);
 }

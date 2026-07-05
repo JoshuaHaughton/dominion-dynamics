@@ -6,15 +6,17 @@ import { healthRouter } from "./api/routes/health.js";
 import { zonesRouter } from "./api/routes/zones.js";
 import {
   attachWebSocket,
-  broadcastSnapshot,
   closeWebSocketServer,
   WS_LIVE_PATH,
-} from "./realtime/ws.server.js";
-import { loadZoneGeometryCache } from "./threat/zoneGeometryCache.js";
-import { getAssets, startSim, stopSim } from "./sim/service.js";
+} from "./modules/realtime/ws.server.js";
+import { loadZoneGeometryCache } from "./modules/threat/zoneGeometryCache.js";
+import { getAssets, startSim, stopSim } from "./modules/sim/service.js";
+
+const port = Number(process.env.PORT ?? 8000);
+
+let shuttingDown = false;
 
 const app = express();
-const port = Number(process.env.PORT ?? 8000);
 
 app.use(
   cors({
@@ -32,7 +34,7 @@ const server = http.createServer(app);
 
 attachWebSocket({ server, getConnectSnapshot: getAssets });
 
-startSim({ onTick: broadcastSnapshot });
+startSim();
 
 server.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
@@ -40,13 +42,22 @@ server.listen(port, () => {
 });
 
 function shutdown(): void {
+  if (shuttingDown) return;
+
+  shuttingDown = true;
   console.log("\nShutting down...");
 
   stopSim();
   closeWebSocketServer();
+  server.closeAllConnections();
   server.close(() => {
     process.exit(0);
   });
+
+  // tsx watch force-kills after 5s if clients keep the HTTP socket open.
+  setTimeout(() => {
+    process.exit(0);
+  }, 4_000).unref();
 }
 
 process.on("SIGINT", shutdown);

@@ -1,6 +1,6 @@
 import bbox from "@turf/bbox";
 import type { Zone } from "@dominion-dynamics/shared";
-import { getZones } from "../zones/zoneService.js";
+import { listZones } from "../../services/zones/zoneService.js";
 import type { CachedZone } from "./types.js";
 
 let cachedZones: CachedZone[] = [];
@@ -20,7 +20,7 @@ export function toCachedZone(zone: Zone): CachedZone {
 /** Load all zones from SQLite into the in-memory geometry cache (server startup). */
 export function loadZoneGeometryCache(): void {
   try {
-    cachedZones = getZones().map(toCachedZone);
+    cachedZones = listZones().map(toCachedZone);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
 

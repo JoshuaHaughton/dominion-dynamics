@@ -6,8 +6,8 @@ import { zones } from "../db/schema.js";
 
 type Database = BetterSQLite3Database<typeof schema>;
 
-/** Read all restricted zones from SQLite. */
-export function getZones(database: Database = db): Zone[] {
+/** Read all restricted zone rows from SQLite. */
+export function findAllZones(database: Database = db): Zone[] {
   const rows = database.select().from(zones).all();
 
   return rows.map((row) => ({
@@ -17,8 +17,8 @@ export function getZones(database: Database = db): Zone[] {
   }));
 }
 
-/** Insert a restricted zone and return the persisted row. */
-export function createZone(
+/** Insert a restricted zone row and return the persisted record. */
+export function insertZone(
   input: CreateZoneRequest,
   database: Database = db,
 ): Zone {

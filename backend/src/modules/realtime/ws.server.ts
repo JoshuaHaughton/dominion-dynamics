@@ -54,7 +54,20 @@ export function broadcastSnapshot(assets: readonly Asset[]): void {
   }
 }
 
+/** Close every client with a normal shutdown code, then stop the WebSocket server. */
 export function closeWebSocketServer(): void {
-  wss?.close();
+  if (!wss) {
+    return;
+  }
+
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.close(1001, "Server shutting down");
+    } else {
+      client.terminate();
+    }
+  }
+
+  wss.close();
   wss = undefined;
 }

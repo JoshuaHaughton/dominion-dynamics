@@ -1,5 +1,5 @@
-import { simConfig } from "./sim/config.js";
-import { startSim, stopSim } from "./sim/service.js";
+import { simConfig } from "./modules/sim/config.js";
+import { startSim, stopSim } from "./modules/sim/service.js";
 
 const { seedRegion } = simConfig;
 

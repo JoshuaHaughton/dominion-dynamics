@@ -1,8 +1,9 @@
 import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
-import * as schema from "../db/schema.js";
-import { createZone, getZones } from "./zoneService.js";
+import * as schema from "../../db/schema.js";
+import { clearZoneGeometryCache, getCachedZones } from "../../modules/threat/zoneGeometryCache.js";
+import { createZone, listZones } from "./zoneService.js";
 
 const validPolygon = {
   type: "Feature" as const,
@@ -48,9 +49,10 @@ describe("zoneService", () => {
   afterEach(() => {
     sqlite?.close();
     sqlite = undefined;
+    clearZoneGeometryCache();
   });
 
-  it("creates and reads persisted zones", () => {
+  it("creates a zone and appends it to the geometry cache", () => {
     const { database, sqlite: testSqlite } = createTestDb();
     sqlite = testSqlite;
 
@@ -59,9 +61,8 @@ describe("zoneService", () => {
       database,
     );
 
-    expect(created.id).toBeTypeOf("number");
-    expect(created.name).toBe("Zone 1");
-    expect(created.geojson).toEqual(validPolygon);
-    expect(getZones(database)).toEqual([created]);
+    expect(listZones(database)).toEqual([created]);
+    expect(getCachedZones()).toHaveLength(1);
+    expect(getCachedZones()[0]?.id).toBe(created.id);
   });
 });

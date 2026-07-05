@@ -1,9 +1,8 @@
 import { simConfig } from "./config.js";
 import { seedAssets } from "./seed.js";
-import { setAssets, getAssetList } from "./store.js";
+import { getAssetList } from "./store.js";
+import { publishLiveSnapshot } from "../realtime/publishLiveSnapshot.js";
 import { startTicker, stopTicker } from "./ticker.js";
-import { enrichAssetsWithThreat } from "../threat/evaluateAsset.js";
-import { getCachedZones } from "../threat/zoneGeometryCache.js";
 import type { Asset } from "@dominion-dynamics/shared";
 
 export type StartSimOptions = {
@@ -21,9 +20,7 @@ export function startSim(options: StartSimOptions = {}): void {
   running = true;
 
   const seeded = seedAssets(simConfig.assetCount);
-  const zones = getCachedZones();
-
-  setAssets(enrichAssetsWithThreat(seeded, zones));
+  publishLiveSnapshot(seeded);
 
   startTicker((assets) => {
     options.onTick?.(assets);
