@@ -2,10 +2,8 @@ import { simConfig } from "./config.js";
 import { stepAsset } from "./movement.js";
 import { isInsideSeedRegion, respawnAtBoundary } from "./seed.js";
 import { getTrafficAssets } from "./store.js";
-import {
-  publishEnrichedTrafficWithPatrol,
-  enrichTrafficWithZoneThreat,
-} from "../realtime/publishLiveSnapshot.js";
+import { publishLiveSnapshot } from "../realtime/publishLiveSnapshot.js";
+import { enrichTrafficWithZoneThreat } from "../threat/enrichTrafficWithZoneThreat.js";
 import { getCachedZones } from "../threat/zoneGeometryCache.js";
 import { tickPatrolDrone } from "../patrol/patrolTick.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
@@ -51,11 +49,12 @@ export function startTicker(onTick: (assets: Asset[]) => void): void {
       seedRegion,
     });
     const enrichedTraffic = enrichTrafficWithZoneThreat(moved, getCachedZones());
-    const patrolAsset = tickPatrolDrone(enrichedTraffic, deltaSeconds);
-    const assets = publishEnrichedTrafficWithPatrol(
-      enrichedTraffic,
-      patrolAsset,
-    );
+    const patrol = tickPatrolDrone({ liveAssets: enrichedTraffic, deltaSeconds });
+
+    const assets = publishLiveSnapshot({
+      traffic: enrichedTraffic,
+      patrol,
+    });
 
     onTick(assets);
   }, simConfig.tickMs);
