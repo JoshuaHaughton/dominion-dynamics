@@ -70,6 +70,9 @@ export {
   SavePatrolPathRequestSchema,
 } from "./patrol/path.js";
 
+export type { ValidationErrorBody } from "./api/validationError.js";
+export { ValidationErrorBodySchema } from "./api/validationError.js";
+
 export type { PatrolMode } from "./patrol/constants.js";
 export { PATROL_ASSET_ID } from "./patrol/constants.js";
 

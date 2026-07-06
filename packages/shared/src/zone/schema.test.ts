@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { CreateZoneRequestSchema, ZoneGeoJsonSchema } from "./schema.js";
+import {
+  CreateZoneRequestSchema,
+  ZoneGeoJsonSchema,
+  ZoneListSchema,
+  ZoneSchema,
+} from "./schema.js";
 
 describe("zone schemas", () => {
   const validPolygon = {
@@ -130,6 +135,61 @@ describe("zone schemas", () => {
       ],
     ])("rejects %s", (_label, geojson) => {
       expect(ZoneGeoJsonSchema.safeParse(geojson).success).toBe(false);
+    });
+  });
+
+  describe("ZoneSchema", () => {
+    const validZone = {
+      id: 1,
+      name: "Zone 1",
+      geojson: validPolygon,
+    };
+
+    it("accepts a valid zone payload", () => {
+      expect(ZoneSchema.parse(validZone)).toEqual(validZone);
+    });
+
+    it.each([
+      ["non-object", "zone"],
+      ["missing id", { name: "Zone 1", geojson: validPolygon }],
+      ["missing name", { id: 1, geojson: validPolygon }],
+      ["non-integer id", { id: 1.5, name: "Zone 1", geojson: validPolygon }],
+      [
+        "non-polygon geojson",
+        {
+          id: 1,
+          name: "Zone 1",
+          geojson: {
+            type: "Feature",
+            properties: {},
+            geometry: { type: "Point", coordinates: [0, 0] },
+          },
+        },
+      ],
+    ])("rejects %s", (_label, payload) => {
+      expect(ZoneSchema.safeParse(payload).success).toBe(false);
+    });
+  });
+
+  describe("ZoneListSchema", () => {
+    const validZone = {
+      id: 1,
+      name: "Zone 1",
+      geojson: validPolygon,
+    };
+
+    it("accepts a valid zone list", () => {
+      expect(ZoneListSchema.parse([validZone])).toEqual([validZone]);
+    });
+
+    it("rejects malformed lists", () => {
+      expect(ZoneListSchema.safeParse("zones").success).toBe(false);
+      expect(
+        ZoneListSchema.safeParse([
+          validZone,
+          { id: "bad", name: "Zone 2", geojson: validZone.geojson },
+        ]).success,
+      ).toBe(false);
     });
   });
 });

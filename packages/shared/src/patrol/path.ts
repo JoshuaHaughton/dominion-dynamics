@@ -13,7 +13,9 @@ export const PathGeoJsonSchema: z.ZodType<PathGeoJson> = z
     properties: z.record(z.string(), z.unknown()).optional(),
     geometry: z.object({
       type: z.literal("LineString"),
-      coordinates: z.array(lonLatPairSchema).min(2),
+      coordinates: z
+        .array(lonLatPairSchema)
+        .min(2, "Patrol path needs at least two waypoints"),
     }),
   })
   .passthrough() as z.ZodType<PathGeoJson>;

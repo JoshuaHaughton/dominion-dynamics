@@ -30,7 +30,7 @@ export const ZoneGeoJsonSchema: z.ZodType<ZoneGeoJson> = z
     if (feature.geometry.coordinates.length > 1) {
       context.addIssue({
         code: "custom",
-        message: "geojson must be a simple polygon with one outer ring (no holes)",
+        message: "Draw a simple polygon with one outer ring (no holes)",
       });
     }
 
@@ -39,14 +39,14 @@ export const ZoneGeoJsonSchema: z.ZodType<ZoneGeoJson> = z
     if (!outerRing || !isClosedRing(outerRing)) {
       context.addIssue({
         code: "custom",
-        message: "geojson must be a Polygon Feature with a closed ring",
+        message: "Close the zone on the first point",
       });
     }
   }) as z.ZodType<ZoneGeoJson>;
 
 /** POST /api/zones request body. */
 export const CreateZoneRequestSchema = z.object({
-  name: z.string().trim().min(1),
+  name: z.string().trim().min(1, "Zone name is required"),
   geojson: ZoneGeoJsonSchema,
 });
 
