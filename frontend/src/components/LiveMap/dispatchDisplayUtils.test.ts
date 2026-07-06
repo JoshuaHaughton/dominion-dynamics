@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { Asset } from "@dominion-dynamics/shared";
+import type { Asset, DispatchPhase } from "@dominion-dynamics/shared";
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import {
-  formatDispatchBaseLabel,
-  formatDispatchFocusField,
-  formatDispatchFocusValue,
+  buildDispatchMissionRow,
   formatDispatchPhase,
   PATROL_ROUTE_BASE_LABEL,
 } from "./dispatchDisplayUtils.js";
@@ -23,48 +22,97 @@ const trafficAsset: Asset = {
   zone: { threat: "critical", zoneTteSeconds: null, nearestBoundaryM: 0 },
 };
 
+function dispatchDrone(
+  id: string,
+  callsign: string,
+  origin: "dispatch" | "patrol",
+  targetId: string,
+  phase: DispatchPhase,
+  homeAirportIdent: string,
+): Asset {
+  return {
+    id,
+    lat: 45.32,
+    lon: -75.67,
+    alt: 500,
+    heading: 45,
+    speed: 80,
+    role: "drone",
+    category: 14,
+    callsign,
+    originCountry: null,
+    onGround: false,
+    zone: null,
+    drone: {
+      origin,
+      dispatch: {
+        targetId,
+        phase,
+        homeAirportIdent,
+      },
+    },
+  };
+}
+
 describe("formatDispatchPhase", () => {
   it("maps wire phases to operator-facing labels", () => {
+    expect(formatDispatchPhase("enroute")).toBe("En-route");
     expect(formatDispatchPhase("rtb")).toBe("RTB");
     expect(formatDispatchPhase("trailing")).toBe("Trailing");
   });
 });
 
-describe("formatDispatchBaseLabel", () => {
-  it("uses patrol route for patrol-origin assignments", () => {
-    expect(formatDispatchBaseLabel("patrol", "CYOW")).toBe(
-      PATROL_ROUTE_BASE_LABEL,
+describe("buildDispatchMissionRow", () => {
+  it("returns null for non-dispatch assets", () => {
+    expect(buildDispatchMissionRow(trafficAsset, [trafficAsset])).toBeNull();
+  });
+
+  it("derives one mission row from a dispatch drone asset", () => {
+    expect(
+      buildDispatchMissionRow(
+        dispatchDrone(
+          "dispatch-1",
+          "Dispatch-1",
+          "dispatch",
+          trafficAsset.id,
+          "enroute",
+          "CYOW",
+        ),
+        [
+          trafficAsset,
+          dispatchDrone(
+            "dispatch-1",
+            "Dispatch-1",
+            "dispatch",
+            trafficAsset.id,
+            "enroute",
+            "CYOW",
+          ),
+        ],
+      ),
+    ).toEqual({
+      assetId: "dispatch-1",
+      droneLabel: "Dispatch-1",
+      focusFieldLabel: "Target",
+      focusLabel: "UAL123",
+      phaseLabel: "En-route",
+      baseLabel: "CYOW",
+    });
+  });
+
+  it("shows patrol route as the base label for patrol-origin rows", () => {
+    const row = buildDispatchMissionRow(
+      dispatchDrone(
+        PATROL_ASSET_ID,
+        "PATROL1",
+        "patrol",
+        trafficAsset.id,
+        "intercepting",
+        "CYRO",
+      ),
+      [trafficAsset],
     );
-  });
 
-  it("uses the airport ident for airport-born dispatch drones", () => {
-    expect(formatDispatchBaseLabel("dispatch", "CYOW")).toBe("CYOW");
-  });
-});
-
-describe("formatDispatchFocusValue", () => {
-  it("shows the target callsign while chasing", () => {
-    expect(
-      formatDispatchFocusValue("trailing", trafficAsset.id, "CYOW", [
-        trafficAsset,
-      ]),
-    ).toBe("UAL123");
-  });
-
-  it("shows the home airport ident during RTB", () => {
-    expect(formatDispatchFocusValue("rtb", "", "CYRO", [])).toBe("CYRO");
-  });
-
-  it("shows patrol route during patrol-origin RTB", () => {
-    expect(
-      formatDispatchFocusValue("rtb", "", "", [], "patrol"),
-    ).toBe(PATROL_ROUTE_BASE_LABEL);
-  });
-});
-
-describe("formatDispatchFocusField", () => {
-  it("switches the label during RTB", () => {
-    expect(formatDispatchFocusField("rtb")).toBe("Returning to");
-    expect(formatDispatchFocusField("trailing")).toBe("Target");
+    expect(row?.baseLabel).toBe(PATROL_ROUTE_BASE_LABEL);
   });
 });
