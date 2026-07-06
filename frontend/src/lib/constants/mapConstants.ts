@@ -25,6 +25,7 @@ export const CUSTOM_MAP_PREFIX = "dd-";
 export const MAP_LAYERS = {
   assetsSource: `${CUSTOM_MAP_PREFIX}assets`,
   assetsCircles: `${CUSTOM_MAP_PREFIX}assets-circles`,
+  assetsMarkerRings: `${CUSTOM_MAP_PREFIX}assets-marker-rings`,
   assetsMarkers: `${CUSTOM_MAP_PREFIX}assets-markers`,
   assetsHeading: `${CUSTOM_MAP_PREFIX}assets-heading`,
   zonesSource: `${CUSTOM_MAP_PREFIX}zones`,
@@ -78,6 +79,8 @@ export const ASSET_GHOST_OPACITY = 0.65;
 export const ASSET_GHOST_RADIUS_SCALE = 0.85;
 export const ASSET_SELECTED_RADIUS_SCALE = 1.15;
 export const ASSET_SELECTED_STROKE_WIDTH = 3.5;
+/** Default ring width for square drone markers (traffic circles stay at 1). */
+export const DRONE_DEFAULT_STROKE_WIDTH = 2;
 export const DRONE_MARKER_DIAMETER_PX = PATROL_ASSET_CIRCLE_RADIUS * 2;
 /** High-res SDF canvas for drone squares (same approach as heading chevrons). */
 export const DRONE_MARKER_SDF_LOGICAL_PX = 32;
@@ -90,7 +93,7 @@ export const ASSET_HEADING_ICON_SIZE = 0.55;
 /** Screen pixels between the traffic circle edge and the chevron wing base. */
 export const ASSET_HEADING_GAP_PX = 2;
 /** Extra heading lift for square drone markers (corners sit closer to the chevron). */
-export const DRONE_HEADING_OFFSET_Y = -5;
+export const DRONE_HEADING_OFFSET_Y = -8;
 export const TRAFFIC_HEADING_OFFSET_Y = -2;
 /** High-res SDF canvas for heading chevrons (same V shape, sharper on screen). */
 export const HEADING_ICON_LOGICAL_PX = 48;

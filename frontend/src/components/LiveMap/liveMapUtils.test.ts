@@ -31,7 +31,7 @@ describe("assetsToFeatureCollection", () => {
     });
   });
 
-  it("maps patrol drones with shape and stroke keys", () => {
+  it("maps patrol drones with shape and ring keys", () => {
     const patrolAsset: Asset = {
       ...syntheticAsset,
       id: "patrol-1",
@@ -43,7 +43,13 @@ describe("assetsToFeatureCollection", () => {
       },
     };
 
-    const collection = assetsToFeatureCollection([patrolAsset], {
+    const criticalTarget: Asset = {
+      ...syntheticAsset,
+      id: "critical-1",
+      zone: { threat: "critical", zoneTteSeconds: null, nearestBoundaryM: 0 },
+    };
+
+    const collection = assetsToFeatureCollection([patrolAsset, criticalTarget], {
       entityTab: "drones",
       statusFilter: "all",
       selectedAssetId: null,
@@ -55,7 +61,7 @@ describe("assetsToFeatureCollection", () => {
       heading: 90,
       markerShape: "square",
       symbologyBodyKey: "patrol:shadow",
-      symbologyStrokeKey: "patrol-stroke:shadow",
+      symbologyRingKey: "drone-ring:critical-target",
       mapOpacity: 1,
       mapRadiusScale: 1,
     });
@@ -83,6 +89,7 @@ describe("assetsToFeatureCollection", () => {
       isSelected: true,
       isPatrolOrigin: true,
       symbologyBodyKey: "patrol:patrol",
+      mapStrokeWidth: 3.5,
     });
     expect(collection.features[0]?.properties).not.toHaveProperty(
       "divertedFromPatrol",
@@ -105,12 +112,12 @@ describe("assetsToFeatureCollection", () => {
       },
     };
 
-    const collection = assetsToFeatureCollection([dispatchAsset]);
+    const collection = assetsToFeatureCollection([syntheticAsset, dispatchAsset]);
 
-    expect(collection.features[0]?.properties).toMatchObject({
+    expect(collection.features[1]?.properties).toMatchObject({
       markerShape: "square",
       symbologyBodyKey: "dispatch:trailing",
-      symbologyStrokeKey: "dispatch-stroke:trailing",
+      symbologyRingKey: "drone-ring:default",
       isPatrolOrigin: true,
     });
   });

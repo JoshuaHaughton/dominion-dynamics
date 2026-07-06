@@ -3,7 +3,7 @@ import type {
   DataDrivenPropertyValueSpecification,
   GeoJSONSource,
   GeoJSONSourceSpecification,
-  Map,
+  Map as MapLibreMap,
   SymbolLayerSpecification,
 } from "maplibre-gl";
 import type { FeatureCollection, Point } from "geojson";
@@ -16,9 +16,11 @@ import {
   ASSET_HEADING_ICON_SIZE,
   ASSET_PATROL_MODE_COLORS,
   ASSET_PATROL_STROKE_COLORS,
+  ASSET_SELECTED_RADIUS_SCALE,
   ASSET_SOURCE_COLORS,
   ASSET_THREAT_COLORS,
   DRONE_HEADING_OFFSET_Y,
+  DRONE_MARKER_DIAMETER_PX,
   DRONE_MARKER_ICON_SIZE,
   DRONE_MARKER_SDF_LOGICAL_PX,
   DRONE_MARKER_SDF_PIXEL_RATIO,
@@ -32,7 +34,7 @@ import {
   mapEmphasisForAsset,
   symbologyBodyKey,
   symbologyMarkerShape,
-  symbologyStrokeKey,
+  symbologyRingKey,
   type MapVisualFilter,
 } from "../../lib/utils/assetSymbology.js";
 
@@ -61,16 +63,18 @@ function drawSquareSdf(
   canvasPx: number,
 ): void {
   const inset = DRONE_MARKER_SDF_PIXEL_RATIO;
+  const side = canvasPx - inset * 2;
+  const cornerRadius = 3 * DRONE_MARKER_SDF_PIXEL_RATIO;
 
   context.clearRect(0, 0, canvasPx, canvasPx);
   context.fillStyle = "#ffffff";
   context.beginPath();
-  context.rect(inset, inset, canvasPx - inset * 2, canvasPx - inset * 2);
+  context.roundRect(inset, inset, side, side, cornerRadius);
   context.fill();
 }
 
 /** Register a high-res square SDF for drone bodies (heading-style canvas density). */
-export async function ensureDroneMarkerIcon(map: Map): Promise<void> {
+export async function ensureDroneMarkerIcon(map: MapLibreMap): Promise<void> {
   if (map.hasImage(ASSET_MARKER_ICON_SQUARE)) {
     map.removeImage(ASSET_MARKER_ICON_SQUARE);
   }
@@ -100,7 +104,7 @@ export async function ensureDroneMarkerIcon(map: Map): Promise<void> {
  * The icon is drawn on an offscreen canvas, then registered via map.addImage as an
  * SDF so MapLibre can tint it per feature.
  */
-export async function ensureAssetHeadingIcon(map: Map): Promise<void> {
+export async function ensureAssetHeadingIcon(map: MapLibreMap): Promise<void> {
   if (map.hasImage(ASSET_HEADING_ICON_ID)) {
     map.removeImage(ASSET_HEADING_ICON_ID);
   }
@@ -144,7 +148,7 @@ export async function ensureAssetHeadingIcon(map: Map): Promise<void> {
   );
 }
 
-async function ensureAssetIcons(map: Map): Promise<void> {
+async function ensureAssetIcons(map: MapLibreMap): Promise<void> {
   await ensureDroneMarkerIcon(map);
   await ensureAssetHeadingIcon(map);
 }
@@ -154,6 +158,8 @@ export function assetsToFeatureCollection(
   assets: readonly Asset[],
   visualFilter: MapVisualFilter = DEFAULT_VISUAL_FILTER,
 ): FeatureCollection<Point> {
+  const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
+
   return {
     type: "FeatureCollection",
     features: assets.map((asset) => {
@@ -173,7 +179,7 @@ export function assetsToFeatureCollection(
           heading: asset.heading,
           markerShape: symbologyMarkerShape(symbology),
           symbologyBodyKey: symbologyBodyKey(symbology),
-          symbologyStrokeKey: symbologyStrokeKey(symbology),
+          symbologyRingKey: symbologyRingKey(asset, assetsById),
           isPatrolOrigin: asset.drone?.origin === "patrol",
           isSelected: visualFilter.selectedAssetId === asset.id,
           mapOpacity: emphasis.opacity,
@@ -237,35 +243,25 @@ const markerBodyColor: DataDrivenPropertyValueSpecification<string> = [
   normalFillColor,
 ];
 
-const symbologyStrokeColor: DataDrivenPropertyValueSpecification<string> = [
+const symbologyRingColor: DataDrivenPropertyValueSpecification<string> = [
   "match",
-  ["get", "symbologyStrokeKey"],
+  ["get", "symbologyRingKey"],
   "traffic-stroke",
   ASSET_SOURCE_COLORS.stroke,
-  "patrol-stroke:patrol",
-  ASSET_PATROL_STROKE_COLORS.patrol,
-  "patrol-stroke:shadow",
-  ASSET_PATROL_STROKE_COLORS.shadow,
-  "patrol-stroke:rejoin",
-  ASSET_PATROL_STROKE_COLORS.rejoin,
-  "dispatch-stroke:enroute",
-  ASSET_DISPATCH_STROKE_COLORS.enroute,
-  "dispatch-stroke:intercepting",
-  ASSET_DISPATCH_STROKE_COLORS.intercepting,
-  "dispatch-stroke:trailing",
-  ASSET_DISPATCH_STROKE_COLORS.trailing,
-  "dispatch-stroke:rtb",
+  "drone-ring:critical-target",
+  ASSET_THREAT_COLORS.critical,
+  "drone-ring:returning",
   ASSET_DISPATCH_STROKE_COLORS.rtb,
-  "dispatch-stroke:at_base",
-  ASSET_DISPATCH_STROKE_COLORS.at_base,
-  ASSET_SOURCE_COLORS.stroke,
+  "drone-ring:default",
+  ASSET_PATROL_STROKE_COLORS.patrol,
+  ASSET_PATROL_STROKE_COLORS.patrol,
 ];
 
 const markerRingColor: DataDrivenPropertyValueSpecification<string> = [
   "case",
   ["get", "isSelected"],
   normalFillColor,
-  symbologyStrokeColor,
+  symbologyRingColor,
 ];
 
 const trafficCircleRadius: DataDrivenPropertyValueSpecification<number> = [
@@ -294,6 +290,39 @@ const droneIconSize: DataDrivenPropertyValueSpecification<number> = [
   ["get", "mapRadiusScale"],
 ];
 
+/**
+ * Ring rendered as a slightly larger square underneath the body. SDF icon halos
+ * clip at the sprite edge, so scaling an underlay is the only way to get a
+ * stroke that visibly thickens on selection.
+ */
+const droneRingIconSize: DataDrivenPropertyValueSpecification<number> = [
+  "*",
+  DRONE_MARKER_ICON_SIZE,
+  ["get", "mapRadiusScale"],
+  [
+    "+",
+    1,
+    ["/", ["*", 2, ["get", "mapStrokeWidth"]], DRONE_MARKER_DIAMETER_PX],
+  ],
+];
+
+const assetsDroneMarkerRingLayer: SymbolLayerSpecification = {
+  id: MAP_LAYERS.assetsMarkerRings,
+  type: "symbol",
+  source: MAP_LAYERS.assetsSource,
+  filter: DRONE_ROLE_FILTER,
+  layout: {
+    "icon-image": ASSET_MARKER_ICON_SQUARE,
+    "icon-size": droneRingIconSize,
+    "icon-allow-overlap": true,
+    "icon-ignore-placement": true,
+  },
+  paint: {
+    "icon-color": markerRingColor,
+    "icon-opacity": ["get", "mapOpacity"],
+  },
+};
+
 const assetsDroneMarkerLayer: SymbolLayerSpecification = {
   id: MAP_LAYERS.assetsMarkers,
   type: "symbol",
@@ -308,17 +337,26 @@ const assetsDroneMarkerLayer: SymbolLayerSpecification = {
   paint: {
     "icon-color": markerBodyColor,
     "icon-opacity": ["get", "mapOpacity"],
-    "icon-halo-color": markerRingColor,
-    "icon-halo-width": ["get", "mapStrokeWidth"],
   },
 };
 
+/** icon-offset components are multiplied by icon-size, so values stay in chevron units. */
 const headingIconOffset: DataDrivenPropertyValueSpecification<[number, number]> =
   [
     "case",
     ["==", ["get", "role"], "drone"],
-    ["literal", [0, DRONE_HEADING_OFFSET_Y]],
-    ["literal", [0, TRAFFIC_HEADING_OFFSET_Y]],
+    [
+      "case",
+      ["get", "isSelected"],
+      ["literal", [0, DRONE_HEADING_OFFSET_Y * ASSET_SELECTED_RADIUS_SCALE]],
+      ["literal", [0, DRONE_HEADING_OFFSET_Y]],
+    ],
+    [
+      "case",
+      ["get", "isSelected"],
+      ["literal", [0, TRAFFIC_HEADING_OFFSET_Y * ASSET_SELECTED_RADIUS_SCALE]],
+      ["literal", [0, TRAFFIC_HEADING_OFFSET_Y]],
+    ],
   ];
 
 const assetsHeadingLayer: SymbolLayerSpecification = {
@@ -336,23 +374,24 @@ const assetsHeadingLayer: SymbolLayerSpecification = {
     "icon-ignore-placement": true,
   },
   paint: {
-    "icon-color": markerBodyColor,
+    "icon-color": normalFillColor,
     "icon-opacity": ["get", "mapOpacity"],
   },
 };
 
 function addAssetLayerStack(
-  map: Map,
+  map: MapLibreMap,
   assets: readonly Asset[],
   visualFilter: MapVisualFilter,
 ): void {
   map.addSource(MAP_LAYERS.assetsSource, assetsSource(assets, visualFilter));
   map.addLayer(assetsCircleLayer);
+  map.addLayer(assetsDroneMarkerRingLayer);
   map.addLayer(assetsDroneMarkerLayer);
   map.addLayer(assetsHeadingLayer);
 }
 
-function hasAssetBodyLayers(map: Map): boolean {
+function hasAssetBodyLayers(map: MapLibreMap): boolean {
   return (
     map.getLayer(MAP_LAYERS.assetsCircles) !== undefined ||
     map.getLayer(MAP_LAYERS.assetsMarkers) !== undefined
@@ -361,7 +400,7 @@ function hasAssetBodyLayers(map: Map): boolean {
 
 /** Attach asset layers on first map load. No-op if the source already exists. */
 export async function addAssetLayers(
-  map: Map,
+  map: MapLibreMap,
   assets: readonly Asset[],
   visualFilter: MapVisualFilter = DEFAULT_VISUAL_FILTER,
 ): Promise<void> {
@@ -377,7 +416,7 @@ export async function addAssetLayers(
 
 /** Push the latest asset snapshot into the existing GeoJSON source. */
 export function updateAssetLayerData(
-  map: Map,
+  map: MapLibreMap,
   assets: readonly Asset[],
   visualFilter: MapVisualFilter = DEFAULT_VISUAL_FILTER,
 ): void {
@@ -394,7 +433,7 @@ export function updateAssetLayerData(
 
 /** Re-attach asset layers after a basemap style swap clears custom layers. */
 export async function syncAssetLayers(
-  map: Map,
+  map: MapLibreMap,
   assets: readonly Asset[],
   visualFilter: MapVisualFilter = DEFAULT_VISUAL_FILTER,
 ): Promise<void> {
