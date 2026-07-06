@@ -1,6 +1,8 @@
 import type { Zone, ZoneGeoJson } from "@dominion-dynamics/shared";
+import { CreateZoneRequestSchema } from "@dominion-dynamics/shared";
 import { useCallback, useEffect, useState } from "react";
 import { createZone, fetchZones } from "../api/clients/zonesApi.js";
+import { firstZodValidationMessage } from "../api/validationMessages.js";
 
 export type PendingZone = {
   clientId: string;
@@ -77,11 +79,21 @@ export function useZones() {
   const addZoneFromDraw = useCallback(
     (geojson: ZoneGeoJson) => {
       setError(null);
+      let validationError: string | null = null;
 
       setZones((current) => {
+        const name = nextZoneName(current.length);
+        const validation = CreateZoneRequestSchema.safeParse({ name, geojson });
+
+        if (!validation.success) {
+          validationError =
+            firstZodValidationMessage(validation.error) ?? "Invalid zone";
+          return current;
+        }
+
         const pendingZone: PendingZone = {
           clientId: crypto.randomUUID(),
-          name: nextZoneName(current.length),
+          name,
           geojson,
           pending: true,
         };
@@ -90,6 +102,10 @@ export function useZones() {
 
         return [...current, pendingZone];
       });
+
+      if (validationError !== null) {
+        setError(validationError);
+      }
     },
     [persistPendingZone],
   );
