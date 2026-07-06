@@ -12,19 +12,18 @@ import {
   DEMO_MAP_FOCUS_REGION,
   INITIAL_MAP_ZOOM,
   MAP_CAMERA_ANIMATION_MS,
-  MAP_FIT_PADDING,
   MAP_LAYERS,
 } from "../../lib/constants/mapConstants.js";
 import { getMapStyleUrl } from "../../lib/constants/mapStyles.js";
 import { transformCustomMapStyle } from "../../lib/utils/mapStyleTransform.js";
 import {
-  boundsFromPatrolPath,
   easeMapToPoint,
   fitMapToBounds,
 } from "../../lib/utils/mapFocusUtils.js";
+import type { MapVisualFilter } from "../../lib/utils/assetSymbology.js";
 import type { ZoneView } from "../../lib/hooks/useZones.js";
 import { disableBasemapTerrain, getRegionCenter, toFitBounds } from "../../lib/utils/mapUtils.js";
-import { syncAssetLayers } from "./liveMapUtils.js";
+import { syncAssetLayers, ASSET_BODY_LAYER_IDS } from "./liveMapUtils.js";
 import { pushAssetsToMap } from "./pushAssetsToMap.js";
 import {
   clearAssetTrackLayers,
@@ -56,8 +55,7 @@ export type LiveMapInput = {
   trackDetail: AssetTrackDetail | null;
   selectedAssetId: string | null;
   isFollowingCamera: boolean;
-  /** Incremented from App when the operator clicks "Patrol route saved". */
-  patrolFocusRequest: number;
+  mapVisualFilter: MapVisualFilter;
   onAssetSelect: (assetId: string | null) => void;
   onFollowingChange: (isFollowing: boolean) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
@@ -121,7 +119,7 @@ export function useLiveMap({
   trackDetail,
   selectedAssetId,
   isFollowingCamera,
-  patrolFocusRequest,
+  mapVisualFilter,
   onAssetSelect,
   onFollowingChange,
   onZoneDrawn,
@@ -137,6 +135,7 @@ export function useLiveMap({
   const hasFitBoundsRef = useRef(false);
   const skipNextStyleSwapRef = useRef(true);
   const clickHandlersAttachedRef = useRef(false);
+  const mapVisualFilterRef = useRef(mapVisualFilter);
   /** Latest props/callbacks for map listeners without re-binding handlers each render. */
   const mapContextRef = useRef<MapContext>({
     assets,
@@ -170,6 +169,7 @@ export function useLiveMap({
     onZoneDrawError,
     onPatrolDrawError,
   };
+  mapVisualFilterRef.current = mapVisualFilter;
 
   const resetDrawMode = useCallback(() => {
     drawControlRef.current?.resetActiveMode();
@@ -178,19 +178,29 @@ export function useLiveMap({
   }, []);
 
   const beginZoneDraw = useCallback(() => {
+    if (isDrawingZone) {
+      resetDrawMode();
+      return;
+    }
+
     if (isDrawingPatrol) {
       resetDrawMode();
     }
 
-    startZoneDraw(drawControlRef.current, isDrawingZone);
+    startZoneDraw(drawControlRef.current, false);
   }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
 
   const beginPatrolDraw = useCallback(() => {
+    if (isDrawingPatrol) {
+      resetDrawMode();
+      return;
+    }
+
     if (isDrawingZone) {
       resetDrawMode();
     }
 
-    startPatrolDraw(drawControlRef.current, isDrawingPatrol);
+    startPatrolDraw(drawControlRef.current, false);
   }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
 
   const focusOnBounds = useCallback(
@@ -201,7 +211,7 @@ export function useLiveMap({
         return;
       }
 
-      fitMapToBounds(map, bounds, MAP_FIT_PADDING, cameraDuration(options));
+      fitMapToBounds(map, bounds, cameraDuration(options));
     },
     [],
   );
@@ -253,9 +263,8 @@ export function useLiveMap({
     disableBasemapTerrain(map);
     syncZoneLayers(map, context.zones);
     syncPatrolPathLayers(map, context.patrolPath);
-    void syncAssetLayers(map, context.assets).then(() => {
+    void syncAssetLayers(map, context.assets, mapVisualFilterRef.current).then(() => {
       syncAssetTrackLayers(map, context.trackDetail, selectedThreat);
-      fitDemoRegionIfNeeded(map, context.assets.length);
     });
     setupDrawControl(map);
     attachAssetClickHandlers(map);
@@ -263,7 +272,8 @@ export function useLiveMap({
   }
 
   function attachUserCameraHandlers(map: Map): void {
-    const stopFollowingOnUserInput = (event: maplibregl.MapLibreEvent) => {
+    /** Panning looks elsewhere; zoom keeps the operator close to the followed asset. */
+    const stopFollowingOnPan = (event: maplibregl.MapLibreEvent) => {
       if (!event.originalEvent) {
         return;
       }
@@ -271,8 +281,7 @@ export function useLiveMap({
       mapContextRef.current.onFollowingChange(false);
     };
 
-    map.on("dragstart", stopFollowingOnUserInput);
-    map.on("zoomstart", stopFollowingOnUserInput);
+    map.on("dragstart", stopFollowingOnPan);
   }
 
   function attachAssetClickHandlers(map: Map): void {
@@ -282,30 +291,32 @@ export function useLiveMap({
 
     clickHandlersAttachedRef.current = true;
 
-    map.on("click", MAP_LAYERS.assetsCircles, (event) => {
-      const context = mapContextRef.current;
+    for (const layerId of ASSET_BODY_LAYER_IDS) {
+      map.on("click", layerId, (event) => {
+        const context = mapContextRef.current;
 
-      if (isDrawing(context)) {
-        return;
-      }
+        if (isDrawing(context)) {
+          return;
+        }
 
-      const feature = event.features?.[0];
-      const assetId = feature?.properties?.id;
+        const feature = event.features?.[0];
+        const assetId = feature?.properties?.id;
 
-      if (typeof assetId === "string" && assetId.length > 0) {
-        context.onAssetSelect(assetId);
-      }
-    });
+        if (typeof assetId === "string" && assetId.length > 0) {
+          context.onAssetSelect(assetId);
+        }
+      });
 
-    map.on("mouseenter", MAP_LAYERS.assetsCircles, () => {
-      if (!isDrawing(mapContextRef.current)) {
-        map.getCanvas().style.cursor = "pointer";
-      }
-    });
+      map.on("mouseenter", layerId, () => {
+        if (!isDrawing(mapContextRef.current)) {
+          map.getCanvas().style.cursor = "pointer";
+        }
+      });
 
-    map.on("mouseleave", MAP_LAYERS.assetsCircles, () => {
-      map.getCanvas().style.cursor = "";
-    });
+      map.on("mouseleave", layerId, () => {
+        map.getCanvas().style.cursor = "";
+      });
+    }
 
     map.on("click", (event) => {
       const context = mapContextRef.current;
@@ -315,7 +326,7 @@ export function useLiveMap({
       }
 
       const hits = map.queryRenderedFeatures(event.point, {
-        layers: [MAP_LAYERS.assetsCircles],
+        layers: [...ASSET_BODY_LAYER_IDS],
       });
 
       if (hits.length === 0) {
@@ -380,7 +391,7 @@ export function useLiveMap({
       const selectedThreat = getSelectedThreat(context.assets, selectedAssetId);
 
       disableBasemapTerrain(map);
-      pushAssetsToMap(map, context.assets);
+      void syncAssetLayers(map, context.assets, mapVisualFilterRef.current);
       updateZoneLayerData(map, context.zones);
       updatePatrolPathLayerData(map, context.patrolPath);
       updateAssetTrackLayerData(map, context.trackDetail, selectedThreat);
@@ -426,7 +437,11 @@ export function useLiveMap({
 
     const selectedThreat = getSelectedThreat(assets, selectedAssetId);
 
-    if (selectedAssetId === null || trackDetail === null) {
+    if (
+      selectedAssetId === null ||
+      trackDetail === null ||
+      trackDetail.assetId !== selectedAssetId
+    ) {
       if (map.getSource(MAP_LAYERS.assetHistorySource)) {
         clearAssetTrackLayers(map);
       }
@@ -441,7 +456,7 @@ export function useLiveMap({
     syncAssetTrackLayers(map, trackDetail, selectedThreat);
   }, [assets, selectedAssetId, trackDetail]);
 
-  /** Push the latest asset snapshot into the map and fit once on first data. */
+  /** Push the latest asset snapshot into the map; initial demo fit runs once on first data. */
   useEffect(() => {
     const map = mapRef.current;
 
@@ -449,9 +464,15 @@ export function useLiveMap({
       return;
     }
 
-    pushAssetsToMap(map, assets);
-    fitDemoRegionIfNeeded(map, assets.length);
-  }, [assets]);
+    pushAssetsToMap({ map, assets, visualFilter: mapVisualFilter });
+
+    if (hasFitBoundsRef.current || assets.length === 0 || !map.isStyleLoaded()) {
+      return;
+    }
+
+    fitMapToBounds(map, toFitBounds(DEMO_MAP_FOCUS_REGION), 0);
+    hasFitBoundsRef.current = true;
+  }, [assets, mapVisualFilter]);
 
   /** Re-center on the selected asset each tick while camera follow is enabled. */
   useEffect(() => {
@@ -461,36 +482,6 @@ export function useLiveMap({
 
     focusOnAsset(selectedAssetId);
   }, [assets, focusOnAsset, isFollowingCamera, selectedAssetId]);
-
-  /** Focus the saved patrol route when the header chip is clicked. */
-  useEffect(() => {
-    if (patrolFocusRequest === 0 || patrolPath === null) {
-      return;
-    }
-
-    const bounds = boundsFromPatrolPath(patrolPath);
-
-    if (bounds === null) {
-      return;
-    }
-
-    focusOnBounds(bounds);
-  }, [focusOnBounds, patrolFocusRequest, patrolPath]);
-
-  /** One-time initial fit; skipped after so patrol/asset focus is not overridden. */
-  function fitDemoRegionIfNeeded(map: Map, assetCount: number): void {
-    if (hasFitBoundsRef.current || assetCount === 0) {
-      return;
-    }
-
-    fitMapToBounds(
-      map,
-      toFitBounds(DEMO_MAP_FOCUS_REGION),
-      MAP_FIT_PADDING,
-      0,
-    );
-    hasFitBoundsRef.current = true;
-  }
 
   return {
     containerRef,

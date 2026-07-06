@@ -1,7 +1,10 @@
 import type { LngLatBoundsLike, Map } from "maplibre-gl";
-import type { PathGeoJson } from "@dominion-dynamics/shared";
+import type { Asset, PathGeoJson, ZoneGeoJson } from "@dominion-dynamics/shared";
+import { MAP_FIT_PADDING } from "../constants/mapConstants.js";
 
 type LonLat = readonly [number, number];
+
+const DEFAULT_FIT_MAX_ZOOM = 14;
 
 /** Pan the map center to a lon/lat. */
 export function easeMapToPoint(
@@ -16,16 +19,16 @@ export function easeMapToPoint(
   });
 }
 
-/** Fit the viewport to geographic bounds. */
+/** Fit the viewport to geographic bounds (center + zoom chosen by MapLibre). */
 export function fitMapToBounds(
   map: Map,
   bounds: LngLatBoundsLike,
-  padding: number,
   durationMs: number,
 ): void {
   map.fitBounds(bounds, {
-    padding,
+    padding: MAP_FIT_PADDING,
     duration: durationMs,
+    maxZoom: DEFAULT_FIT_MAX_ZOOM,
   });
 }
 
@@ -55,6 +58,15 @@ export function boundsFromCoordinates(
   ];
 }
 
+/** Fit bounds for live asset positions. */
+export function boundsFromAssets(
+  assets: readonly Pick<Asset, "lon" | "lat">[],
+): LngLatBoundsLike | null {
+  return boundsFromCoordinates(
+    assets.map((asset) => [asset.lon, asset.lat] as const),
+  );
+}
+
 /** Fit bounds for a saved patrol path line. */
 export function boundsFromPatrolPath(
   patrolPath: PathGeoJson,
@@ -64,4 +76,19 @@ export function boundsFromPatrolPath(
   );
 
   return boundsFromCoordinates(coordinates);
+}
+
+/** Fit bounds for a restricted zone polygon. */
+export function boundsFromZoneGeoJson(
+  geojson: ZoneGeoJson,
+): LngLatBoundsLike | null {
+  const ring = geojson.geometry.coordinates[0];
+
+  if (ring === undefined) {
+    return null;
+  }
+
+  return boundsFromCoordinates(
+    ring.map(([lon, lat]) => [lon, lat] as const),
+  );
 }

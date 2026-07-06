@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { LngLatBoundsLike } from "maplibre-gl";
 import type { PathGeoJson } from "@dominion-dynamics/shared";
+import { MAP_FIT_PADDING } from "../constants/mapConstants.js";
 import {
+  boundsFromAssets,
   boundsFromCoordinates,
   boundsFromPatrolPath,
   easeMapToPoint,
@@ -23,7 +25,7 @@ describe("easeMapToPoint", () => {
 });
 
 describe("fitMapToBounds", () => {
-  it("fits the viewport with padding and duration", () => {
+  it("fits the viewport with uniform padding and max zoom", () => {
     const fitBounds = vi.fn();
     const map = { fitBounds } as unknown as import("maplibre-gl").Map;
     const bounds: LngLatBoundsLike = [
@@ -31,11 +33,12 @@ describe("fitMapToBounds", () => {
       [-75.6, 45.4],
     ];
 
-    fitMapToBounds(map, bounds, 48, 0);
+    fitMapToBounds(map, bounds, 400);
 
     expect(fitBounds).toHaveBeenCalledWith(bounds, {
-      padding: 48,
-      duration: 0,
+      padding: MAP_FIT_PADDING,
+      duration: 400,
+      maxZoom: 14,
     });
   });
 });
@@ -75,6 +78,24 @@ describe("boundsFromPatrolPath", () => {
     expect(boundsFromPatrolPath(patrolPath)).toEqual([
       [-75.75, 45.35],
       [-75.65, 45.42],
+    ]);
+  });
+});
+
+describe("boundsFromAssets", () => {
+  it("returns null when no assets are provided", () => {
+    expect(boundsFromAssets([])).toBeNull();
+  });
+
+  it("builds bounds from asset lon/lat positions", () => {
+    expect(
+      boundsFromAssets([
+        { lon: -75.8, lat: 45.3 },
+        { lon: -75.6, lat: 45.4 },
+      ]),
+    ).toEqual([
+      [-75.8, 45.3],
+      [-75.6, 45.4],
     ]);
   });
 });

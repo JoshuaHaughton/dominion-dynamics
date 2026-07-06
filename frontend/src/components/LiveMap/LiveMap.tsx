@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import type {
   Asset,
   AssetTrackDetail,
@@ -7,8 +7,13 @@ import type {
 } from "@dominion-dynamics/shared";
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
 import type { ZoneView } from "../../lib/hooks/useZones.js";
+import { useOperationsStore } from "../../lib/stores/operationsStore.js";
+import {
+  boundsFromPatrolPath,
+  boundsFromZoneGeoJson,
+} from "../../lib/utils/mapFocusUtils.js";
 import { AssetInfoPanel } from "./AssetInfoPanel.js";
-import { InterceptPanel } from "./InterceptPanel.js";
+import { OperationsPanel } from "./OperationsPanel.js";
 import { useLiveMap } from "./useLiveMap.js";
 import styles from "./LiveMap.module.css";
 
@@ -17,12 +22,7 @@ type LiveMapProps = {
   styleId: MapStyleId;
   zones: readonly ZoneView[];
   patrolPath: PathGeoJson | null;
-  selectedAssetId: string | null;
-  isFollowingCamera: boolean;
-  patrolFocusRequest: number;
   trackDetail: AssetTrackDetail | null;
-  onAssetSelect: (assetId: string | null) => void;
-  onFollowingChange: (isFollowing: boolean) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
   onPatrolPathDrawn: (geojson: PathGeoJson) => void;
   onZoneDrawError: (message: string) => void;
@@ -38,12 +38,7 @@ export function LiveMap({
   styleId,
   zones,
   patrolPath,
-  selectedAssetId,
-  isFollowingCamera,
-  patrolFocusRequest,
   trackDetail,
-  onAssetSelect,
-  onFollowingChange,
   onZoneDrawn,
   onPatrolPathDrawn,
   zoneDrawError,
@@ -52,6 +47,19 @@ export function LiveMap({
   onPatrolDrawError,
   isSavingPatrolPath,
 }: LiveMapProps) {
+  const selectedAssetId = useOperationsStore((state) => state.selectedAssetId);
+  const isFollowingCamera = useOperationsStore(
+    (state) => state.isFollowingCamera,
+  );
+  const entityTab = useOperationsStore((state) => state.entityTab);
+  const statusFilter = useOperationsStore((state) => state.statusFilter);
+  const selectAsset = useOperationsStore((state) => state.selectAsset);
+  const setFollowingCamera = useOperationsStore(
+    (state) => state.setFollowingCamera,
+  );
+  const setEntityTab = useOperationsStore((state) => state.setEntityTab);
+  const setStatusFilter = useOperationsStore((state) => state.setStatusFilter);
+
   const selectedAsset = useMemo(
     () => assets.find((asset) => asset.id === selectedAssetId) ?? null,
     [assets, selectedAssetId],
@@ -59,9 +67,35 @@ export function LiveMap({
 
   useEffect(() => {
     if (selectedAssetId !== null && selectedAsset === null) {
-      onAssetSelect(null);
+      selectAsset(null);
     }
-  }, [onAssetSelect, selectedAsset, selectedAssetId]);
+  }, [selectAsset, selectedAsset, selectedAssetId]);
+
+  const mapVisualFilter = useMemo(
+    () => ({
+      entityTab,
+      statusFilter,
+      selectedAssetId,
+    }),
+    [entityTab, selectedAssetId, statusFilter],
+  );
+
+  const focusHandlersRef = useRef({
+    selectAsset,
+    focusOnAsset: (_assetId: string) => {},
+  });
+
+  const onAssetSelect = useCallback((assetId: string | null) => {
+    const { selectAsset: select, focusOnAsset: focus } = focusHandlersRef.current;
+
+    if (assetId === null) {
+      select(null);
+      return;
+    }
+
+    select(assetId);
+    focus(assetId);
+  }, []);
 
   const {
     containerRef,
@@ -70,6 +104,7 @@ export function LiveMap({
     isDrawingZone,
     isDrawingPatrol,
     focusOnAsset,
+    focusOnBounds,
   } = useLiveMap({
     assets,
     styleId,
@@ -78,81 +113,127 @@ export function LiveMap({
     trackDetail,
     selectedAssetId,
     isFollowingCamera,
-    patrolFocusRequest,
+    mapVisualFilter,
     onAssetSelect,
-    onFollowingChange,
+    onFollowingChange: setFollowingCamera,
     onZoneDrawn,
     onPatrolPathDrawn,
     onZoneDrawError,
     onPatrolDrawError,
   });
 
+  focusHandlersRef.current = { selectAsset, focusOnAsset };
+
+  const drawHint = isDrawingZone
+    ? "Click to add points. Close on the first point or press Enter."
+    : isDrawingPatrol
+      ? "Click to add waypoints. Click the start point to close the loop, or the last point or Enter for an open path."
+      : isSavingPatrolPath
+        ? "Saving patrol path…"
+        : null;
+
+  function focusPatrolRoute(): void {
+    if (patrolPath === null) {
+      return;
+    }
+
+    const bounds = boundsFromPatrolPath(patrolPath);
+
+    if (bounds !== null) {
+      focusOnBounds(bounds);
+    }
+  }
+
+  function handleSelectZone(geojson: ZoneGeoJson): void {
+    const bounds = boundsFromZoneGeoJson(geojson);
+
+    if (bounds !== null) {
+      focusOnBounds(bounds);
+    }
+  }
+
   return (
     <div className={styles.wrapper}>
       <div ref={containerRef} className={styles.map} />
-      <div className={styles.toolbar}>
-        <div className={styles.drawTool}>
-          <button
-            type="button"
-            className={`${styles.drawButton} ${isDrawingZone ? styles.drawButtonActive : ""}`}
-            aria-pressed={isDrawingZone}
-            onClick={beginZoneDraw}
+      <div className={styles.toolbarPanel}>
+        <div className={styles.toolbarRow}>
+          <div
+            className={styles.drawGroup}
+            role="group"
+            aria-label="Map drawing tools"
           >
-            Draw zone
-          </button>
-          {isDrawingZone && (
-            <span className={styles.drawHint}>
-              Click to add points. Close on the first point or press Enter.
-            </span>
-          )}
+            <button
+              type="button"
+              className={`${styles.drawButton} ${isDrawingZone ? styles.drawButtonActive : ""}`}
+              aria-pressed={isDrawingZone}
+              onClick={beginZoneDraw}
+            >
+              Draw zone
+            </button>
+            <button
+              type="button"
+              className={`${styles.drawButton} ${isDrawingPatrol ? styles.drawButtonActive : ""}`}
+              aria-pressed={isDrawingPatrol}
+              onClick={beginPatrolDraw}
+            >
+              Draw patrol path
+            </button>
+          </div>
+          {patrolPath !== null ? (
+            <>
+              <span className={styles.toolbarDivider} aria-hidden="true" />
+              <div
+                className={styles.focusGroup}
+                role="group"
+                aria-label="Map focus shortcuts"
+              >
+                <button
+                  type="button"
+                  className={styles.focusButton}
+                  onClick={focusPatrolRoute}
+                >
+                  Focus patrol route
+                </button>
+              </div>
+            </>
+          ) : null}
         </div>
-        <div className={styles.drawTool}>
-          <button
-            type="button"
-            className={`${styles.drawButton} ${isDrawingPatrol ? styles.drawButtonActive : ""}`}
-            aria-pressed={isDrawingPatrol}
-            onClick={beginPatrolDraw}
-          >
-            Draw patrol path
-          </button>
-          {isDrawingPatrol && (
-            <span className={styles.drawHint}>
-              Click to add waypoints. Click the start point to close the loop,
-              or the last point or Enter for an open path.
-            </span>
-          )}
-          {isSavingPatrolPath && (
-            <span className={styles.drawHint}>Saving patrol path…</span>
-          )}
-        </div>
-        {zoneDrawError !== null && (
-          <span className={styles.error} role="status">
+        {drawHint !== null ? (
+          <p className={styles.drawHint} role="status">
+            {drawHint}
+          </p>
+        ) : null}
+        {zoneDrawError !== null ? (
+          <p className={styles.error} role="status">
             {zoneDrawError}
-          </span>
-        )}
-        {patrolDrawError !== null && (
-          <span className={styles.error} role="status">
+          </p>
+        ) : null}
+        {patrolDrawError !== null ? (
+          <p className={styles.error} role="status">
             {patrolDrawError}
-          </span>
-        )}
+          </p>
+        ) : null}
       </div>
-      <InterceptPanel
+      <OperationsPanel
         assets={assets}
+        zones={zones}
         selectedAssetId={selectedAssetId}
-        onSelectDrone={(droneId) => {
-          onAssetSelect(droneId);
-          focusOnAsset(droneId);
-        }}
+        entityTab={entityTab}
+        statusFilter={statusFilter}
+        onEntityTabChange={setEntityTab}
+        onStatusFilterChange={setStatusFilter}
+        onSelectAsset={onAssetSelect}
+        onSelectZone={handleSelectZone}
       />
       {selectedAsset !== null && (
         <AssetInfoPanel
           asset={selectedAsset}
           assets={assets}
           isFollowingCamera={isFollowingCamera}
-          onFollowingChange={onFollowingChange}
+          onFollowingChange={setFollowingCamera}
           onClose={() => {
-            onFollowingChange(false);
-            onAssetSelect(null);
+            setFollowingCamera(false);
+            selectAsset(null);
           }}
         />
       )}

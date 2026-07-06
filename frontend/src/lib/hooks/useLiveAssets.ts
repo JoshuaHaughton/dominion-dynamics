@@ -98,10 +98,6 @@ export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
     }
 
     sendSelection(ws, selectedAssetId);
-
-    if (selectedAssetId !== null) {
-      setTrackDetail(null);
-    }
   }, [selectedAssetId]);
 
   useEffect(() => {
@@ -121,10 +117,6 @@ export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
 
         setConnected(true);
         sendSelection(ws!, selectedAssetIdRef.current);
-
-        if (selectedAssetIdRef.current !== null) {
-          setTrackDetail(null);
-        }
       };
 
       ws.onmessage = (event) => {
