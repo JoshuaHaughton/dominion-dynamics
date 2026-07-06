@@ -2,7 +2,6 @@
 
 Dominion Dynamics is a localhost demo of a live airspace map over Ottawa. Run it and you get 120 simulated aircraft updating once per second, restricted zones you draw on the map, threat levels as tracks approach or enter those zones, and drones that respond when something actually breaches a zone.
 
-Demo video: _link placeholder_
 
 ## Quick Start
 
