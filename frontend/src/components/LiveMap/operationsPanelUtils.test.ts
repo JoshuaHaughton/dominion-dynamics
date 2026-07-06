@@ -8,7 +8,7 @@ import {
 } from "./operationsPanelUtils.js";
 
 const trafficAsset: Asset = {
-  id: "syn-7033aa39-4da1-495d-89f9-13c43a7677ad",
+  id: "7033aa39-4da1-495d-89f9-13c43a7677ad",
   lat: 45.4,
   lon: -75.7,
   alt: 1000,
@@ -63,7 +63,7 @@ const patrolDrone: Asset = {
   speed: 80,
   role: "drone",
   category: 14,
-  callsign: "PATROL1",
+  callsign: "Patrol-1",
   originCountry: null,
   onGround: false,
   zone: null,
@@ -170,7 +170,7 @@ describe("buildOperationsRows", () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]?.kind).toBe("drone");
     expect(rows[0]?.row).toMatchObject({
-      label: "PATROL1",
+      label: "Patrol-1",
       typeLabel: "Patrol",
       statusLabel: "Shadowing",
       taskLabel: "UAL123",

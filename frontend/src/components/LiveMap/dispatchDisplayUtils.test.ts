@@ -8,7 +8,7 @@ import {
 } from "./dispatchDisplayUtils.js";
 
 const trafficAsset: Asset = {
-  id: "syn-7033aa39-4da1-495d-89f9-13c43a7677ad",
+  id: "7033aa39-4da1-495d-89f9-13c43a7677ad",
   lat: 45.4,
   lon: -75.7,
   alt: 1000,
@@ -104,7 +104,7 @@ describe("buildDispatchMissionRow", () => {
     const row = buildDispatchMissionRow(
       dispatchDrone(
         PATROL_ASSET_ID,
-        "PATROL1",
+        "Patrol-1",
         "patrol",
         trafficAsset.id,
         "intercepting",

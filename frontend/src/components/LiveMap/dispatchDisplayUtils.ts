@@ -27,22 +27,13 @@ export type DispatchMissionRow = {
   baseLabel: string;
 };
 
-/** Shorten synthetic traffic ids for panel display (`syn-…a039`). */
+/** Shorten opaque asset ids when no callsign is available. */
 export function formatReadableAssetId(assetId: string): string {
   if (assetId.length <= 16) {
     return assetId;
   }
 
-  const separatorIndex = assetId.indexOf("-");
-
-  if (separatorIndex === -1) {
-    return `…${assetId.slice(-8)}`;
-  }
-
-  const prefix = assetId.slice(0, separatorIndex);
-  const suffix = assetId.slice(-4);
-
-  return `${prefix}-…${suffix}`;
+  return `…${assetId.slice(-6)}`;
 }
 
 /** Resolve a traffic or drone id to callsign when present, else a shortened id. */
