@@ -41,19 +41,21 @@ export function App() {
       <header className={styles.header}>
         <h1 className={styles.title}>Dominion Dynamics</h1>
         <div className={styles.headerMeta}>
-          <span className={styles.connection}>
-            <span
-              className={`${styles.statusDot} ${connected ? styles.statusDotConnected : ""}`}
-              aria-hidden="true"
-            />
-            {connected ? "Live" : "Reconnecting…"}
-          </span>
           <MapStyleSelect value={styleId} onChange={setStyleId} />
-          {lastUpdatedAt !== null ? (
-            <span className={styles.statusMuted}>
-              Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
+          <div className={styles.feedStatus}>
+            <span className={styles.connection}>
+              <span
+                className={`${styles.statusDot} ${connected ? styles.statusDotConnected : ""}`}
+                aria-hidden="true"
+              />
+              {connected ? "Live" : "Reconnecting…"}
             </span>
-          ) : null}
+            {lastUpdatedAt !== null ? (
+              <span className={styles.statusMuted}>
+                Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
+              </span>
+            ) : null}
+          </div>
         </div>
       </header>
       <main className={styles.main}>

@@ -161,7 +161,10 @@ export function OperationsPanel({
               <p className={styles.empty}>{emptyMessage("zones")}</p>
             ) : (
               <ul className={styles.list}>
-                {zoneRows.map((entry) => (
+                {zoneRows.map((entry) => {
+                  const zoneId = entry.zoneId;
+
+                  return (
                   <li key={entry.key} className={styles.zoneRow}>
                     <button
                       type="button"
@@ -181,20 +184,21 @@ export function OperationsPanel({
                         </div>
                       </dl>
                     </button>
-                    {entry.zoneId !== null ? (
+                    {zoneId !== null ? (
                       <button
                         type="button"
                         className={styles.deleteButton}
                         aria-label={`Delete ${entry.label}`}
                         onClick={() => {
-                          void onDeleteZone(entry.zoneId);
+                          void onDeleteZone(zoneId);
                         }}
                       >
                         Delete
                       </button>
                     ) : null}
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )
           ) : null}

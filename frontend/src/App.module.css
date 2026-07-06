@@ -31,6 +31,12 @@
   font-size: 0.875rem;
 }
 
+.feedStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .connection {
   display: inline-flex;
   align-items: center;
@@ -52,6 +58,8 @@
 .statusMuted {
   color: #94a3b8;
   font-size: 0.8125rem;
+  /* Fixed-width digits so the ticking clock doesn't reflow the header. */
+  font-variant-numeric: tabular-nums;
 }
 
 .main {
