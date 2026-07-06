@@ -6,6 +6,7 @@ import {
   mapEmphasisForAsset,
   symbologyBodyKey,
   symbologyMarkerShape,
+  symbologyRingKey,
   symbologyStrokeKey,
 } from "./assetSymbology.js";
 
@@ -101,6 +102,87 @@ describe("symbology keys", () => {
     expect(symbologyMarkerShape(deriveAssetSymbology(trafficCritical))).toBe(
       "circle",
     );
+  });
+});
+
+describe("symbologyRingKey", () => {
+  const assetsById = new Map([
+    [trafficCritical.id, trafficCritical],
+    [patrolDrone.id, patrolDrone],
+    [dispatchDrone.id, dispatchDrone],
+  ]);
+
+  it("uses critical red when shadowing or trailing a critical target", () => {
+    expect(symbologyRingKey(patrolDrone, assetsById)).toBe(
+      "drone-ring:critical-target",
+    );
+    expect(symbologyRingKey(dispatchDrone, assetsById)).toBe(
+      "drone-ring:critical-target",
+    );
+  });
+
+  it("uses default gray for idle patrol and enroute dispatch", () => {
+    expect(
+      symbologyRingKey(
+        {
+          ...patrolDrone,
+          drone: {
+            origin: "patrol",
+            patrol: { mode: "patrol", shadowTargetId: null, pathId: 1 },
+          },
+        },
+        assetsById,
+      ),
+    ).toBe("drone-ring:default");
+
+    expect(
+      symbologyRingKey(
+        {
+          ...dispatchDrone,
+          drone: {
+            origin: "dispatch",
+            dispatch: {
+              targetId: trafficCritical.id,
+              phase: "enroute",
+              homeAirportIdent: "CYOW",
+            },
+          },
+        },
+        assetsById,
+      ),
+    ).toBe("drone-ring:default");
+  });
+
+  it("uses returning gray for rtb and rejoin", () => {
+    expect(
+      symbologyRingKey(
+        {
+          ...dispatchDrone,
+          drone: {
+            origin: "dispatch",
+            dispatch: {
+              targetId: trafficCritical.id,
+              phase: "rtb",
+              homeAirportIdent: "CYOW",
+            },
+          },
+        },
+        assetsById,
+      ),
+    ).toBe("drone-ring:returning");
+
+    expect(
+      symbologyRingKey(
+        {
+          ...patrolDrone,
+          drone: {
+            origin: "patrol",
+            patrol: { mode: "rejoin", shadowTargetId: null, pathId: 1 },
+          },
+        },
+        assetsById,
+      ),
+    ).toBe("drone-ring:returning");
   });
 });
 

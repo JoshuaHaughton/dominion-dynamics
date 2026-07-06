@@ -16,6 +16,7 @@ import {
   ASSET_GHOST_RADIUS_SCALE,
   ASSET_SELECTED_RADIUS_SCALE,
   ASSET_SELECTED_STROKE_WIDTH,
+  DRONE_DEFAULT_STROKE_WIDTH,
 } from "../constants/mapConstants.js";
 
 export type OperationsEntityTab = "missions" | "drones" | "traffic" | "zones";
@@ -97,7 +98,7 @@ export function symbologyBodyKey(symbology: AssetSymbology): string {
   }
 }
 
-/** Stroke/halo color key for patrol mode or dispatch phase accents. */
+/** Stroke/halo color key for patrol mode or dispatch phase accents (legacy phase keys). */
 export function symbologyStrokeKey(symbology: AssetSymbology): string {
   switch (symbology.kind) {
     case "traffic":
@@ -107,6 +108,88 @@ export function symbologyStrokeKey(symbology: AssetSymbology): string {
     case "dispatch":
       return `dispatch-stroke:${symbology.phase}`;
   }
+}
+
+function resolveDroneTargetId(asset: Asset): string | null {
+  return (
+    asset.drone?.dispatch?.targetId ??
+    asset.drone?.patrol?.shadowTargetId ??
+    null
+  );
+}
+
+function resolveTargetThreat(
+  asset: Asset,
+  assetsById: ReadonlyMap<string, Asset>,
+): ThreatLevel | null {
+  const targetId = resolveDroneTargetId(asset);
+
+  if (targetId === null) {
+    return null;
+  }
+
+  return assetsById.get(targetId)?.zone?.threat ?? null;
+}
+
+function isReturningDrone(asset: Asset): boolean {
+  const dispatchPhase = asset.drone?.dispatch?.phase;
+
+  if (dispatchPhase === "rtb" || dispatchPhase === "at_base") {
+    return true;
+  }
+
+  return asset.drone?.patrol?.mode === "rejoin";
+}
+
+function isActivelyTrackingCritical(
+  asset: Asset,
+  assetsById: ReadonlyMap<string, Asset>,
+): boolean {
+  if (asset.role !== "drone") {
+    return false;
+  }
+
+  const dispatch = asset.drone?.dispatch;
+
+  if (dispatch !== undefined) {
+    if (
+      dispatch.phase !== "intercepting" &&
+      dispatch.phase !== "trailing"
+    ) {
+      return false;
+    }
+
+    return resolveTargetThreat(asset, assetsById) === "critical";
+  }
+
+  if (asset.drone?.patrol?.mode === "shadow") {
+    return resolveTargetThreat(asset, assetsById) === "critical";
+  }
+
+  return false;
+}
+
+/**
+ * Outcome-based ring key for map markers: critical target, returning, or default.
+ * Traffic keeps a neutral stroke key.
+ */
+export function symbologyRingKey(
+  asset: Asset,
+  assetsById: ReadonlyMap<string, Asset>,
+): string {
+  if (asset.role === "traffic") {
+    return "traffic-stroke";
+  }
+
+  if (isReturningDrone(asset)) {
+    return "drone-ring:returning";
+  }
+
+  if (isActivelyTrackingCritical(asset, assetsById)) {
+    return "drone-ring:critical-target";
+  }
+
+  return "drone-ring:default";
 }
 
 /** Marker silhouette: circle for traffic, square for all drones. */
@@ -252,10 +335,12 @@ export function mapEmphasisForAsset(
   ghostRadiusScale: number = ASSET_GHOST_RADIUS_SCALE,
 ): AssetMapEmphasis {
   const isSelected = asset.id === filter.selectedAssetId;
+  const defaultStrokeWidth =
+    asset.role === "drone" ? DRONE_DEFAULT_STROKE_WIDTH : 1;
   const fullEmphasis: AssetMapEmphasis = {
     opacity: 1,
     radiusScale: isSelected ? ASSET_SELECTED_RADIUS_SCALE : 1,
-    strokeWidth: isSelected ? ASSET_SELECTED_STROKE_WIDTH : 1,
+    strokeWidth: isSelected ? ASSET_SELECTED_STROKE_WIDTH : defaultStrokeWidth,
   };
 
   if (
