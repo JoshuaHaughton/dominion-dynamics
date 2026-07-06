@@ -119,6 +119,15 @@ export function formatThreatLabel(threat: ThreatLevel): string {
   return threat.charAt(0).toUpperCase() + threat.slice(1);
 }
 
+/** Seconds until intercept for dispatch drone detail panels. */
+export function formatInterceptEtaSeconds(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined) {
+    return "—";
+  }
+
+  return formatZoneTteSeconds(seconds);
+}
+
 /** Zone time-to-entry for operations and detail panels. */
 export function formatZoneTteSeconds(seconds: number | null): string {
   if (seconds === null) {

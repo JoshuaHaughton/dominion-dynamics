@@ -9,6 +9,7 @@ import {
   formatDispatchFocusField,
   formatDispatchFocusValue,
   formatDispatchPhase,
+  formatInterceptEtaSeconds,
   formatNearestZoneDistance,
   formatPatrolModeLabel,
   formatThreatLabel,
@@ -195,6 +196,15 @@ export function AssetInfoPanel({
               <dt>Dispatch phase</dt>
               <dd>{formatDispatchPhase(drone.dispatch.phase)}</dd>
             </div>
+            {drone.dispatch.interceptEtaSeconds !== null &&
+            drone.dispatch.interceptEtaSeconds !== undefined ? (
+              <div className={styles.row}>
+                <dt>Intercept time</dt>
+                <dd>
+                  {formatInterceptEtaSeconds(drone.dispatch.interceptEtaSeconds)}
+                </dd>
+              </div>
+            ) : null}
             <div className={styles.row}>
               <dt>Base</dt>
               <dd>
