@@ -71,28 +71,13 @@ describe("assetSymbology", () => {
       [dispatchDrone.id, dispatchDrone],
     ]);
 
-    it("uses critical red when shadowing or trailing a critical target", () => {
+    it("uses critical red when tracking a critical target", () => {
       expect(symbologyRingKey(patrolDrone, assetsById)).toBe(
         "drone-ring:critical-target",
       );
       expect(symbologyRingKey(dispatchDrone, assetsById)).toBe(
         "drone-ring:critical-target",
       );
-    });
-
-    it("uses default gray for idle patrol and enroute dispatch", () => {
-      expect(
-        symbologyRingKey(
-          {
-            ...patrolDrone,
-            drone: {
-              origin: "patrol",
-              patrol: { mode: "patrol", shadowTargetId: null, pathId: 1 },
-            },
-          },
-          assetsById,
-        ),
-      ).toBe("drone-ring:default");
 
       expect(
         symbologyRingKey(
@@ -105,6 +90,21 @@ describe("assetSymbology", () => {
                 phase: "enroute",
                 homeAirportIdent: "CYOW",
               },
+            },
+          },
+          assetsById,
+        ),
+      ).toBe("drone-ring:critical-target");
+    });
+
+    it("uses default gray for idle patrol drones", () => {
+      expect(
+        symbologyRingKey(
+          {
+            ...patrolDrone,
+            drone: {
+              origin: "patrol",
+              patrol: { mode: "patrol", shadowTargetId: null, pathId: 1 },
             },
           },
           assetsById,

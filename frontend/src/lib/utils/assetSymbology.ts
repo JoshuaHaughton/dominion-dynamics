@@ -138,7 +138,11 @@ function isActivelyTrackingCritical(
   const dispatch = asset.drone?.dispatch;
 
   if (dispatch !== undefined) {
-    if (dispatch.phase !== "intercepting" && dispatch.phase !== "trailing") {
+    if (
+      dispatch.phase !== "enroute" &&
+      dispatch.phase !== "intercepting" &&
+      dispatch.phase !== "trailing"
+    ) {
       return false;
     }
 
