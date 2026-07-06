@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { TEST_IDS, UUID_PATTERN } from "@dominion-dynamics/shared/testing";
 import { selectDispatchSource } from "./selectDispatchSource.js";
 import type { DispatchDroneCandidate } from "./types.js";
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const IDLE_DISPATCH_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-
 describe("selectDispatchSource", () => {
+  const IDLE_DISPATCH_ID = TEST_IDS.DISPATCH_DRONE;
   const target = { id: "critical-1", lat: 45.3225, lon: -75.6692 };
 
   it("spawns at the nearest airport when no drones exist", () => {
@@ -72,12 +69,12 @@ describe("selectDispatchSource", () => {
     expect(decision.type).toBe("spawn");
   });
 
-  it("reuses the closest available non-route drone before spawning", () => {
+  it("reuses a nearby dispatch drone when it is closer than spawning at the airport", () => {
     const drones: DispatchDroneCandidate[] = [
       {
         droneId: IDLE_DISPATCH_ID,
-        lat: 45.33,
-        lon: -75.67,
+        lat: target.lat,
+        lon: target.lon,
         origin: "dispatch",
         availability: "available",
         missionTargetId: null,
@@ -96,6 +93,37 @@ describe("selectDispatchSource", () => {
       droneId: IDLE_DISPATCH_ID,
       homeAirportIdent: "CYOW",
     });
+  });
+
+  it("assigns idle patrol when it is closer than a distant reusable dispatch drone", () => {
+    const drones: DispatchDroneCandidate[] = [
+      {
+        droneId: PATROL_ASSET_ID,
+        lat: target.lat,
+        lon: target.lon,
+        origin: "patrol",
+        patrol: { mode: "patrol" },
+        availability: "available",
+        missionTargetId: null,
+      },
+      {
+        droneId: IDLE_DISPATCH_ID,
+        lat: 10,
+        lon: 10,
+        origin: "dispatch",
+        availability: "available",
+        missionTargetId: null,
+        homeAirportIdent: "CYOW",
+      },
+    ];
+
+    const decision = selectDispatchSource({
+      target,
+      drones,
+      reservedDroneIds: new Set(),
+    });
+
+    expect(decision).toEqual({ type: "patrol", droneId: PATROL_ASSET_ID });
   });
 
   it("does not assign busy patrol drones", () => {
@@ -146,29 +174,28 @@ describe("selectDispatchSource", () => {
     }
   });
 
-  it("reuses patrol on rejoin before comparing idle patrol to airport", () => {
-    const drones: DispatchDroneCandidate[] = [
-      {
-        droneId: PATROL_ASSET_ID,
-        lat: target.lat,
-        lon: target.lon,
-        origin: "patrol",
-        patrol: { mode: "rejoin" },
-        availability: "available",
-        missionTargetId: null,
-      },
-    ];
+  it.each([{ mode: "shadow" as const }, { mode: "rejoin" as const }])(
+    "never diverts a $mode patrol even when it is the closest drone",
+    ({ mode }) => {
+      const drones: DispatchDroneCandidate[] = [
+        {
+          droneId: PATROL_ASSET_ID,
+          lat: target.lat,
+          lon: target.lon,
+          origin: "patrol",
+          patrol: { mode },
+          availability: "available",
+          missionTargetId: null,
+        },
+      ];
 
-    const decision = selectDispatchSource({
-      target,
-      drones,
-      reservedDroneIds: new Set(),
-    });
+      const decision = selectDispatchSource({
+        target,
+        drones,
+        reservedDroneIds: new Set(),
+      });
 
-    expect(decision).toEqual({
-      type: "reuse",
-      droneId: PATROL_ASSET_ID,
-      homeAirportIdent: null,
-    });
-  });
+      expect(decision.type).toBe("spawn");
+    },
+  );
 });

@@ -1,5 +1,10 @@
 import type { Asset } from "@dominion-dynamics/shared";
-import { isDrone } from "../sim/store.js";
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { isCriticalTrafficAsset } from "../threat/criticalTraffic.js";
+import {
+  getPatrolDroneState,
+  setPatrolDroneState,
+} from "../patrol/droneStore.js";
 import { syncDispatchMissions } from "./allocator.js";
 import {
   buildDispatchDroneCandidates,
@@ -8,34 +13,37 @@ import {
 import { applyDispatchAssignment } from "./createDispatchDrone.js";
 import { setDispatchDroneState } from "./dispatchDroneStore.js";
 import {
+  applyDispatchSyncResult,
   getDispatchMissionMap,
-  setDispatchMissions,
+  getDispatchMissionTargetForDrone,
 } from "./missionStore.js";
 
 /** Traffic targets that need a dispatch assignment this tick. */
 function extractCriticalTargets(
   liveAssets: readonly Asset[],
 ): Array<Pick<Asset, "id" | "lat" | "lon">> {
-  return liveAssets
-    .filter(
-      (asset) => !isDrone(asset) && asset.zone?.threat === "critical",
-    )
-    .map((asset) => ({
-      id: asset.id,
-      lat: asset.lat,
-      lon: asset.lon,
-    }));
+  return liveAssets.filter(isCriticalTrafficAsset).map((asset) => ({
+    id: asset.id,
+    lat: asset.lat,
+    lon: asset.lon,
+  }));
 }
 
-/** Invert mission store for candidate busy/available lookup by drone id. */
-function missionByDroneIdFromStore(): Map<string, string> {
-  const missionByDroneId = new Map<string, string>();
+/**
+ * Reset the parked patrol sim state when the patrol drone takes a dispatch
+ * mission. While dispatch owns the drone its patrol state is frozen; without
+ * this reset a stale shadow claim survives the mission and resurfaces on release.
+ */
+function clearPatrolShadowState(): void {
+  const patrolState = getPatrolDroneState(PATROL_ASSET_ID);
+  if (!patrolState) return;
 
-  for (const mission of getDispatchMissionMap().values()) {
-    missionByDroneId.set(mission.droneId, mission.targetId);
-  }
-
-  return missionByDroneId;
+  setPatrolDroneState(PATROL_ASSET_ID, {
+    ...patrolState,
+    mode: "patrol",
+    shadowTargetId: null,
+    rejoinTarget: null,
+  });
 }
 
 /**
@@ -47,8 +55,7 @@ export function syncDispatchAllocator(
   nowMs: number,
 ): void {
   const criticalTargets = extractCriticalTargets(enrichedTraffic);
-  const missionByDroneId = missionByDroneIdFromStore();
-  const candidates = buildDispatchDroneCandidates(missionByDroneId);
+  const candidates = buildDispatchDroneCandidates(getDispatchMissionTargetForDrone);
 
   const result = syncDispatchMissions({
     criticalTargets,
@@ -57,7 +64,7 @@ export function syncDispatchAllocator(
     nowMs,
   });
 
-  setDispatchMissions(result.missions);
+  applyDispatchSyncResult(result);
 
   // Apply only brand-new assignments; sticky missions keep their existing sim state.
   for (const { targetId, decision } of result.assignments) {
@@ -73,10 +80,7 @@ export function syncDispatchAllocator(
       continue;
     }
 
-    const existingAsset = resolveExistingAssetForAssignment(
-      decision.droneId,
-      [],
-    );
+    const existingAsset = resolveExistingAssetForAssignment(decision.droneId);
     const state = applyDispatchAssignment(
       mission,
       decision,
@@ -85,5 +89,7 @@ export function syncDispatchAllocator(
     );
 
     setDispatchDroneState(state.asset.id, state);
+
+    if (state.asset.id === PATROL_ASSET_ID) clearPatrolShadowState();
   }
 }

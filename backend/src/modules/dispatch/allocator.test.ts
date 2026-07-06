@@ -1,20 +1,17 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { TEST_IDS, UUID_PATTERN } from "@dominion-dynamics/shared/testing";
 import { syncDispatchMissions } from "./allocator.js";
 import {
   clearDispatchMissions,
   listDispatchMissions,
-  setDispatchMissions,
+  applyDispatchSyncResult,
 } from "./missionStore.js";
 import type { DispatchDroneCandidate, DispatchMission } from "./types.js";
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const IDLE_DISPATCH_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-const GONE_DISPATCH_ID = "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22";
-
 describe("syncDispatchMissions", () => {
+  const IDLE_DISPATCH_ID = TEST_IDS.DISPATCH_DRONE;
+  const GONE_DISPATCH_ID = TEST_IDS.SECOND_DISPATCH_DRONE;
   const nowMs = 1_700_000_000_000;
   const targetA = { id: "critical-a", lat: 45.3225, lon: -75.6692 };
   const targetB = { id: "critical-b", lat: 45.4, lon: -75.7 };
@@ -77,7 +74,6 @@ describe("syncDispatchMissions", () => {
     });
 
     expect(result.assignments).toHaveLength(0);
-    expect(result.releasedTargetIds).toEqual([]);
     expect(result.missions.get("critical-a")).toEqual(existing);
   });
 
@@ -97,7 +93,6 @@ describe("syncDispatchMissions", () => {
       nowMs,
     });
 
-    expect(result.releasedTargetIds).toEqual(["critical-a"]);
     expect(result.missions.size).toBe(0);
   });
 
@@ -111,7 +106,9 @@ describe("syncDispatchMissions", () => {
 
     expect(result.assignments).toHaveLength(2);
 
-    const droneIds = [...result.missions.values()].map((mission) => mission.droneId);
+    const droneIds = [...result.missions.values()].map(
+      (mission) => mission.droneId,
+    );
     expect(new Set(droneIds).size).toBe(2);
   });
 
@@ -157,7 +154,9 @@ describe("syncDispatchMissions", () => {
       nowMs,
     });
 
-    expect(result.releasedTargetIds).toEqual(["critical-a"]);
+    expect(result.missions.get("critical-a")?.droneId).not.toBe(
+      GONE_DISPATCH_ID,
+    );
     expect(result.assignments).toHaveLength(1);
     expect(result.assignments[0]?.decision.type).toBe("spawn");
   });
@@ -170,20 +169,20 @@ describe("syncDispatchMissions", () => {
       nowMs,
     });
 
-    setDispatchMissions(result.missions);
+    applyDispatchSyncResult(result);
 
     expect(listDispatchMissions()).toHaveLength(1);
     expect(listDispatchMissions()[0]?.targetId).toBe("critical-a");
   });
 
-  it("reuses an idle dispatch drone before allocating a new spawn id", () => {
+  it("reuses a nearby dispatch drone when it is closer than spawning at the airport", () => {
     const result = syncDispatchMissions({
       criticalTargets: [targetA],
       drones: [
         {
           droneId: IDLE_DISPATCH_ID,
-          lat: 45.323,
-          lon: -75.669,
+          lat: targetA.lat,
+          lon: targetA.lon,
           origin: "dispatch",
           availability: "available",
           missionTargetId: null,

@@ -1,23 +1,20 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
-import { testAsset } from "../../testFixtures/asset.js";
+import { testAsset } from "@dominion-dynamics/shared/testing";
 import {
   clearDispatchMissions,
-  setDispatchMissions,
+  applyDispatchSyncResult,
 } from "../dispatch/missionStore.js";
 import {
   advancePatrolDrone,
-  findNearestCriticalAsset,
   resolveShadowTarget,
 } from "./advancePatrolDrone.js";
 import { createInitialPatrolDroneState } from "./createInitialPatrolDroneState.js";
 import {
-  clearShadowAssignments,
-  getShadowDroneId,
-  setShadowAssignment,
-} from "./shadowAssignmentStore.js";
-import { PATROL_MAX_INTERCEPT_MPS, PATROL_VERTICAL_RATE_MPS } from "./constants.js";
+  PATROL_MAX_INTERCEPT_MPS,
+  PATROL_VERTICAL_RATE_MPS,
+} from "./constants.js";
 import { trailPointBehindTarget } from "./shadowChase.js";
 
 describe("advancePatrolDrone", () => {
@@ -35,7 +32,6 @@ describe("advancePatrolDrone", () => {
   };
 
   beforeEach(() => {
-    clearShadowAssignments();
     clearDispatchMissions();
   });
 
@@ -99,17 +95,12 @@ describe("advancePatrolDrone", () => {
 
     expect(shadowing.mode).toBe("shadow");
     expect(shadowing.shadowTargetId).toBe("critical-near");
-    expect(getShadowDroneId("critical-near")).toBe(PATROL_ASSET_ID);
-    expect(findNearestCriticalAsset(initial.asset, [farCritical, nearCritical])?.id).toBe(
-      "critical-near",
-    );
   });
 
   it("keeps the current shadow target when still critical", () => {
     const initial = createInitialPatrolDroneState(patrolPath);
     initial.mode = "shadow";
     initial.shadowTargetId = "critical-far";
-    setShadowAssignment("critical-far", PATROL_ASSET_ID);
 
     const nearCritical: Asset = testAsset({
       id: "critical-near",
@@ -131,17 +122,18 @@ describe("advancePatrolDrone", () => {
       zone: { threat: "critical", zoneTteSeconds: 0, nearestBoundaryM: 0 },
     });
 
-    expect(
-      resolveShadowTarget(initial, [nearCritical, farCritical])?.id,
-    ).toBe("critical-far");
+    expect(resolveShadowTarget(initial, [nearCritical, farCritical])?.id).toBe(
+      "critical-far",
+    );
   });
 
-  it("does not steal a target assigned to another drone", () => {
+  it("switches to the nearest remaining critical when the current target despawns", () => {
     const initial = createInitialPatrolDroneState(patrolPath);
-    setShadowAssignment("critical-taken", "other-drone");
+    initial.mode = "shadow";
+    initial.shadowTargetId = "critical-gone";
 
-    const takenCritical: Asset = testAsset({
-      id: "critical-taken",
+    const replacement: Asset = testAsset({
+      id: "critical-new",
       lat: initial.asset.lat + 0.001,
       lon: initial.asset.lon + 0.001,
       alt: 1000,
@@ -150,7 +142,9 @@ describe("advancePatrolDrone", () => {
       zone: { threat: "critical", zoneTteSeconds: 0, nearestBoundaryM: 0 },
     });
 
-    expect(resolveShadowTarget(initial, [takenCritical])).toBeNull();
+    expect(resolveShadowTarget(initial, [replacement])?.id).toBe(
+      "critical-new",
+    );
   });
 
   it("does not shadow a critical already covered by a dispatch mission", () => {
@@ -166,8 +160,8 @@ describe("advancePatrolDrone", () => {
       zone: { threat: "critical", zoneTteSeconds: 0, nearestBoundaryM: 0 },
     });
 
-    setDispatchMissions(
-      new Map([
+    applyDispatchSyncResult({
+      missions: new Map([
         [
           "critical-covered",
           {
@@ -179,7 +173,8 @@ describe("advancePatrolDrone", () => {
           },
         ],
       ]),
-    );
+      assignments: [],
+    });
 
     expect(resolveShadowTarget(initial, [coveredCritical])).toBeNull();
   });
@@ -285,14 +280,13 @@ describe("advancePatrolDrone", () => {
     });
 
     expect(resumed.shadowTargetId).toBeNull();
-    expect(getShadowDroneId("critical-1")).toBeUndefined();
     expect(["patrol", "rejoin"]).toContain(resumed.mode);
     expect(resumed.asset.speed).toBeLessThanOrEqual(PATROL_MAX_INTERCEPT_MPS);
     expect(resumed.asset.speed).toBeGreaterThan(0);
     expect(resumed.asset.alt).toBe(500);
   });
 
-  it("ignores other patrol assets when selecting a shadow target", () => {
+  it("ignores other drone assets when selecting a shadow target", () => {
     const initial = createInitialPatrolDroneState(patrolPath);
     const otherPatrol: Asset = {
       ...initial.asset,
@@ -302,6 +296,6 @@ describe("advancePatrolDrone", () => {
       zone: { threat: "critical", zoneTteSeconds: 0, nearestBoundaryM: 0 },
     };
 
-    expect(findNearestCriticalAsset(initial.asset, [otherPatrol])).toBeNull();
+    expect(resolveShadowTarget(initial, [otherPatrol])).toBeNull();
   });
 });

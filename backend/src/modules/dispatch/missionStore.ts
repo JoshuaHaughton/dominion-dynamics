@@ -1,6 +1,35 @@
+import type { DispatchSyncResult } from "./types.js";
 import type { DispatchMission } from "./types.js";
 
 const missions = new Map<string, DispatchMission>();
+const missionByDroneId = new Map<string, string>();
+
+function removeMission(targetId: string): void {
+  const mission = missions.get(targetId);
+
+  if (!mission) {
+    return;
+  }
+
+  missions.delete(targetId);
+
+  if (missionByDroneId.get(mission.droneId) === targetId) {
+    missionByDroneId.delete(mission.droneId);
+  }
+}
+
+function upsertMission(targetId: string, mission: DispatchMission): void {
+  const previous = missions.get(targetId);
+
+  if (previous && previous.droneId !== mission.droneId) {
+    if (missionByDroneId.get(previous.droneId) === targetId) {
+      missionByDroneId.delete(previous.droneId);
+    }
+  }
+
+  missions.set(targetId, mission);
+  missionByDroneId.set(mission.droneId, targetId);
+}
 
 /** Read the sticky mission for a critical target, if any. */
 export function getDispatchMission(
@@ -14,12 +43,25 @@ export function getDispatchMissionMap(): ReadonlyMap<string, DispatchMission> {
   return missions;
 }
 
-/** Replace the full mission map (allocator output). */
-export function setDispatchMissions(next: Map<string, DispatchMission>): void {
-  missions.clear();
+/** Active mission target for a drone id, when assigned. */
+export function getDispatchMissionTargetForDrone(
+  droneId: string,
+): string | undefined {
+  return missionByDroneId.get(droneId);
+}
 
-  for (const [targetId, mission] of next) {
-    missions.set(targetId, mission);
+/** In-place sync from allocator output (delete stale, upsert sticky + new). */
+export function applyDispatchSyncResult(result: DispatchSyncResult): void {
+  const nextTargetIds = new Set(result.missions.keys());
+
+  for (const targetId of [...missions.keys()]) {
+    if (!nextTargetIds.has(targetId)) {
+      removeMission(targetId);
+    }
+  }
+
+  for (const [targetId, mission] of result.missions) {
+    upsertMission(targetId, mission);
   }
 }
 
@@ -28,17 +70,8 @@ export function listDispatchMissions(): DispatchMission[] {
   return [...missions.values()];
 }
 
-/** Remove one mission when the target clears or the scramble ends. */
-export function deleteDispatchMission(targetId: string): void {
-  missions.delete(targetId);
-}
-
 /** Clear all missions (tests / shutdown). */
 export function clearDispatchMissions(): void {
   missions.clear();
-}
-
-/** Critical target ids with an active dispatch mission this tick. */
-export function getDispatchMissionTargetIds(): ReadonlySet<string> {
-  return new Set(missions.keys());
+  missionByDroneId.clear();
 }
