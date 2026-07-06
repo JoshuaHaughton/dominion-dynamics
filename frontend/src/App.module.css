@@ -32,6 +32,21 @@
   color: #94a3b8;
 }
 
+.statusButton {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #93c5fd;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
+.statusButton:hover {
+  color: #bfdbfe;
+}
+
 .statusDot {
   width: 0.55rem;
   height: 0.55rem;

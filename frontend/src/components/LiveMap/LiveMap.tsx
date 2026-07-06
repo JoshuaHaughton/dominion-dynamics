@@ -18,8 +18,11 @@ type LiveMapProps = {
   zones: readonly ZoneView[];
   patrolPath: PathGeoJson | null;
   selectedAssetId: string | null;
+  isFollowingCamera: boolean;
+  patrolFocusRequest: number;
   trackDetail: AssetTrackDetail | null;
   onAssetSelect: (assetId: string | null) => void;
+  onFollowingChange: (isFollowing: boolean) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
   onPatrolPathDrawn: (geojson: PathGeoJson) => void;
   onZoneDrawError: (message: string) => void;
@@ -36,8 +39,11 @@ export function LiveMap({
   zones,
   patrolPath,
   selectedAssetId,
+  isFollowingCamera,
+  patrolFocusRequest,
   trackDetail,
   onAssetSelect,
+  onFollowingChange,
   onZoneDrawn,
   onPatrolPathDrawn,
   zoneDrawError,
@@ -63,6 +69,7 @@ export function LiveMap({
     beginPatrolDraw,
     isDrawingZone,
     isDrawingPatrol,
+    focusOnAsset,
   } = useLiveMap({
     assets,
     styleId,
@@ -70,7 +77,10 @@ export function LiveMap({
     patrolPath,
     trackDetail,
     selectedAssetId,
+    isFollowingCamera,
+    patrolFocusRequest,
     onAssetSelect,
+    onFollowingChange,
     onZoneDrawn,
     onPatrolPathDrawn,
     onZoneDrawError,
@@ -129,13 +139,19 @@ export function LiveMap({
       <InterceptPanel
         assets={assets}
         selectedAssetId={selectedAssetId}
-        onSelectDrone={onAssetSelect}
+        onSelectDrone={(droneId) => {
+          onAssetSelect(droneId);
+          focusOnAsset(droneId);
+        }}
       />
       {selectedAsset !== null && (
         <AssetInfoPanel
           asset={selectedAsset}
           assets={assets}
+          isFollowingCamera={isFollowingCamera}
+          onFollowingChange={onFollowingChange}
           onClose={() => {
+            onFollowingChange(false);
             onAssetSelect(null);
           }}
         />

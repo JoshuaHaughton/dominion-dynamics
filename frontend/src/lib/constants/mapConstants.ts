@@ -61,6 +61,8 @@ export const ASSET_HEADING_GAP_PX = 2;
 
 /** Pixel padding when fitting the map to the demo region. */
 export const MAP_FIT_PADDING = 48;
+/** Ease/fit duration for programmatic camera moves (select, follow, header focus). */
+export const MAP_CAMERA_ANIMATION_MS = 400;
 /** Initial zoom before the first asset snapshot arrives. */
 export const INITIAL_MAP_ZOOM = 9;
 

@@ -1,4 +1,4 @@
-import maplibregl, { type Map } from "maplibre-gl";
+import maplibregl, { type LngLatBoundsLike, type Map } from "maplibre-gl";
 import type {
   Asset,
   AssetTrackDetail,
@@ -11,11 +11,17 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import {
   DEMO_MAP_FOCUS_REGION,
   INITIAL_MAP_ZOOM,
+  MAP_CAMERA_ANIMATION_MS,
   MAP_FIT_PADDING,
   MAP_LAYERS,
 } from "../../lib/constants/mapConstants.js";
 import { getMapStyleUrl } from "../../lib/constants/mapStyles.js";
 import { transformCustomMapStyle } from "../../lib/utils/mapStyleTransform.js";
+import {
+  boundsFromPatrolPath,
+  easeMapToPoint,
+  fitMapToBounds,
+} from "../../lib/utils/mapFocusUtils.js";
 import type { ZoneView } from "../../lib/hooks/useZones.js";
 import { disableBasemapTerrain, getRegionCenter, toFitBounds } from "../../lib/utils/mapUtils.js";
 import { syncAssetLayers } from "./liveMapUtils.js";
@@ -38,6 +44,10 @@ import {
   updatePatrolPathLayerData,
 } from "./patrolPathMapUtils.js";
 
+export type MapFocusOptions = {
+  animate?: boolean;
+};
+
 export type LiveMapInput = {
   assets: readonly Asset[];
   styleId: MapStyleId;
@@ -45,7 +55,11 @@ export type LiveMapInput = {
   patrolPath: PathGeoJson | null;
   trackDetail: AssetTrackDetail | null;
   selectedAssetId: string | null;
+  isFollowingCamera: boolean;
+  /** Incremented from App when the operator clicks "Patrol route saved". */
+  patrolFocusRequest: number;
   onAssetSelect: (assetId: string | null) => void;
+  onFollowingChange: (isFollowing: boolean) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
   onPatrolPathDrawn: (geojson: PathGeoJson) => void;
   onZoneDrawError: (message: string) => void;
@@ -60,6 +74,7 @@ type MapContext = {
   isDrawingZone: boolean;
   isDrawingPatrol: boolean;
   onAssetSelect: (assetId: string | null) => void;
+  onFollowingChange: (isFollowing: boolean) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
   onPatrolPathDrawn: (geojson: PathGeoJson) => void;
   onZoneDrawError: (message: string) => void;
@@ -72,6 +87,10 @@ type UseLiveMapResult = {
   beginPatrolDraw: () => void;
   isDrawingZone: boolean;
   isDrawingPatrol: boolean;
+  /** Center on an asset; reused by follow and future header focus chips. */
+  focusOnAsset: (assetId: string, options?: MapFocusOptions) => void;
+  /** Fit the viewport to bounds; reused by patrol route and zone focus. */
+  focusOnBounds: (bounds: LngLatBoundsLike, options?: MapFocusOptions) => void;
 };
 
 function getSelectedThreat(
@@ -89,7 +108,11 @@ function isDrawing(context: MapContext): boolean {
   return context.isDrawingZone || context.isDrawingPatrol;
 }
 
-/** Manage MapLibre lifecycle and sync assets, zones, and patrol path onto the map. */
+function cameraDuration(options?: MapFocusOptions): number {
+  return options?.animate === false ? 0 : MAP_CAMERA_ANIMATION_MS;
+}
+
+/** MapLibre lifecycle, layer sync, draw controls, and camera focus for the live map. */
 export function useLiveMap({
   assets,
   styleId,
@@ -97,7 +120,10 @@ export function useLiveMap({
   patrolPath,
   trackDetail,
   selectedAssetId,
+  isFollowingCamera,
+  patrolFocusRequest,
   onAssetSelect,
+  onFollowingChange,
   onZoneDrawn,
   onPatrolPathDrawn,
   onZoneDrawError,
@@ -111,6 +137,7 @@ export function useLiveMap({
   const hasFitBoundsRef = useRef(false);
   const skipNextStyleSwapRef = useRef(true);
   const clickHandlersAttachedRef = useRef(false);
+  /** Latest props/callbacks for map listeners without re-binding handlers each render. */
   const mapContextRef = useRef<MapContext>({
     assets,
     zones,
@@ -119,6 +146,7 @@ export function useLiveMap({
     isDrawingZone: false,
     isDrawingPatrol: false,
     onAssetSelect,
+    onFollowingChange,
     onZoneDrawn,
     onPatrolPathDrawn,
     onZoneDrawError,
@@ -136,6 +164,7 @@ export function useLiveMap({
     isDrawingZone,
     isDrawingPatrol,
     onAssetSelect,
+    onFollowingChange,
     onZoneDrawn,
     onPatrolPathDrawn,
     onZoneDrawError,
@@ -163,6 +192,35 @@ export function useLiveMap({
 
     startPatrolDraw(drawControlRef.current, isDrawingPatrol);
   }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
+
+  const focusOnBounds = useCallback(
+    (bounds: LngLatBoundsLike, options?: MapFocusOptions) => {
+      const map = mapRef.current;
+
+      if (!map) {
+        return;
+      }
+
+      fitMapToBounds(map, bounds, MAP_FIT_PADDING, cameraDuration(options));
+    },
+    [],
+  );
+
+  const focusOnAsset = useCallback(
+    (assetId: string, options?: MapFocusOptions) => {
+      const map = mapRef.current;
+      const asset = mapContextRef.current.assets.find(
+        (candidate) => candidate.id === assetId,
+      );
+
+      if (!map || !asset) {
+        return;
+      }
+
+      easeMapToPoint(map, asset.lon, asset.lat, cameraDuration(options));
+    },
+    [],
+  );
 
   function setupDrawControl(map: Map): void {
     detachDrawControl(map, drawControlRef.current);
@@ -201,6 +259,20 @@ export function useLiveMap({
     });
     setupDrawControl(map);
     attachAssetClickHandlers(map);
+    attachUserCameraHandlers(map);
+  }
+
+  function attachUserCameraHandlers(map: Map): void {
+    const stopFollowingOnUserInput = (event: maplibregl.MapLibreEvent) => {
+      if (!event.originalEvent) {
+        return;
+      }
+
+      mapContextRef.current.onFollowingChange(false);
+    };
+
+    map.on("dragstart", stopFollowingOnUserInput);
+    map.on("zoomstart", stopFollowingOnUserInput);
   }
 
   function attachAssetClickHandlers(map: Map): void {
@@ -263,6 +335,7 @@ export function useLiveMap({
       style: getMapStyleUrl(styleId),
       center: getRegionCenter(DEMO_MAP_FOCUS_REGION),
       zoom: INITIAL_MAP_ZOOM,
+      // Private demo build; no on-map tile attribution chrome.
       attributionControl: false,
     });
 
@@ -380,16 +453,42 @@ export function useLiveMap({
     fitDemoRegionIfNeeded(map, assets.length);
   }, [assets]);
 
-  /** Fit to the Ottawa airport demo focus once, when the first snapshot has at least one asset. */
+  /** Re-center on the selected asset each tick while camera follow is enabled. */
+  useEffect(() => {
+    if (!isFollowingCamera || selectedAssetId === null) {
+      return;
+    }
+
+    focusOnAsset(selectedAssetId);
+  }, [assets, focusOnAsset, isFollowingCamera, selectedAssetId]);
+
+  /** Focus the saved patrol route when the header chip is clicked. */
+  useEffect(() => {
+    if (patrolFocusRequest === 0 || patrolPath === null) {
+      return;
+    }
+
+    const bounds = boundsFromPatrolPath(patrolPath);
+
+    if (bounds === null) {
+      return;
+    }
+
+    focusOnBounds(bounds);
+  }, [focusOnBounds, patrolFocusRequest, patrolPath]);
+
+  /** One-time initial fit; skipped after so patrol/asset focus is not overridden. */
   function fitDemoRegionIfNeeded(map: Map, assetCount: number): void {
     if (hasFitBoundsRef.current || assetCount === 0) {
       return;
     }
 
-    map.fitBounds(toFitBounds(DEMO_MAP_FOCUS_REGION), {
-      padding: MAP_FIT_PADDING,
-      duration: 0,
-    });
+    fitMapToBounds(
+      map,
+      toFitBounds(DEMO_MAP_FOCUS_REGION),
+      MAP_FIT_PADDING,
+      0,
+    );
     hasFitBoundsRef.current = true;
   }
 
@@ -399,5 +498,7 @@ export function useLiveMap({
     beginPatrolDraw,
     isDrawingZone,
     isDrawingPatrol,
+    focusOnAsset,
+    focusOnBounds,
   };
 }

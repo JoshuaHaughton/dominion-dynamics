@@ -9,6 +9,8 @@ import styles from "./App.module.css";
 
 export function App() {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [isFollowingCamera, setIsFollowingCamera] = useState(false);
+  const [patrolFocusRequest, setPatrolFocusRequest] = useState(0);
   const { assets, connected, lastUpdatedAt, trackDetail } =
     useLiveAssets(selectedAssetId);
   const { styleId, setStyleId } = useMapStyle();
@@ -34,7 +36,19 @@ export function App() {
           <span>{connected ? "Live" : "Reconnecting…"}</span>
           <span>{assets.length} assets</span>
           <span>{zones.length} zones</span>
-          <span>{patrolPath !== null ? "Patrol route saved" : "No patrol route"}</span>
+          {patrolPath !== null ? (
+            <button
+              type="button"
+              className={styles.statusButton}
+              onClick={() => {
+                setPatrolFocusRequest((count) => count + 1);
+              }}
+            >
+              Patrol route saved
+            </button>
+          ) : (
+            <span>No patrol route</span>
+          )}
           {lastUpdatedAt !== null && (
             <span className={styles.statusMuted}>
               updated {new Date(lastUpdatedAt).toLocaleTimeString()}
@@ -49,8 +63,11 @@ export function App() {
           zones={zones}
           patrolPath={patrolPath}
           selectedAssetId={selectedAssetId}
+          isFollowingCamera={isFollowingCamera}
+          patrolFocusRequest={patrolFocusRequest}
           trackDetail={trackDetail}
           onAssetSelect={setSelectedAssetId}
+          onFollowingChange={setIsFollowingCamera}
           onZoneDrawn={addZoneFromDraw}
           onPatrolPathDrawn={addPatrolPathFromDraw}
           onZoneDrawError={reportDrawError}
