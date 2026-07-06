@@ -1,11 +1,9 @@
-import { AnimatePresence, motion } from "framer-motion";
 import type { Asset, ZoneGeoJson } from "@dominion-dynamics/shared";
 import type { ZoneView } from "../LiveMap/zones/useZones.js";
 import type {
   OperationsEntityTab,
   OperationsStatusFilter,
 } from "../../lib/utils/assetSymbology.js";
-import { useFadeMotionProps } from "../../lib/motion/useFadeMotion.js";
 import {
   buildOperationsRows,
   buildPinnedPatrolRow,
@@ -109,8 +107,6 @@ export function OperationsPanel({
   onSelectZone,
   onDeleteZone,
 }: OperationsPanelProps) {
-  const fadeMotion = useFadeMotionProps();
-
   const rows = buildOperationsRows(assets, entityTab, statusFilter);
   const zoneRows = buildZoneRows(zones);
   const pinnedPatrol =
@@ -131,58 +127,56 @@ export function OperationsPanel({
         onStatusFilterChange={onStatusFilterChange}
       />
       <div className={styles.body}>
-        <AnimatePresence initial={false} mode="wait">
-          {entityTab === "zones" ? (
-            <motion.div key="zones" {...fadeMotion}>
-              {zonesError !== null ? (
-                <p className={styles.error} role="alert">
-                  {zonesError}
-                </p>
-              ) : null}
-              {zoneRows.length === 0 ? (
-                <p className={styles.empty}>{emptyMessage("zones")}</p>
-              ) : (
-                <ZoneRowList
-                  zoneRows={zoneRows}
-                  onSelectZone={onSelectZone}
-                  onDeleteZone={onDeleteZone}
-                />
-              )}
-            </motion.div>
-          ) : (
-            <motion.div key={entityTab} {...fadeMotion}>
-              {pinnedPatrol !== null ? (
-                <div className={styles.pinnedSection}>
-                  <p className={styles.pinnedLabel}>Patrol drone</p>
-                  <ul className={styles.list}>
-                    <OperationsAssetRow
-                      assetId={pinnedPatrol.assetId}
-                      fields={droneRowFields(pinnedPatrol.row)}
-                      isSelected={selectedAssetId === pinnedPatrol.assetId}
-                      isPinned
-                      onSelect={onSelectAsset}
-                    />
-                  </ul>
-                </div>
-              ) : null}
-              {listRows.length === 0 && pinnedPatrol === null ? (
-                <p className={styles.empty}>{emptyMessage(entityTab)}</p>
-              ) : listRows.length > 0 ? (
+        {entityTab === "zones" ? (
+          <>
+            {zonesError !== null ? (
+              <p className={styles.error} role="alert">
+                {zonesError}
+              </p>
+            ) : null}
+            {zoneRows.length === 0 ? (
+              <p className={styles.empty}>{emptyMessage("zones")}</p>
+            ) : (
+              <ZoneRowList
+                zoneRows={zoneRows}
+                onSelectZone={onSelectZone}
+                onDeleteZone={onDeleteZone}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            {pinnedPatrol !== null ? (
+              <div className={styles.pinnedSection}>
+                <p className={styles.pinnedLabel}>Patrol drone</p>
                 <ul className={styles.list}>
-                  {listRows.map((entry) => (
-                    <OperationsAssetRow
-                      key={entry.assetId}
-                      assetId={entry.assetId}
-                      fields={rowFields(entry)}
-                      isSelected={selectedAssetId === entry.assetId}
-                      onSelect={onSelectAsset}
-                    />
-                  ))}
+                  <OperationsAssetRow
+                    assetId={pinnedPatrol.assetId}
+                    fields={droneRowFields(pinnedPatrol.row)}
+                    isSelected={selectedAssetId === pinnedPatrol.assetId}
+                    isPinned
+                    onSelect={onSelectAsset}
+                  />
                 </ul>
-              ) : null}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </div>
+            ) : null}
+            {listRows.length === 0 && pinnedPatrol === null ? (
+              <p className={styles.empty}>{emptyMessage(entityTab)}</p>
+            ) : listRows.length > 0 ? (
+              <ul className={styles.list}>
+                {listRows.map((entry) => (
+                  <OperationsAssetRow
+                    key={entry.assetId}
+                    assetId={entry.assetId}
+                    fields={rowFields(entry)}
+                    isSelected={selectedAssetId === entry.assetId}
+                    onSelect={onSelectAsset}
+                  />
+                ))}
+              </ul>
+            ) : null}
+          </>
+        )}
       </div>
     </aside>
   );
