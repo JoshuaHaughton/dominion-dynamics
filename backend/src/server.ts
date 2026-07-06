@@ -1,45 +1,23 @@
 import http from "node:http";
-import { z } from "zod";
 import "./db/index.js";
-import { db } from "./db/index.js";
 import { createApp } from "./app.js";
 import {
   attachWebSocket,
   closeWebSocketServer,
   WS_LIVE_PATH,
 } from "./modules/realtime/ws.server.js";
-import { primeZoneGeometryCache } from "./modules/threat/zoneGeometryCache.js";
 import { startSim, stopSim } from "./modules/sim/simControl.js";
-import { getAssetList } from "./modules/sim/store.js";
-import { listZoneRows } from "./repositories/zoneRepository.js";
+import { getAssetSnapshot } from "./modules/sim/store.js";
 import {
   ensureDefaultPatrolPath,
   resolvePatrolPath,
 } from "./services/patrol/patrolPathService.js";
+import { hydrateZoneGeometryCache } from "./services/zones/zoneService.js";
 import { initializePatrolDrone } from "./modules/patrol/patrolTick.js";
 
-const port = z.coerce
-  .number()
-  .int()
-  .positive()
-  .default(8000)
-  .parse(process.env.PORT);
+const port = Number(process.env.PORT) || 8000;
 
 let shuttingDown = false;
-
-/** Hydrate the passive zone geometry cache from SQLite before the sim starts. */
-function hydrateZoneGeometryCache(): void {
-  try {
-    primeZoneGeometryCache(listZoneRows(db));
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-
-    console.warn(
-      `Failed to load zone geometry cache (${detail}); using no zones.`,
-    );
-    primeZoneGeometryCache([]);
-  }
-}
 
 const app = createApp();
 
@@ -49,7 +27,7 @@ initializePatrolDrone(resolvePatrolPath());
 
 const server = http.createServer(app);
 
-attachWebSocket({ server, getConnectSnapshot: getAssetList });
+attachWebSocket({ server, getConnectSnapshot: getAssetSnapshot });
 
 startSim();
 

@@ -7,6 +7,7 @@ import {
 } from "../../repositories/zoneRepository.js";
 import {
   appendZoneToCache,
+  primeZoneGeometryCache,
   removeZoneFromCache,
 } from "../../modules/threat/zoneGeometryCache.js";
 
@@ -35,4 +36,18 @@ export function deleteZone(id: number): boolean {
   removeZoneFromCache(id);
 
   return true;
+}
+
+/** Load persisted zones into the passive geometry cache before the sim starts. */
+export function hydrateZoneGeometryCache(): void {
+  try {
+    primeZoneGeometryCache(listZones());
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+
+    console.warn(
+      `Failed to load zone geometry cache (${detail}); using no zones.`,
+    );
+    primeZoneGeometryCache([]);
+  }
 }
