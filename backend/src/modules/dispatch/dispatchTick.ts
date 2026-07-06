@@ -49,7 +49,7 @@ export function tickDispatchDrones({
     }
 
     setDispatchDroneState(droneId, result.state);
-    wireAssets.push(dispatchAssetFromState(result.state));
+    wireAssets.push(dispatchAssetFromState(result.state, liveAssets));
   }
 
   return wireAssets;
