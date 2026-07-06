@@ -154,7 +154,7 @@ function lateralMergePointWhenClosing(
   return { lon, lat };
 }
 
-/** Lead pursuit when far; lag trail slot when close; lateral merge when head-on. */
+/** Steer at the target when far; lag trail slot when close; lateral merge when head-on. */
 export function resolveChaseSteerPoint(
   drone: Pick<Asset, "lat" | "lon">,
   target: Pick<Asset, "lat" | "lon" | "heading" | "speed">,
@@ -173,7 +173,7 @@ export function resolveChaseSteerPoint(
   }
 
   if (distanceToTargetM > SHADOW_LEAD_LAG_THRESHOLD_M) {
-    return leadPointAheadOfTarget(target);
+    return { lon: target.lon, lat: target.lat };
   }
 
   return trailPointBehindTarget(target);

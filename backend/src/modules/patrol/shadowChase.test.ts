@@ -79,11 +79,12 @@ describe("shadowChase", () => {
     expect(trail.lon).toBeCloseTo(target.lon, 4);
   });
 
-  it("leads ahead of the target when far away", () => {
+  it("steers toward the target when far away instead of leading ahead", () => {
     const drone = { lat: 45.2, lon: -75.7 };
     const steerPoint = resolveChaseSteerPoint(drone, target);
 
-    expect(steerPoint.lat).toBeGreaterThan(target.lat);
+    expect(steerPoint.lat).toBeCloseTo(target.lat, 4);
+    expect(steerPoint.lon).toBeCloseTo(target.lon, 4);
   });
 
   it("uses the trail slot when within the lead/lag threshold", () => {
