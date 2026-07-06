@@ -82,6 +82,7 @@ describe("SnapshotMessageSchema", () => {
               phase: "trailing" as const,
               homeAirportIdent: "CYOW",
               homeAirportName: "Ottawa Macdonald-Cartier International Airport",
+              interceptEtaSeconds: null,
             },
           },
         },

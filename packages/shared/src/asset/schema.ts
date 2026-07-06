@@ -22,6 +22,8 @@ export const DroneDispatchStateSchema = z.object({
   homeAirportIdent: z.string(),
   /** Resolved from the airport registry for operator-facing labels. */
   homeAirportName: z.string().optional(),
+  /** Seconds until intercept while en-route or closing; null once trailing or RTB. */
+  interceptEtaSeconds: z.number().finite().nullable().optional(),
 });
 
 export const AssetDroneStateSchema = z.object({
