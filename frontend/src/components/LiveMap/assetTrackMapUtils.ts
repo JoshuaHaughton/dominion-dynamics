@@ -51,6 +51,13 @@ function predictionCollection(
     return emptyLineCollection();
   }
 
+  const [startLon, startLat] = coordinates[0]!;
+  const [endLon, endLat] = coordinates[1]!;
+
+  if (startLon === endLon && startLat === endLat) {
+    return emptyLineCollection();
+  }
+
   return {
     type: "FeatureCollection",
     features: [

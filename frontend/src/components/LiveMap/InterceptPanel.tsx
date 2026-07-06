@@ -53,9 +53,7 @@ export function InterceptPanel({
                       </div>
                       <div>
                         <dt>Drone</dt>
-                        <dd>
-                          {mission.droneKindLabel} · {mission.droneLabel}
-                        </dd>
+                        <dd>{mission.droneLabel}</dd>
                       </div>
                       <div>
                         <dt>Phase</dt>
@@ -63,7 +61,7 @@ export function InterceptPanel({
                       </div>
                       <div>
                         <dt>Base</dt>
-                        <dd>{mission.homeAirportIdent}</dd>
+                        <dd>{mission.baseLabel}</dd>
                       </div>
                     </dl>
                   </button>

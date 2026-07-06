@@ -25,6 +25,32 @@
   font-weight: 600;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.followButton {
+  border: 1px solid #334155;
+  border-radius: 0.375rem;
+  padding: 0.2rem 0.5rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.followButton:hover {
+  background: #1e293b;
+}
+
+.followButtonActive {
+  border-color: #38bdf8;
+  background: #0c4a6e;
+  color: #e0f2fe;
+}
+
 .closeButton {
   border: 1px solid #334155;
   border-radius: 0.375rem;

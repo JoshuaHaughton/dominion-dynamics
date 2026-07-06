@@ -4,11 +4,19 @@ import {
   ASSET_PATROL_MODE_COLORS,
   ASSET_THREAT_COLORS,
 } from "../../lib/constants/mapConstants.js";
+import {
+  formatDispatchBaseLabel,
+  formatDispatchFocusField,
+  formatDispatchFocusValue,
+  formatDispatchPhase,
+} from "./dispatchDisplayUtils.js";
 import styles from "./AssetInfoPanel.module.css";
 
 type AssetInfoPanelProps = {
   asset: Asset;
   assets: readonly Asset[];
+  isFollowingCamera: boolean;
+  onFollowingChange: (isFollowing: boolean) => void;
   onClose: () => void;
 };
 
@@ -105,7 +113,13 @@ function formatAltitude(altM: number): string {
 }
 
 /** Selected asset summary; zone fields follow the live WS stream. */
-export function AssetInfoPanel({ asset, assets, onClose }: AssetInfoPanelProps) {
+export function AssetInfoPanel({
+  asset,
+  assets,
+  isFollowingCamera,
+  onFollowingChange,
+  onClose,
+}: AssetInfoPanelProps) {
   const zone = asset.zone;
   const drone = asset.drone;
   const route = drone?.patrol;
@@ -126,9 +140,21 @@ export function AssetInfoPanel({ asset, assets, onClose }: AssetInfoPanelProps) 
     <aside className={styles.panel} aria-label="Asset details">
       <div className={styles.header}>
         <h2 className={styles.title}>{entityLabel}</h2>
-        <button className={styles.closeButton} onClick={onClose}>
-          Close
-        </button>
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={`${styles.followButton} ${isFollowingCamera ? styles.followButtonActive : ""}`}
+            aria-pressed={isFollowingCamera}
+            onClick={() => {
+              onFollowingChange(!isFollowingCamera);
+            }}
+          >
+            Follow
+          </button>
+          <button className={styles.closeButton} onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
       <dl className={styles.list}>
         <div className={styles.row}>
@@ -188,19 +214,28 @@ export function AssetInfoPanel({ asset, assets, onClose }: AssetInfoPanelProps) 
         {drone?.dispatch !== undefined ? (
           <>
             <div className={styles.row}>
-              <dt>Dispatch target</dt>
-              <dd>{formatShadowTarget(drone.dispatch.targetId, assets)}</dd>
+              <dt>{formatDispatchFocusField(drone.dispatch.phase)}</dt>
+              <dd>
+                {formatDispatchFocusValue(
+                  drone.dispatch.phase,
+                  drone.dispatch.targetId,
+                  drone.dispatch.homeAirportIdent,
+                  assets,
+                  drone.origin,
+                )}
+              </dd>
             </div>
             <div className={styles.row}>
               <dt>Dispatch phase</dt>
-              <dd>{drone.dispatch.phase}</dd>
+              <dd>{formatDispatchPhase(drone.dispatch.phase)}</dd>
             </div>
             <div className={styles.row}>
-              <dt>Home airport</dt>
+              <dt>Base</dt>
               <dd>
-                {drone.dispatch.homeAirportName !== undefined
-                  ? `${drone.dispatch.homeAirportName} (${drone.dispatch.homeAirportIdent})`
-                  : drone.dispatch.homeAirportIdent}
+                {formatDispatchBaseLabel(
+                  drone.origin,
+                  drone.dispatch.homeAirportIdent,
+                )}
               </dd>
             </div>
           </>

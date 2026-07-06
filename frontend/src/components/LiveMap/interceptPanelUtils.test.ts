@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Asset, DispatchPhase } from "@dominion-dynamics/shared";
-import {
-  formatAirportLabel,
-  formatDispatchPhase,
-  formatDroneKindLabel,
-  formatReadableAssetId,
-  getActiveInterceptMissions,
-  resolveAssetLabel,
-} from "./interceptPanelUtils.js";
+import { getActiveInterceptMissions } from "./interceptPanelUtils.js";
 
 const trafficAsset: Asset = {
   id: "syn-7033aa39-4da1-495d-89f9-13c43a7677ad",
@@ -31,7 +24,6 @@ function dispatchDrone(
   targetId: string,
   phase: DispatchPhase,
   homeAirportIdent: string,
-  homeAirportName?: string,
 ): Asset {
   return {
     id,
@@ -52,57 +44,10 @@ function dispatchDrone(
         targetId,
         phase,
         homeAirportIdent,
-        homeAirportName,
       },
     },
   };
 }
-
-describe("formatReadableAssetId", () => {
-  it("shortens long synthetic ids", () => {
-    expect(formatReadableAssetId("syn-7033aa39-4da1-495d-89f9-13c43a7677ad")).toBe(
-      "syn-…77ad",
-    );
-  });
-
-  it("keeps short ids unchanged", () => {
-    expect(formatReadableAssetId("syn-1")).toBe("syn-1");
-  });
-});
-
-describe("resolveAssetLabel", () => {
-  it("returns callsign when the asset has one", () => {
-    expect(resolveAssetLabel(trafficAsset.id, [trafficAsset])).toBe("UAL123");
-  });
-
-  it("falls back to a shortened id when callsign is missing", () => {
-    expect(
-      resolveAssetLabel("syn-7033aa39-4da1-495d-89f9-13c43a7677ad", []),
-    ).toBe("syn-…77ad");
-  });
-});
-
-describe("formatDispatchPhase", () => {
-  it("maps wire phases to operator-facing labels", () => {
-    expect(formatDispatchPhase("enroute")).toBe("En route");
-    expect(formatDispatchPhase("rtb")).toBe("RTB");
-  });
-});
-
-describe("formatDroneKindLabel", () => {
-  it("distinguishes airport launches from patrol assignments", () => {
-    expect(formatDroneKindLabel("dispatch")).toBe("Airport launch");
-    expect(formatDroneKindLabel("patrol")).toBe("Patrol route");
-  });
-});
-
-describe("formatAirportLabel", () => {
-  it("includes the registry name when available", () => {
-    expect(
-      formatAirportLabel("CYOW", "Ottawa Macdonald-Cartier International Airport"),
-    ).toBe("Ottawa Macdonald-Cartier International Airport (CYOW)");
-  });
-});
 
 describe("getActiveInterceptMissions", () => {
   it("returns an empty list when no drones are on dispatch", () => {
@@ -119,42 +64,32 @@ describe("getActiveInterceptMissions", () => {
         trafficAsset.id,
         "enroute",
         "CYOW",
-        "Ottawa Macdonald-Cartier International Airport",
       ),
     ]);
 
     expect(missions).toEqual([
       {
         droneId: "dispatch-1",
-        droneKindLabel: "Airport launch",
         droneLabel: "Dispatch-1",
         focusFieldLabel: "Target",
         focusLabel: "UAL123",
         phase: "enroute",
         phaseLabel: "En route",
-        homeAirportIdent: "CYOW",
+        baseLabel: "CYOW",
       },
     ]);
   });
 
-  it("shows the return airport during RTB instead of an empty target", () => {
+  it("shows the home airport ident during RTB", () => {
     const missions = getActiveInterceptMissions([
-      dispatchDrone(
-        "dispatch-1",
-        "Dispatch-1",
-        "dispatch",
-        "",
-        "rtb",
-        "CYOW",
-        "Ottawa Macdonald-Cartier International Airport",
-      ),
+      dispatchDrone("dispatch-1", "Dispatch-1", "dispatch", "", "rtb", "CYRO"),
     ]);
 
     expect(missions[0]?.focusFieldLabel).toBe("Returning to");
-    expect(missions[0]?.focusLabel).toContain("CYOW");
+    expect(missions[0]?.focusLabel).toBe("CYRO");
   });
 
-  it("labels patrol-origin dispatch rows separately", () => {
+  it("shows patrol route as the base label for patrol-origin rows", () => {
     const missions = getActiveInterceptMissions([
       dispatchDrone(
         "patrol-1",
@@ -163,11 +98,20 @@ describe("getActiveInterceptMissions", () => {
         trafficAsset.id,
         "intercepting",
         "CYRO",
-        "Ottawa / Rockcliffe Airport",
       ),
     ]);
 
-    expect(missions[0]?.droneKindLabel).toBe("Patrol route");
+    expect(missions[0]?.baseLabel).toBe("Patrol route");
     expect(missions[0]?.droneLabel).toBe("PATROL1");
+  });
+
+  it("shows patrol route as the RTB focus label for patrol-origin rows", () => {
+    const missions = getActiveInterceptMissions([
+      dispatchDrone("patrol-1", "PATROL1", "patrol", "", "rtb", ""),
+    ]);
+
+    expect(missions[0]?.focusFieldLabel).toBe("Returning to");
+    expect(missions[0]?.focusLabel).toBe("Patrol route");
+    expect(missions[0]?.baseLabel).toBe("Patrol route");
   });
 });
