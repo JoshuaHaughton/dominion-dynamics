@@ -39,10 +39,16 @@ export const SavePatrolPathRequestSchema = z.object({
 });
 
 /** GET /api/patrol-path response body. */
+export const PatrolPathResponseSchema = z.object({
+  geojson: PathGeoJsonSchema.nullable(),
+});
+
+/** PUT /api/patrol-path response body. */
 export const PatrolPathSchema = z.object({
   geojson: PathGeoJsonSchema,
 });
 
 export type PathRecord = z.infer<typeof PathRecordSchema>;
 export type SavePatrolPathRequest = z.infer<typeof SavePatrolPathRequestSchema>;
+export type PatrolPathResponse = z.infer<typeof PatrolPathResponseSchema>;
 export type PatrolPath = z.infer<typeof PatrolPathSchema>;

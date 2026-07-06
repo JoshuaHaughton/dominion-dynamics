@@ -1,5 +1,10 @@
 import { useEffect, useMemo } from "react";
-import type { Asset, AssetTrackDetail, ZoneGeoJson } from "@dominion-dynamics/shared";
+import type {
+  Asset,
+  AssetTrackDetail,
+  PathGeoJson,
+  ZoneGeoJson,
+} from "@dominion-dynamics/shared";
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
 import type { ZoneView } from "../../lib/hooks/useZones.js";
 import { AssetInfoPanel } from "./AssetInfoPanel.js";
@@ -10,25 +15,35 @@ type LiveMapProps = {
   assets: readonly Asset[];
   styleId: MapStyleId;
   zones: readonly ZoneView[];
+  patrolPath: PathGeoJson | null;
   selectedAssetId: string | null;
   trackDetail: AssetTrackDetail | null;
   onAssetSelect: (assetId: string | null) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
+  onPatrolPathDrawn: (geojson: PathGeoJson) => void;
   onZoneDrawError: (message: string) => void;
+  onPatrolDrawError: (message: string) => void;
   zoneDrawError: string | null;
+  patrolDrawError: string | null;
+  isSavingPatrolPath: boolean;
 };
 
-/** MapLibre map with live assets and restricted zone drawing. */
+/** MapLibre map with live assets, restricted zones, and patrol route drawing. */
 export function LiveMap({
   assets,
   styleId,
   zones,
+  patrolPath,
   selectedAssetId,
   trackDetail,
   onAssetSelect,
   onZoneDrawn,
+  onPatrolPathDrawn,
   zoneDrawError,
+  patrolDrawError,
   onZoneDrawError,
+  onPatrolDrawError,
+  isSavingPatrolPath,
 }: LiveMapProps) {
   const selectedAsset = useMemo(
     () => assets.find((asset) => asset.id === selectedAssetId) ?? null,
@@ -41,15 +56,24 @@ export function LiveMap({
     }
   }, [onAssetSelect, selectedAsset, selectedAssetId]);
 
-  const { containerRef, beginZoneDraw, isDrawingZone } = useLiveMap({
+  const {
+    containerRef,
+    beginZoneDraw,
+    beginPatrolDraw,
+    isDrawingZone,
+    isDrawingPatrol,
+  } = useLiveMap({
     assets,
     styleId,
     zones,
+    patrolPath,
     trackDetail,
     selectedAssetId,
     onAssetSelect,
     onZoneDrawn,
+    onPatrolPathDrawn,
     onZoneDrawError,
+    onPatrolDrawError,
   });
 
   return (
@@ -71,9 +95,33 @@ export function LiveMap({
             </span>
           )}
         </div>
+        <div className={styles.drawTool}>
+          <button
+            type="button"
+            className={`${styles.drawButton} ${isDrawingPatrol ? styles.drawButtonActive : ""}`}
+            aria-pressed={isDrawingPatrol}
+            onClick={beginPatrolDraw}
+          >
+            Draw patrol path
+          </button>
+          {isDrawingPatrol && (
+            <span className={styles.drawHint}>
+              Click to add waypoints. Click the start point to close the loop,
+              or the last point or Enter for an open path.
+            </span>
+          )}
+          {isSavingPatrolPath && (
+            <span className={styles.drawHint}>Saving patrol path…</span>
+          )}
+        </div>
         {zoneDrawError !== null && (
           <span className={styles.error} role="status">
             {zoneDrawError}
+          </span>
+        )}
+        {patrolDrawError !== null && (
+          <span className={styles.error} role="status">
+            {patrolDrawError}
           </span>
         )}
       </div>

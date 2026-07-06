@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PathGeoJsonSchema,
+  PatrolPathResponseSchema,
   PatrolPathSchema,
   SavePatrolPathRequestSchema,
 } from "./path.js";
@@ -68,11 +69,57 @@ describe("patrol path schemas", () => {
     });
   });
 
+  describe("PatrolPathResponseSchema", () => {
+    it("accepts a saved patrol path response", () => {
+      expect(PatrolPathResponseSchema.parse({ geojson: validLine })).toEqual({
+        geojson: validLine,
+      });
+    });
+
+    it("accepts an empty patrol path response", () => {
+      expect(PatrolPathResponseSchema.parse({ geojson: null })).toEqual({
+        geojson: null,
+      });
+    });
+
+    it.each([
+      ["non-object", "patrol-path"],
+      ["missing geojson", {}],
+      [
+        "polygon geojson",
+        {
+          geojson: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [-75.8, 45.3],
+                  [-75.6, 45.3],
+                  [-75.6, 45.45],
+                  [-75.8, 45.45],
+                  [-75.8, 45.3],
+                ],
+              ],
+            },
+          },
+        },
+      ],
+    ])("rejects %s", (_label, payload) => {
+      expect(PatrolPathResponseSchema.safeParse(payload).success).toBe(false);
+    });
+  });
+
   describe("PatrolPathSchema", () => {
     it("accepts a patrol path response", () => {
       expect(PatrolPathSchema.parse({ geojson: validLine })).toEqual({
         geojson: validLine,
       });
+    });
+
+    it("rejects an empty patrol path payload", () => {
+      expect(PatrolPathSchema.safeParse({ geojson: null }).success).toBe(false);
     });
   });
 });

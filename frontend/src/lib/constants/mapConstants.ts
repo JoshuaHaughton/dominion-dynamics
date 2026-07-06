@@ -22,12 +22,17 @@ export const MAP_LAYERS = {
   assetHistoryLine: `${CUSTOM_MAP_PREFIX}asset-history-line`,
   assetPredictionSource: `${CUSTOM_MAP_PREFIX}asset-prediction`,
   assetPredictionLine: `${CUSTOM_MAP_PREFIX}asset-prediction-line`,
+  patrolPathSource: `${CUSTOM_MAP_PREFIX}patrol-path`,
+  patrolPathLine: `${CUSTOM_MAP_PREFIX}patrol-path-line`,
 } as const;
 
 export const ZONE_FILL_COLOR = "#ef4444";
 export const ZONE_FILL_OPACITY = 0.18;
 export const ZONE_OUTLINE_COLOR = "#ef4444";
 export const ZONE_OUTLINE_WIDTH = 2;
+
+export const PATROL_PATH_LINE_COLOR = "#38bdf8";
+export const PATROL_PATH_LINE_WIDTH = 3;
 
 export const ASSET_CIRCLE_RADIUS = 6;
 export const ASSET_HEADING_ICON_SIZE = 0.55;

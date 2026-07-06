@@ -11,12 +11,7 @@ import {
 export function getPatrolPathHandler(_req: Request, res: Response): void {
   const patrolPath = getPatrolPath();
 
-  if (!patrolPath) {
-    res.status(404).json({ error: "Patrol path not found" });
-    return;
-  }
-
-  res.json(patrolPath);
+  res.json({ geojson: patrolPath?.geojson ?? null });
 }
 
 /** PUT /api/patrol-path */

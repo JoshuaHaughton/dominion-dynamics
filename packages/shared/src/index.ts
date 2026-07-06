@@ -60,12 +60,14 @@ export type {
   PathKind,
   PathRecord,
   PatrolPath,
+  PatrolPathResponse,
   SavePatrolPathRequest,
 } from "./patrol/path.js";
 export {
   PathGeoJsonSchema,
   PathKindSchema,
   PathRecordSchema,
+  PatrolPathResponseSchema,
   PatrolPathSchema,
   SavePatrolPathRequestSchema,
 } from "./patrol/path.js";

@@ -1,5 +1,11 @@
 import maplibregl, { type Map } from "maplibre-gl";
-import type { Asset, AssetTrackDetail, ThreatLevel, ZoneGeoJson } from "@dominion-dynamics/shared";
+import type {
+  Asset,
+  AssetTrackDetail,
+  PathGeoJson,
+  ThreatLevel,
+  ZoneGeoJson,
+} from "@dominion-dynamics/shared";
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import {
@@ -20,38 +26,52 @@ import {
   updateAssetTrackLayerData,
 } from "./assetTrackMapUtils.js";
 import {
-  attachZoneDrawControl,
-  detachZoneDrawControl,
+  attachDrawControl,
+  detachDrawControl,
   startZoneDraw,
-} from "./zoneDrawControl.js";
+} from "./drawControl.js";
+import { startPatrolDraw } from "./patrolDrawControl.js";
 import type { MaplibreTerradrawControl } from "@watergis/maplibre-gl-terradraw";
 import { syncZoneLayers, updateZoneLayerData } from "./zoneMapUtils.js";
+import {
+  syncPatrolPathLayers,
+  updatePatrolPathLayerData,
+} from "./patrolPathMapUtils.js";
 
 export type LiveMapInput = {
   assets: readonly Asset[];
   styleId: MapStyleId;
   zones: readonly ZoneView[];
+  patrolPath: PathGeoJson | null;
   trackDetail: AssetTrackDetail | null;
   selectedAssetId: string | null;
   onAssetSelect: (assetId: string | null) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
+  onPatrolPathDrawn: (geojson: PathGeoJson) => void;
   onZoneDrawError: (message: string) => void;
+  onPatrolDrawError: (message: string) => void;
 };
 
 type MapContext = {
   assets: readonly Asset[];
   zones: readonly ZoneView[];
+  patrolPath: PathGeoJson | null;
   trackDetail: AssetTrackDetail | null;
   isDrawingZone: boolean;
+  isDrawingPatrol: boolean;
   onAssetSelect: (assetId: string | null) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
+  onPatrolPathDrawn: (geojson: PathGeoJson) => void;
   onZoneDrawError: (message: string) => void;
+  onPatrolDrawError: (message: string) => void;
 };
 
 type UseLiveMapResult = {
   containerRef: RefObject<HTMLDivElement | null>;
   beginZoneDraw: () => void;
+  beginPatrolDraw: () => void;
   isDrawingZone: boolean;
+  isDrawingPatrol: boolean;
 };
 
 function getSelectedThreat(
@@ -65,16 +85,23 @@ function getSelectedThreat(
   return assets.find((asset) => asset.id === selectedAssetId)?.zone?.threat ?? "normal";
 }
 
-/** Manage MapLibre lifecycle and sync assets + zones onto the map. */
+function isDrawing(context: MapContext): boolean {
+  return context.isDrawingZone || context.isDrawingPatrol;
+}
+
+/** Manage MapLibre lifecycle and sync assets, zones, and patrol path onto the map. */
 export function useLiveMap({
   assets,
   styleId,
   zones,
+  patrolPath,
   trackDetail,
   selectedAssetId,
   onAssetSelect,
   onZoneDrawn,
+  onPatrolPathDrawn,
   onZoneDrawError,
+  onPatrolDrawError,
 }: LiveMapInput): UseLiveMapResult {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
@@ -87,41 +114,78 @@ export function useLiveMap({
   const mapContextRef = useRef<MapContext>({
     assets,
     zones,
+    patrolPath,
     trackDetail,
     isDrawingZone: false,
+    isDrawingPatrol: false,
     onAssetSelect,
     onZoneDrawn,
+    onPatrolPathDrawn,
     onZoneDrawError,
+    onPatrolDrawError,
   });
 
   const [isDrawingZone, setIsDrawingZone] = useState(false);
+  const [isDrawingPatrol, setIsDrawingPatrol] = useState(false);
 
   mapContextRef.current = {
     assets,
     zones,
+    patrolPath,
     trackDetail,
     isDrawingZone,
+    isDrawingPatrol,
     onAssetSelect,
     onZoneDrawn,
+    onPatrolPathDrawn,
     onZoneDrawError,
+    onPatrolDrawError,
   };
 
+  const resetDrawMode = useCallback(() => {
+    drawControlRef.current?.resetActiveMode();
+    setIsDrawingZone(false);
+    setIsDrawingPatrol(false);
+  }, []);
+
   const beginZoneDraw = useCallback(() => {
+    if (isDrawingPatrol) {
+      resetDrawMode();
+    }
+
     startZoneDraw(drawControlRef.current, isDrawingZone);
-  }, [isDrawingZone]);
+  }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
+
+  const beginPatrolDraw = useCallback(() => {
+    if (isDrawingZone) {
+      resetDrawMode();
+    }
+
+    startPatrolDraw(drawControlRef.current, isDrawingPatrol);
+  }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
 
   function setupDrawControl(map: Map): void {
-    detachZoneDrawControl(map, drawControlRef.current);
-    drawControlRef.current = attachZoneDrawControl(
-      map,
-      (geojson) => {
+    detachDrawControl(map, drawControlRef.current);
+    drawControlRef.current = attachDrawControl(map, {
+      onZoneComplete: (geojson) => {
         mapContextRef.current.onZoneDrawn(geojson);
       },
-      setIsDrawingZone,
-      (message) => {
-        mapContextRef.current.onZoneDrawError(message);
+      onPatrolPathComplete: (geojson) => {
+        mapContextRef.current.onPatrolPathDrawn(geojson);
       },
-    );
+      onZoneDrawingChange: setIsDrawingZone,
+      onPatrolDrawingChange: setIsDrawingPatrol,
+      onDrawError: (message) => {
+        const context = mapContextRef.current;
+
+        if (context.isDrawingPatrol) {
+          context.onPatrolDrawError(message);
+          return;
+        }
+
+        context.onZoneDrawError(message);
+      },
+    });
   }
 
   function syncMapContent(map: Map): void {
@@ -130,6 +194,7 @@ export function useLiveMap({
 
     disableBasemapTerrain(map);
     syncZoneLayers(map, context.zones);
+    syncPatrolPathLayers(map, context.patrolPath);
     void syncAssetLayers(map, context.assets).then(() => {
       syncAssetTrackLayers(map, context.trackDetail, selectedThreat);
       fitDemoRegionIfNeeded(map, context.assets.length);
@@ -148,7 +213,7 @@ export function useLiveMap({
     map.on("click", MAP_LAYERS.assetsCircles, (event) => {
       const context = mapContextRef.current;
 
-      if (context.isDrawingZone) {
+      if (isDrawing(context)) {
         return;
       }
 
@@ -161,7 +226,7 @@ export function useLiveMap({
     });
 
     map.on("mouseenter", MAP_LAYERS.assetsCircles, () => {
-      if (!mapContextRef.current.isDrawingZone) {
+      if (!isDrawing(mapContextRef.current)) {
         map.getCanvas().style.cursor = "pointer";
       }
     });
@@ -173,7 +238,7 @@ export function useLiveMap({
     map.on("click", (event) => {
       const context = mapContextRef.current;
 
-      if (context.isDrawingZone) {
+      if (isDrawing(context)) {
         return;
       }
 
@@ -209,13 +274,14 @@ export function useLiveMap({
     mapRef.current = map;
 
     return () => {
-      detachZoneDrawControl(map, drawControlRef.current);
+      detachDrawControl(map, drawControlRef.current);
       drawControlRef.current = undefined;
       map.remove();
       mapRef.current = null;
       hasFitBoundsRef.current = false;
       clickHandlersAttachedRef.current = false;
       setIsDrawingZone(false);
+      setIsDrawingPatrol(false);
     };
   }, []);
 
@@ -242,6 +308,7 @@ export function useLiveMap({
       disableBasemapTerrain(map);
       pushAssetsToMap(map, context.assets);
       updateZoneLayerData(map, context.zones);
+      updatePatrolPathLayerData(map, context.patrolPath);
       updateAssetTrackLayerData(map, context.trackDetail, selectedThreat);
       setupDrawControl(map);
     };
@@ -263,6 +330,17 @@ export function useLiveMap({
 
     updateZoneLayerData(map, zones);
   }, [zones]);
+
+  /** Push the latest patrol route into the GeoJSON source. */
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map?.isStyleLoaded()) {
+      return;
+    }
+
+    updatePatrolPathLayerData(map, patrolPath);
+  }, [patrolPath]);
 
   /** Push track overlays when selection detail changes. */
   useEffect(() => {
@@ -314,5 +392,11 @@ export function useLiveMap({
     hasFitBoundsRef.current = true;
   }
 
-  return { containerRef, beginZoneDraw, isDrawingZone };
+  return {
+    containerRef,
+    beginZoneDraw,
+    beginPatrolDraw,
+    isDrawingZone,
+    isDrawingPatrol,
+  };
 }
