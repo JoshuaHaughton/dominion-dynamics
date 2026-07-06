@@ -1,46 +1,55 @@
 import http from "node:http";
-import cors from "cors";
-import express from "express";
+import { z } from "zod";
 import "./db/index.js";
-import { assetsRouter } from "./api/routes/assets.js";
-import { healthRouter } from "./api/routes/health.js";
-import { zonesRouter } from "./api/routes/zones.js";
-import { patrolPathRouter } from "./api/routes/patrolPath.js";
+import { db } from "./db/index.js";
+import { createApp } from "./app.js";
 import {
   attachWebSocket,
   closeWebSocketServer,
   WS_LIVE_PATH,
 } from "./modules/realtime/ws.server.js";
-import { loadZoneGeometryCache } from "./modules/threat/zoneGeometryCache.js";
-import { getAssets, startSim, stopSim } from "./modules/sim/simControl.js";
-import { ensureDefaultPatrolPath } from "./services/patrol/patrolPathService.js";
+import { primeZoneGeometryCache } from "./modules/threat/zoneGeometryCache.js";
+import { startSim, stopSim } from "./modules/sim/simControl.js";
+import { getAssetList } from "./modules/sim/store.js";
+import { listZoneRows } from "./repositories/zoneRepository.js";
+import {
+  ensureDefaultPatrolPath,
+  resolvePatrolPath,
+} from "./services/patrol/patrolPathService.js";
 import { initializePatrolDrone } from "./modules/patrol/patrolTick.js";
 
-const port = Number(process.env.PORT ?? 8000);
+const port = z.coerce
+  .number()
+  .int()
+  .positive()
+  .default(8000)
+  .parse(process.env.PORT);
 
 let shuttingDown = false;
 
-const app = express();
+/** Hydrate the passive zone geometry cache from SQLite before the sim starts. */
+function hydrateZoneGeometryCache(): void {
+  try {
+    primeZoneGeometryCache(listZoneRows(db));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
 
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-  }),
-);
-app.use(express.json());
+    console.warn(
+      `Failed to load zone geometry cache (${detail}); using no zones.`,
+    );
+    primeZoneGeometryCache([]);
+  }
+}
 
-app.use("/api/health", healthRouter);
-app.use("/api/assets", assetsRouter);
-app.use("/api/zones", zonesRouter);
-app.use("/api/patrol-path", patrolPathRouter);
+const app = createApp();
 
-loadZoneGeometryCache();
+hydrateZoneGeometryCache();
 ensureDefaultPatrolPath();
-initializePatrolDrone();
+initializePatrolDrone(resolvePatrolPath());
 
 const server = http.createServer(app);
 
-attachWebSocket({ server, getConnectSnapshot: getAssets });
+attachWebSocket({ server, getConnectSnapshot: getAssetList });
 
 startSim();
 
@@ -62,10 +71,9 @@ function shutdown(): void {
     process.exit(0);
   });
 
-  // tsx watch force-kills after 5s if clients keep the HTTP socket open.
   setTimeout(() => {
     process.exit(0);
-  }, 4_000).unref();
+  }, 4_000).unref(); // tsx watch force-kills if HTTP/WS sockets linger
 }
 
 process.on("SIGINT", shutdown);
