@@ -1,6 +1,6 @@
 import type { Zone, ZoneGeoJson } from "@dominion-dynamics/shared";
 import { useCallback, useEffect, useState } from "react";
-import { createZone, fetchZones } from "../wire/zonesApi.js";
+import { createZone, fetchZones } from "../api/clients/zonesApi.js";
 
 export type PendingZone = {
   clientId: string;

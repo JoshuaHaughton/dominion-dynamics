@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AssetTrackDetailSchema } from "@dominion-dynamics/shared";
+import { AssetTrackDetailSchema } from "./track.js";
 
 describe("AssetTrackDetailSchema", () => {
   const validDetail = {
