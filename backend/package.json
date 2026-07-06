@@ -10,7 +10,7 @@
   "dependencies": {
     "better-sqlite3": "^12.6.0",
     "cors": "^2.8.5",
-    "drizzle-orm": "^0.44.0",
+    "drizzle-orm": "^0.45.2",
     "express": "^4.21.2"
   },
   "devDependencies": {
