@@ -71,16 +71,14 @@ export function useMapLayerSync({
     mapVisualFilter,
   });
 
-  useEffect(() => {
-    latestRef.current = {
-      assets,
-      zones,
-      patrolPath,
-      trackDetail,
-      selectedAssetId,
-      mapVisualFilter,
-    };
-  });
+  latestRef.current = {
+    assets,
+    zones,
+    patrolPath,
+    trackDetail,
+    selectedAssetId,
+    mapVisualFilter,
+  };
 
   const selectedThreat = getSelectedThreat(assets, selectedAssetId);
 
@@ -116,9 +114,13 @@ export function useMapLayerSync({
   useEffect(() => {
     const map = mapRef.current;
 
-    if (!map?.isStyleLoaded()) return;
+    if (!map) return;
 
-    updatePatrolPathLayerData(map, patrolPath);
+    if (map.getLayer(MAP_LAYERS.patrolPathLine)) {
+      updatePatrolPathLayerData(map, patrolPath);
+    } else if (map.isStyleLoaded()) {
+      syncPatrolPathLayers(map, patrolPath);
+    }
   }, [patrolPath]);
 
   /** Push track overlays when selection detail (or its threat tint) changes. */
