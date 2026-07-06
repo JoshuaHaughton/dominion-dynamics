@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { zonesToFeatureCollection } from "./zoneMapUtils.js";
-import type { ZoneView } from "../hooks/useZones.js";
+import type { ZoneView } from "./useZones.js";
 
 describe("zonesToFeatureCollection", () => {
   const savedZone: ZoneView = {

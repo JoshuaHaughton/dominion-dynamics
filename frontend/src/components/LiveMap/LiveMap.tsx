@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import type { ZoneGeoJson } from "@dominion-dynamics/shared";
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
 import { useFeedStatusStore } from "../../lib/stores/feedStatusStore.js";
@@ -6,16 +6,16 @@ import { useOperationsStore } from "../../lib/stores/operationsStore.js";
 import { AssetInfoPanel } from "../AssetInfoPanel/AssetInfoPanel.js";
 import { MapLoadingOverlay } from "../MapLoadingOverlay/MapLoadingOverlay.js";
 import { OperationsPanel } from "../OperationsPanel/OperationsPanel.js";
-import { useLiveAssets } from "./hooks/useLiveAssets.js";
-import { usePatrolPath } from "./hooks/usePatrolPath.js";
-import { useZones } from "./hooks/useZones.js";
+import { useLiveAssets } from "./assets/useLiveAssets.js";
+import { usePatrolPath } from "./patrol/usePatrolPath.js";
+import { useZones } from "./zones/useZones.js";
 import {
   boundsFromPatrolPath,
   boundsFromZoneGeoJson,
 } from "./map/mapFocusUtils.js";
 import { MapToolbar } from "./MapToolbar/MapToolbar.js";
-import { useLiveMap } from "./useLiveMap.js";
-import { useMapKeyboardShortcuts } from "./hooks/useMapKeyboardShortcuts.js";
+import { useLiveMap } from "./map/useLiveMap.js";
+import { useMapKeyboardShortcuts } from "./map/useMapKeyboardShortcuts.js";
 import styles from "./LiveMap.module.css";
 
 type LiveMapProps = {
@@ -65,10 +65,8 @@ export function LiveMap({ styleId }: LiveMapProps) {
     setFollowingCamera,
   });
 
-  const selectedAsset = useMemo(
-    () => assets.find((asset) => asset.id === selectedAssetId) ?? null,
-    [assets, selectedAssetId],
-  );
+  const selectedAsset =
+    assets.find((asset) => asset.id === selectedAssetId) ?? null;
 
   useEffect(() => {
     if (selectedAssetId !== null && selectedAsset === null) {
@@ -76,14 +74,11 @@ export function LiveMap({ styleId }: LiveMapProps) {
     }
   }, [selectAsset, selectedAsset, selectedAssetId]);
 
-  const mapVisualFilter = useMemo(
-    () => ({
-      entityTab,
-      statusFilter,
-      selectedAssetId,
-    }),
-    [entityTab, selectedAssetId, statusFilter],
-  );
+  const mapVisualFilter = {
+    entityTab,
+    statusFilter,
+    selectedAssetId,
+  };
 
   const {
     containerRef,

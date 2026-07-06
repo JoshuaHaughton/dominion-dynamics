@@ -9,7 +9,7 @@ import {
   syncGeoJsonLayers,
   updateGeoJsonSource,
   type GeoJsonLayerConfig,
-} from "./geoJsonLayerLifecycle.js";
+} from "../map/geoJsonLayerLifecycle.js";
 import {
   MAP_LAYERS,
   PATROL_PATH_LINE_COLOR,
@@ -60,12 +60,35 @@ const patrolPathLineLayer: LineLayerSpecification = {
   },
 };
 
+/**
+ * MapLibre draw order: layers added later render on top.
+ * `beforeId` inserts this layer *under* the named layer (see Map.addLayer docs).
+ */
+function patrolPathLayerBeforeId(map: Map): string | undefined {
+  if (map.getLayer(MAP_LAYERS.assetsCircles)) {
+    return MAP_LAYERS.assetsCircles;
+  }
+
+  return map.getLayer(MAP_LAYERS.assetsMarkers)
+    ? MAP_LAYERS.assetsMarkers
+    : undefined;
+}
+
 const patrolPathLayerConfig: GeoJsonLayerConfig<PathGeoJson | null> = {
   sourceId: MAP_LAYERS.patrolPathSource,
   primaryLayerId: MAP_LAYERS.patrolPathLine,
   toFeatureCollection: patrolPathToFeatureCollection,
   addLayerStack: (map, patrolPath) => {
     map.addSource(MAP_LAYERS.patrolPathSource, patrolPathSource(patrolPath));
+
+    const beforeId = patrolPathLayerBeforeId(map);
+
+    if (beforeId) {
+      // Route line sits under traffic/drone markers when asset layers already exist.
+      map.addLayer(patrolPathLineLayer, beforeId);
+      return;
+    }
+
     map.addLayer(patrolPathLineLayer);
   },
 };
@@ -84,18 +107,4 @@ export function syncPatrolPathLayers(
   patrolPath: PathGeoJson | null,
 ): void {
   syncGeoJsonLayers(map, patrolPathLayerConfig, patrolPath);
-  ensurePatrolPathBelowAssetLayers(map);
-}
-
-/** Keep the route line under traffic circles and drone markers. */
-export function ensurePatrolPathBelowAssetLayers(map: Map): void {
-  if (!map.getLayer(MAP_LAYERS.patrolPathLine)) {
-    return;
-  }
-
-  if (!map.getLayer(MAP_LAYERS.assetsCircles)) {
-    return;
-  }
-
-  map.moveLayer(MAP_LAYERS.patrolPathLine, MAP_LAYERS.assetsCircles);
 }

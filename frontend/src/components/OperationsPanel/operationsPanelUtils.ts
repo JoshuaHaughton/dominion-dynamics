@@ -1,7 +1,7 @@
 import type { Asset, ZoneGeoJson } from "@dominion-dynamics/shared";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
-import type { ZoneView } from "../LiveMap/hooks/useZones.js";
-import { isPendingZone } from "../LiveMap/hooks/useZones.js";
+import type { ZoneView } from "../LiveMap/zones/useZones.js";
+import { isPendingZone } from "../LiveMap/zones/useZones.js";
 import {
   assetMatchesEntityTab,
   assetMatchesOperationsFilter,

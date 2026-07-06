@@ -6,8 +6,8 @@ import {
   DEMO_MAP_FOCUS_REGION,
   INITIAL_MAP_ZOOM,
 } from "../../../lib/constants/mapConstants.js";
-import { getRegionCenter } from "../map/mapUtils.js";
-import { transformCustomMapStyle } from "../map/mapStyleTransform.js";
+import { getRegionCenter } from "./mapUtils.js";
+import { transformCustomMapStyle } from "./mapStyleTransform.js";
 
 type UseMapInstanceInput = {
   /** Owned by the orchestrator so sibling hooks can share them. */
@@ -91,5 +91,5 @@ export function useMapInstance({
     return () => {
       map.off("style.load", onStyleLoad);
     };
-  }, [mapRef, styleId]);
+  }, [styleId]);
 }

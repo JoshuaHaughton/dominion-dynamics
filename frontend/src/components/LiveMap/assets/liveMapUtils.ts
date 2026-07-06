@@ -7,7 +7,7 @@ import type {
 } from "maplibre-gl";
 import type { FeatureCollection, Point } from "geojson";
 import type { Asset } from "@dominion-dynamics/shared";
-import { setGeoJsonData } from "./geoJsonLayerLifecycle.js";
+import { setGeoJsonData } from "../map/geoJsonLayerLifecycle.js";
 import {
   ASSET_CIRCLE_RADIUS,
   ASSET_DISPATCH_BODY_COLOR,

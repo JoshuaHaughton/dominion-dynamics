@@ -3,27 +3,25 @@ import type {
   Asset,
   AssetTrackDetail,
   PathGeoJson,
-  ThreatLevel,
 } from "@dominion-dynamics/shared";
-import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react";
-import { MAP_LAYERS } from "../../../lib/constants/mapConstants.js";
+import { useEffect, useRef, type RefObject } from "react";
+import { MAP_LAYERS, DEMO_MAP_FOCUS_REGION } from "../../../lib/constants/mapConstants.js";
 import type { MapVisualFilter } from "../../../lib/utils/assetSymbology.js";
-import type { ZoneView } from "./useZones.js";
-import { syncAssetLayers, updateAssetLayerData } from "../map/liveMapUtils.js";
+import type { ZoneView } from "../zones/useZones.js";
+import { syncAssetLayers, updateAssetLayerData } from "../assets/liveMapUtils.js";
 import {
   clearAssetTrackLayers,
   syncAssetTrackLayers,
   updateAssetTrackLayerData,
-} from "../map/assetTrackMapUtils.js";
-import { syncZoneLayers, updateZoneLayerData } from "../map/zoneMapUtils.js";
+} from "../assets/assetTrackMapUtils.js";
+import { syncZoneLayers, updateZoneLayerData } from "../zones/zoneMapUtils.js";
 import {
   syncPatrolPathLayers,
   updatePatrolPathLayerData,
-  ensurePatrolPathBelowAssetLayers,
-} from "../map/patrolPathMapUtils.js";
-import { disableBasemapTerrain, toFitBounds } from "../map/mapUtils.js";
-import { fitMapToBounds } from "../map/mapFocusUtils.js";
-import { DEMO_MAP_FOCUS_REGION } from "../../../lib/constants/mapConstants.js";
+} from "../patrol/patrolPathMapUtils.js";
+import { disableBasemapTerrain, toFitBounds } from "./mapUtils.js";
+import { fitMapToBounds } from "./mapFocusUtils.js";
+import { selectedAssetThreat } from "./selectedAssetDerived.js";
 
 type UseMapLayerSyncInput = {
   mapRef: RefObject<MapLibreMap | null>;
@@ -45,15 +43,8 @@ type UseMapLayerSyncResult = {
 function getSelectedThreat(
   assets: readonly Asset[],
   selectedAssetId: string | null,
-): ThreatLevel {
-  if (selectedAssetId === null) {
-    return "normal";
-  }
-
-  return (
-    assets.find((asset) => asset.id === selectedAssetId)?.zone?.threat ??
-    "normal"
-  );
+) {
+  return selectedAssetThreat(assets, selectedAssetId);
 }
 
 /** Push live data into the map's GeoJSON sources as props change. */
@@ -88,30 +79,22 @@ export function useMapLayerSync({
     };
   });
 
-  /**
-   * Memoized to the threat VALUE so the track effect below re-runs on threat
-   * changes without keying off the whole per-tick assets array.
-   */
-  const selectedThreat = useMemo(
-    () => getSelectedThreat(assets, selectedAssetId),
-    [assets, selectedAssetId],
-  );
+  const selectedThreat = getSelectedThreat(assets, selectedAssetId);
 
-  const syncAllLayers = useCallback((map: MapLibreMap) => {
+  function syncAllLayers(map: MapLibreMap) {
     const latest = latestRef.current;
     const threat = getSelectedThreat(latest.assets, latest.selectedAssetId);
 
     disableBasemapTerrain(map);
     syncZoneLayers(map, latest.zones);
+    // Patrol before assets so markers render above the route line.
     syncPatrolPathLayers(map, latest.patrolPath);
-    // Track layers attach after asset layers exist so they slot underneath.
     void syncAssetLayers(map, latest.assets, latest.mapVisualFilter).then(
       () => {
-        ensurePatrolPathBelowAssetLayers(map);
         syncAssetTrackLayers(map, latest.trackDetail, threat);
       },
     );
-  }, []);
+  }
 
   /** Push the latest zone list into the GeoJSON source. */
   useEffect(() => {
@@ -120,7 +103,7 @@ export function useMapLayerSync({
     if (!map?.isStyleLoaded()) return;
 
     updateZoneLayerData(map, zones);
-  }, [mapRef, zones]);
+  }, [zones]);
 
   /** Push the latest patrol route into the GeoJSON source. */
   useEffect(() => {
@@ -129,8 +112,7 @@ export function useMapLayerSync({
     if (!map?.isStyleLoaded()) return;
 
     updatePatrolPathLayerData(map, patrolPath);
-    ensurePatrolPathBelowAssetLayers(map);
-  }, [mapRef, patrolPath]);
+  }, [patrolPath]);
 
   /** Push track overlays when selection detail (or its threat tint) changes. */
   useEffect(() => {
@@ -155,7 +137,7 @@ export function useMapLayerSync({
     }
 
     syncAssetTrackLayers(map, trackDetail, selectedThreat);
-  }, [mapRef, selectedAssetId, selectedThreat, trackDetail]);
+  }, [selectedAssetId, selectedThreat, trackDetail]);
 
   /** Push the latest asset snapshot into the map; initial demo fit runs once on first data. */
   useEffect(() => {
@@ -178,11 +160,11 @@ export function useMapLayerSync({
 
     fitMapToBounds(map, toFitBounds(DEMO_MAP_FOCUS_REGION), 0);
     hasFitBoundsRef.current = true;
-  }, [assets, mapRef, mapVisualFilter]);
+  }, [assets, mapVisualFilter]);
 
-  const resetLayerSync = useCallback(() => {
+  function resetLayerSync() {
     hasFitBoundsRef.current = false;
-  }, []);
+  }
 
   return { syncAllLayers, resetLayerSync };
 }

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { Asset, ZoneGeoJson } from "@dominion-dynamics/shared";
-import type { ZoneView } from "../LiveMap/hooks/useZones.js";
+import type { ZoneView } from "../LiveMap/zones/useZones.js";
 import type {
   OperationsEntityTab,
   OperationsStatusFilter,

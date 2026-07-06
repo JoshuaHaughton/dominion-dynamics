@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Zone, ZoneGeoJson } from "@dominion-dynamics/shared";
 import { ZoneGeoJsonSchema } from "@dominion-dynamics/shared";
 import {
@@ -72,11 +72,11 @@ export function useZones(): UseZonesResult {
     };
   }, []);
 
-  const reportDrawError = useCallback((message: string) => {
+  function reportDrawError(message: string) {
     setError(message);
-  }, []);
+  }
 
-  const persistPendingZone = useCallback(async (pendingZone: PendingZone) => {
+  async function persistPendingZone(pendingZone: PendingZone) {
     const { clientId, name, geojson } = pendingZone;
 
     try {
@@ -95,38 +95,33 @@ export function useZones(): UseZonesResult {
       );
       setError(err instanceof Error ? err.message : "Failed to save zone");
     }
-  }, []);
+  }
 
-  const addZoneFromDraw = useCallback(
-    (geojson: ZoneGeoJson) => {
-      // Validate before touching state; the generated name never fails
-      // validation, so only the geometry needs checking here.
-      const validation = ZoneGeoJsonSchema.safeParse(geojson);
+  function addZoneFromDraw(geojson: ZoneGeoJson) {
+    const validation = ZoneGeoJsonSchema.safeParse(geojson);
 
-      if (!validation.success) {
-        setError(firstZodValidationMessage(validation.error) ?? "Invalid zone");
-        return;
-      }
+    if (!validation.success) {
+      setError(firstZodValidationMessage(validation.error) ?? "Invalid zone");
+      return;
+    }
 
-      setError(null);
+    setError(null);
 
-      setZones((current) => {
-        const pendingZone: PendingZone = {
-          clientId: crypto.randomUUID(),
-          name: nextZoneName(current.length),
-          geojson,
-          pending: true,
-        };
+    setZones((current) => {
+      const pendingZone: PendingZone = {
+        clientId: crypto.randomUUID(),
+        name: nextZoneName(current.length),
+        geojson,
+        pending: true,
+      };
 
-        void persistPendingZone(pendingZone);
+      void persistPendingZone(pendingZone);
 
-        return [...current, pendingZone];
-      });
-    },
-    [persistPendingZone],
-  );
+      return [...current, pendingZone];
+    });
+  }
 
-  const removeZone = useCallback(async (zoneId: number) => {
+  async function removeZone(zoneId: number) {
     setError(null);
 
     try {
@@ -137,7 +132,7 @@ export function useZones(): UseZonesResult {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to delete zone");
     }
-  }, []);
+  }
 
   return {
     zones,

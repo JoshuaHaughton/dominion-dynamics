@@ -4,7 +4,7 @@ import type {
   PathGeoJson,
   ZoneGeoJson,
 } from "@dominion-dynamics/shared";
-import type { ZoneView } from "./hooks/useZones.js";
+import type { ZoneView } from "../zones/useZones.js";
 
 /** Latest props/callbacks for map listeners without re-binding handlers each render. */
 export type MapContext = {

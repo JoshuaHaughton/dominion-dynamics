@@ -1,6 +1,6 @@
 import type { PathGeoJson } from "@dominion-dynamics/shared";
 import { SavePatrolPathRequestSchema } from "@dominion-dynamics/shared";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   fetchPatrolPath,
   savePatrolPath,
@@ -50,48 +50,45 @@ export function usePatrolPath(): UsePatrolPathResult {
     };
   }, []);
 
-  const reportDrawError = useCallback((message: string) => {
+  function reportDrawError(message: string) {
     setError(message);
-  }, []);
+  }
 
-  const persistPatrolPath = useCallback(
-    async (geojson: PathGeoJson, previous: PathGeoJson | null) => {
-      setIsSaving(true);
+  async function persistPatrolPath(
+    geojson: PathGeoJson,
+    previous: PathGeoJson | null,
+  ) {
+    setIsSaving(true);
 
-      try {
-        await savePatrolPath({ geojson });
-      } catch (err: unknown) {
-        setPatrolPath(previous);
-        setError(
-          err instanceof Error ? err.message : "Failed to save patrol path",
-        );
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [],
-  );
+    try {
+      await savePatrolPath({ geojson });
+    } catch (err: unknown) {
+      setPatrolPath(previous);
+      setError(
+        err instanceof Error ? err.message : "Failed to save patrol path",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
-  const addPatrolPathFromDraw = useCallback(
-    (geojson: PathGeoJson) => {
-      const validation = SavePatrolPathRequestSchema.safeParse({ geojson });
+  function addPatrolPathFromDraw(geojson: PathGeoJson) {
+    const validation = SavePatrolPathRequestSchema.safeParse({ geojson });
 
-      if (!validation.success) {
-        setError(
-          firstZodValidationMessage(validation.error) ?? "Invalid patrol path",
-        );
-        return;
-      }
+    if (!validation.success) {
+      setError(
+        firstZodValidationMessage(validation.error) ?? "Invalid patrol path",
+      );
+      return;
+    }
 
-      setError(null);
+    setError(null);
 
-      setPatrolPath((previous) => {
-        void persistPatrolPath(geojson, previous);
-        return geojson;
-      });
-    },
-    [persistPatrolPath],
-  );
+    setPatrolPath((previous) => {
+      void persistPatrolPath(geojson, previous);
+      return geojson;
+    });
+  }
 
   return {
     patrolPath,

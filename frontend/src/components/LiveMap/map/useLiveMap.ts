@@ -5,16 +5,17 @@ import type {
   PathGeoJson,
   ZoneGeoJson,
 } from "@dominion-dynamics/shared";
-import type { MapStyleId } from "../../lib/constants/mapStyles.js";
-import { useCallback, useEffect, useRef, type RefObject } from "react";
-import { MAP_CAMERA_ANIMATION_MS } from "../../lib/constants/mapConstants.js";
-import type { MapVisualFilter } from "../../lib/utils/assetSymbology.js";
-import type { ZoneView } from "./hooks/useZones.js";
+import type { MapStyleId } from "../../../lib/constants/mapStyles.js";
+import { useEffect, useRef, type RefObject } from "react";
+import { MAP_CAMERA_ANIMATION_MS } from "../../../lib/constants/mapConstants.js";
+import type { MapVisualFilter } from "../../../lib/utils/assetSymbology.js";
+import type { ZoneView } from "../zones/useZones.js";
 import type { MapContext } from "./mapContext.js";
-import { easeMapToPoint, fitMapToBounds } from "./map/mapFocusUtils.js";
-import { useMapInstance } from "./hooks/useMapInstance.js";
-import { useMapLayerSync } from "./hooks/useMapLayerSync.js";
-import { useMapDrawAndInteraction } from "./hooks/useMapDrawAndInteraction.js";
+import { easeMapToPoint, fitMapToBounds } from "./mapFocusUtils.js";
+import { useMapInstance } from "./useMapInstance.js";
+import { useMapLayerSync } from "./useMapLayerSync.js";
+import { useMapDrawAndInteraction } from "./useMapDrawAndInteraction.js";
+import { selectedAssetPositionKey } from "./selectedAssetDerived.js";
 
 export type MapFocusOptions = {
   animate?: boolean;
@@ -83,43 +84,33 @@ export function useLiveMap({
     assetsRef.current = assets;
   });
 
-  const focusOnAsset = useCallback(
-    (assetId: string, options?: MapFocusOptions) => {
-      const map = mapRef.current;
-      const asset = assetsRef.current.find(
-        (candidate) => candidate.id === assetId,
-      );
+  function focusOnAsset(assetId: string, options?: MapFocusOptions) {
+    const map = mapRef.current;
+    const asset = assetsRef.current.find(
+      (candidate) => candidate.id === assetId,
+    );
 
-      if (!map || !asset) return;
+    if (!map || !asset) return;
 
-      easeMapToPoint(map, asset.lon, asset.lat, cameraDuration(options));
-    },
-    [],
-  );
+    easeMapToPoint(map, asset.lon, asset.lat, cameraDuration(options));
+  }
 
-  const focusOnBounds = useCallback(
-    (bounds: LngLatBoundsLike, options?: MapFocusOptions) => {
-      const map = mapRef.current;
+  function focusOnBounds(bounds: LngLatBoundsLike, options?: MapFocusOptions) {
+    const map = mapRef.current;
 
-      if (!map) return;
+    if (!map) return;
 
-      fitMapToBounds(map, bounds, cameraDuration(options));
-    },
-    [],
-  );
+    fitMapToBounds(map, bounds, cameraDuration(options));
+  }
 
-  const selectAndFocusAsset = useCallback(
-    (assetId: string | null) => {
-      selectAsset(assetId);
+  function selectAndFocusAsset(assetId: string | null) {
+    selectAsset(assetId);
 
-      if (assetId !== null) {
-        focusOnAsset(assetId);
-      }
-    },
-    [focusOnAsset, selectAsset],
-  );
+    if (assetId !== null) {
+      focusOnAsset(assetId);
+    }
+  }
 
-  /** Rebuilt each render; consumer hooks keep their own latest-value refs. */
   const mapContext: MapContext = {
     assets,
     zones,
@@ -154,33 +145,47 @@ export function useLiveMap({
     mapVisualFilter,
   });
 
-  const syncMapContent = useCallback(
-    (map: MapLibreMap) => {
-      syncAllLayers(map);
-      setupDrawControl(map);
-      attachInteractionHandlers(map);
-    },
-    [attachInteractionHandlers, setupDrawControl, syncAllLayers],
-  );
+  const syncMapContentRef = useRef(syncAllLayers);
+  const drawRef = useRef({
+    setupDrawControl,
+    attachInteractionHandlers,
+    teardownDraw,
+    resetLayerSync,
+  });
 
-  const onTeardown = useCallback(
-    (map: MapLibreMap) => {
-      teardownDraw(map);
-      resetLayerSync();
-    },
-    [resetLayerSync, teardownDraw],
-  );
+  useEffect(() => {
+    syncMapContentRef.current = syncAllLayers;
+    drawRef.current = {
+      setupDrawControl,
+      attachInteractionHandlers,
+      teardownDraw,
+      resetLayerSync,
+    };
+  });
+
+  function syncMapContent(map: MapLibreMap) {
+    syncMapContentRef.current(map);
+    drawRef.current.setupDrawControl(map);
+    drawRef.current.attachInteractionHandlers(map);
+  }
+
+  function onTeardown(map: MapLibreMap) {
+    drawRef.current.teardownDraw(map);
+    drawRef.current.resetLayerSync();
+  }
 
   useMapInstance({ containerRef, mapRef, styleId, syncMapContent, onTeardown });
 
-  /** Re-center on the selected asset each tick while camera follow is enabled. */
+  const followPositionKey = selectedAssetPositionKey(assets, selectedAssetId);
+
+  /** Re-center when follow is on and the selected asset moves. */
   useEffect(() => {
-    if (!isFollowingCamera || selectedAssetId === null) {
+    if (!isFollowingCamera || selectedAssetId === null || followPositionKey === null) {
       return;
     }
 
     focusOnAsset(selectedAssetId);
-  }, [assets, focusOnAsset, isFollowingCamera, selectedAssetId]);
+  }, [followPositionKey, isFollowingCamera, selectedAssetId]);
 
   return {
     containerRef,

@@ -5,7 +5,7 @@ import type {
 } from "maplibre-gl";
 import type { AssetTrackDetail, ThreatLevel } from "@dominion-dynamics/shared";
 import type { FeatureCollection, LineString } from "geojson";
-import { setGeoJsonData } from "./geoJsonLayerLifecycle.js";
+import { setGeoJsonData } from "../map/geoJsonLayerLifecycle.js";
 import {
   ASSET_HISTORY_LINE_OPACITY,
   ASSET_HISTORY_LINE_WIDTH,
@@ -132,6 +132,10 @@ const predictionLineLayer: LineLayerSpecification = {
   },
 };
 
+/**
+ * MapLibre draw order: layers added later render on top.
+ * `beforeId` inserts new layers *under* the named layer (see Map.addLayer docs).
+ */
 function trackLayerBeforeId(map: Map): string | undefined {
   if (map.getLayer(MAP_LAYERS.assetsCircles)) {
     return MAP_LAYERS.assetsCircles;
@@ -140,21 +144,6 @@ function trackLayerBeforeId(map: Map): string | undefined {
   return map.getLayer(MAP_LAYERS.assetsMarkers)
     ? MAP_LAYERS.assetsMarkers
     : undefined;
-}
-
-function ensureTrackLayersBelowAssets(map: Map): void {
-  const beforeId = trackLayerBeforeId(map);
-
-  if (!beforeId) return;
-
-  for (const layerId of [
-    MAP_LAYERS.assetHistoryLine,
-    MAP_LAYERS.assetPredictionLine,
-  ]) {
-    if (map.getLayer(layerId)) {
-      map.moveLayer(layerId, beforeId);
-    }
-  }
 }
 
 function addTrackLayerStack(
@@ -171,6 +160,7 @@ function addTrackLayerStack(
   );
 
   if (beforeId) {
+    // History/prediction lines sit under traffic/drone markers, above the basemap.
     map.addLayer(historyLineLayer, beforeId);
     map.addLayer(predictionLineLayer, beforeId);
     return;
@@ -188,14 +178,10 @@ export function syncAssetTrackLayers(
 ): void {
   if (!map.getSource(MAP_LAYERS.assetHistorySource)) {
     addTrackLayerStack(map, detail, threat);
-    ensureTrackLayersBelowAssets(map);
     return;
   }
 
   updateAssetTrackLayerData(map, detail, threat);
-  // Re-assert draw order here (not on every data tick) — sync* runs on layer
-  // creation and style swaps, the only times ordering can drift.
-  ensureTrackLayersBelowAssets(map);
 }
 
 /** Push latest track detail into existing GeoJSON sources. */

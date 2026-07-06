@@ -9,7 +9,7 @@ import {
   syncGeoJsonLayers,
   updateGeoJsonSource,
   type GeoJsonLayerConfig,
-} from "./geoJsonLayerLifecycle.js";
+} from "../map/geoJsonLayerLifecycle.js";
 import {
   MAP_LAYERS,
   ZONE_FILL_COLOR,
@@ -17,7 +17,7 @@ import {
   ZONE_OUTLINE_COLOR,
   ZONE_OUTLINE_WIDTH,
 } from "../../../lib/constants/mapConstants.js";
-import { isPendingZone, type ZoneView } from "../hooks/useZones.js";
+import { isPendingZone, type ZoneView } from "./useZones.js";
 
 function zoneFeatureId(zone: ZoneView): string | number {
   return isPendingZone(zone) ? zone.clientId : zone.id;

@@ -1,14 +1,14 @@
 import type maplibregl from "maplibre-gl";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import type { MaplibreTerradrawControl } from "@watergis/maplibre-gl-terradraw";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { MapContext } from "../mapContext.js";
+import { useEffect, useRef, useState } from "react";
+import type { MapContext } from "./mapContext.js";
 import {
   attachDrawControl,
   detachDrawControl,
   startDraw,
-} from "../map/drawControl.js";
-import { ASSET_BODY_LAYER_IDS } from "../map/liveMapUtils.js";
+} from "./drawControl.js";
+import { ASSET_BODY_LAYER_IDS } from "../assets/liveMapUtils.js";
 
 type UseMapDrawAndInteractionResult = {
   isDrawingZone: boolean;
@@ -44,28 +44,27 @@ export function useMapDrawAndInteraction(
   // owns draw state, so it mirrors it into a local ref (not the map context).
   const drawStateRef = useRef({ zone: false, patrol: false });
 
-  const markZoneDrawing = useCallback((drawing: boolean) => {
+  function markZoneDrawing(drawing: boolean) {
     drawStateRef.current.zone = drawing;
     setIsDrawingZone(drawing);
-  }, []);
+  }
 
-  const markPatrolDrawing = useCallback((drawing: boolean) => {
+  function markPatrolDrawing(drawing: boolean) {
     drawStateRef.current.patrol = drawing;
     setIsDrawingPatrol(drawing);
-  }, []);
+  }
 
-  const isDrawing = useCallback(
-    () => drawStateRef.current.zone || drawStateRef.current.patrol,
-    [],
-  );
+  function isDrawing() {
+    return drawStateRef.current.zone || drawStateRef.current.patrol;
+  }
 
-  const resetDrawMode = useCallback(() => {
+  function resetDrawMode() {
     drawControlRef.current?.resetActiveMode();
     markZoneDrawing(false);
     markPatrolDrawing(false);
-  }, [markPatrolDrawing, markZoneDrawing]);
+  }
 
-  const beginZoneDraw = useCallback(() => {
+  function beginZoneDraw() {
     if (isDrawingZone) {
       resetDrawMode();
       return;
@@ -76,9 +75,9 @@ export function useMapDrawAndInteraction(
     }
 
     startDraw(drawControlRef.current, "polygon", false);
-  }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
+  }
 
-  const beginPatrolDraw = useCallback(() => {
+  function beginPatrolDraw() {
     if (isDrawingPatrol) {
       resetDrawMode();
       return;
@@ -89,10 +88,9 @@ export function useMapDrawAndInteraction(
     }
 
     startDraw(drawControlRef.current, "polyline", false);
-  }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
+  }
 
-  const setupDrawControl = useCallback(
-    (map: MapLibreMap) => {
+  function setupDrawControl(map: MapLibreMap) {
       detachDrawControl(map, drawControlRef.current);
       drawControlRef.current = attachDrawControl(map, {
         onZoneComplete: (geojson) => {
@@ -114,12 +112,9 @@ export function useMapDrawAndInteraction(
           context.onZoneDrawError(message);
         },
       });
-    },
-    [markPatrolDrawing, markZoneDrawing],
-  );
+  }
 
-  const attachInteractionHandlers = useCallback(
-    (map: MapLibreMap) => {
+  function attachInteractionHandlers(map: MapLibreMap) {
       if (clickHandlersAttachedRef.current) return;
 
       clickHandlersAttachedRef.current = true;
@@ -167,20 +162,15 @@ export function useMapDrawAndInteraction(
       };
 
       map.on("dragstart", stopFollowingOnPan);
-    },
-    [isDrawing],
-  );
+  }
 
-  const teardownDraw = useCallback(
-    (map: MapLibreMap) => {
+  function teardownDraw(map: MapLibreMap) {
       detachDrawControl(map, drawControlRef.current);
       drawControlRef.current = undefined;
       clickHandlersAttachedRef.current = false;
-      markZoneDrawing(false);
-      markPatrolDrawing(false);
-    },
-    [markPatrolDrawing, markZoneDrawing],
-  );
+    markZoneDrawing(false);
+    markPatrolDrawing(false);
+  }
 
   return {
     isDrawingZone,
