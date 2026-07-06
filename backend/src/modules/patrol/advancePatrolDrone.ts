@@ -1,7 +1,6 @@
 import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
 import { isDrone } from "../sim/store.js";
-import { stepAsset } from "../sim/movement.js";
-import { distanceM, headingToward } from "../../lib/geo/distanceAndHeading.js";
+import { distanceM } from "../../lib/geo/distanceAndHeading.js";
 import {
   PATROL_DRONE_ALT_M,
   PATROL_DRONE_SPEED_MPS,
@@ -18,9 +17,11 @@ import {
 } from "./shadowAssignmentStore.js";
 import {
   capSpeedForRemainingDistance,
-  resolveChaseSpeed,
-  resolveChaseSteerPoint,
 } from "./shadowChase.js";
+import {
+  advanceChaseTowardTarget,
+  stepDroneTowardPoint,
+} from "./chaseStep.js";
 import type { PatrolDroneState, PatrolPathDirection } from "./types.js";
 
 /**
@@ -68,28 +69,12 @@ function stepTowardTarget(
   targetLat: number,
   deltaSeconds: number,
 ): Asset {
-  const distanceToTargetM = distanceM(
-    state.asset.lon,
-    state.asset.lat,
+  return stepDroneTowardPoint(
+    state.asset,
     targetLon,
     targetLat,
-  );
-
-  if (distanceToTargetM <= 0.5) {
-    return { ...state.asset, speed: 0 };
-  }
-
-  const heading = headingToward(
-    state.asset.lon,
-    state.asset.lat,
-    targetLon,
-    targetLat,
-  );
-
-  return stepAsset({
-    asset: { ...state.asset, heading },
     deltaSeconds,
-  });
+  );
 }
 
 /** Nearest critical traffic asset to the patrol drone, if any. */
@@ -174,7 +159,7 @@ function withRejoinKinematics(asset: Asset): Asset {
   };
 }
 
-function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneState {
+export function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneState {
   if (state.shadowTargetId) {
     deleteShadowAssignment(state.shadowTargetId);
   }
@@ -333,26 +318,7 @@ function advanceShadowingTarget(
 ): PatrolDroneState {
   setShadowAssignment(target.id, state.asset.id);
 
-  const steerPoint = resolveChaseSteerPoint(state.asset, target);
-  const chaseSpeed = resolveChaseSpeed(
-    state.asset,
-    target,
-    steerPoint,
-    deltaSeconds,
-  );
-  const shadowing = {
-    ...state,
-    asset: {
-      ...state.asset,
-      ...chaseSpeed,
-    },
-  };
-  const moved = stepTowardTarget(
-    shadowing,
-    steerPoint.lon,
-    steerPoint.lat,
-    deltaSeconds,
-  );
+  const moved = advanceChaseTowardTarget(state.asset, target, deltaSeconds);
 
   return {
     ...state,
