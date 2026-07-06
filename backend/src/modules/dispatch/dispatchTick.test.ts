@@ -56,7 +56,7 @@ describe("tickDispatchDrones", () => {
     expect(drones[0]?.drone?.origin).toBe("dispatch");
     expect(drones[0]?.drone?.dispatch?.targetId).toBe("critical-1");
     expect(getDispatchDroneState(DISPATCH_DRONE_ID)).toBeDefined();
-    expect(drones[0]?.callsign).toBe("SCRAM1");
+    expect(drones[0]?.callsign).toBe("Dispatch-1");
   });
 
   it("removes despawned dispatch drones from the store", () => {

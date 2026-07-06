@@ -81,6 +81,7 @@ describe("SnapshotMessageSchema", () => {
               targetId: "syn-critical-1",
               phase: "trailing" as const,
               homeAirportIdent: "CYOW",
+              homeAirportName: "Ottawa Macdonald-Cartier International Airport",
             },
           },
         },

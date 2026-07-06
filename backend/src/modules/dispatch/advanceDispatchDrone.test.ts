@@ -188,7 +188,7 @@ describe("advanceDispatchDrone", () => {
       speed: 200,
       role: "drone",
       category: 14,
-      callsign: "SCRAM1",
+      callsign: "Dispatch-1",
       originCountry: null,
       onGround: false,
       zone: null,

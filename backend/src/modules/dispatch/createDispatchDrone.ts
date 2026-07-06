@@ -5,7 +5,7 @@ import {
   PATROL_DRONE_SPEED_MPS,
   PATROL_MAX_INTERCEPT_MPS,
 } from "../patrol/constants.js";
-import { issueScramCallsign } from "./dispatchDroneStore.js";
+import { issueDispatchCallsign } from "./dispatchDroneStore.js";
 import type {
   DispatchAssignmentDecision,
   DispatchDroneState,
@@ -51,7 +51,7 @@ export function createSpawnedDispatchDrone(
     origin: "dispatch",
     asset: baseDispatchAsset(
       mission.droneId,
-      issueScramCallsign(),
+      issueDispatchCallsign(),
       spawnLat,
       spawnLon,
       headingToward(spawnLon, spawnLat, targetLon, targetLat),

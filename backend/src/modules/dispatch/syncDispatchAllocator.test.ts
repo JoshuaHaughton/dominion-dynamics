@@ -52,7 +52,7 @@ describe("syncDispatchAllocator", () => {
       phase: "enroute",
       targetId: "critical-1",
     });
-    expect(state?.asset.callsign).toBe("SCRAM1");
+    expect(state?.asset.callsign).toBe("Dispatch-1");
   });
 
   it("keeps sticky missions while the target stays critical", () => {

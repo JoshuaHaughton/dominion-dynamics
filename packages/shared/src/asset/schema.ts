@@ -20,6 +20,8 @@ export const DroneDispatchStateSchema = z.object({
   targetId: z.string(),
   phase: z.enum(["enroute", "intercepting", "trailing", "rtb", "at_base"]),
   homeAirportIdent: z.string(),
+  /** Resolved from the airport registry for operator-facing labels. */
+  homeAirportName: z.string().optional(),
 });
 
 export const AssetDroneStateSchema = z.object({

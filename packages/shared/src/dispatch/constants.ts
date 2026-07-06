@@ -9,5 +9,5 @@ export type DispatchPhase =
   | "rtb"
   | "at_base";
 
-/** Legacy prefix; dispatch drone ids are now opaque UUIDs with monotonic SCRAM callsigns. */
+/** Legacy prefix; dispatch drone ids are opaque UUIDs with monotonic Dispatch-N callsigns. */
 export const DISPATCH_DRONE_ID_PREFIX = "dispatch-drone";

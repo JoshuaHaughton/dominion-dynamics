@@ -36,7 +36,7 @@ describe("publishLiveSnapshot", () => {
       heading: 45,
       speed: 120,
       role: "drone",
-      callsign: "SCRAM1",
+      callsign: "Dispatch-1",
       zone: null,
       drone: {
         origin: "dispatch",
