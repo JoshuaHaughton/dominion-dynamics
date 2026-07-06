@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { advanceAssets } from "./ticker.js";
 import { isInsideSeedRegion } from "./seed.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
-import { testAsset } from "../../testFixtures/asset.js";
+import { testAsset } from "@dominion-dynamics/shared/testing";
 
 describe("advanceAssets", () => {
   const ottawaRegion: SimBounds = {
@@ -28,9 +28,10 @@ describe("advanceAssets", () => {
       seedRegion: ottawaRegion,
     });
 
-    expect(next.id).toBe(baseAsset.id);
-    expect(next.lon).toBeGreaterThan(baseAsset.lon);
-    expect(isInsideSeedRegion(next, ottawaRegion)).toBe(true);
+    expect(next).toBeDefined();
+    expect(next!.id).toBe(baseAsset.id);
+    expect(next!.lon).toBeGreaterThan(baseAsset.lon);
+    expect(isInsideSeedRegion(next!, ottawaRegion)).toBe(true);
   });
 
   it("respawns with a new id when a track exits the seed region", () => {
@@ -47,10 +48,11 @@ describe("advanceAssets", () => {
       seedRegion: ottawaRegion,
     });
 
-    expect(next.id).not.toBe(exitingAsset.id);
-    expect(next.id).toMatch(
+    expect(next).toBeDefined();
+    expect(next!.id).not.toBe(exitingAsset.id);
+    expect(next!.id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
-    expect(isInsideSeedRegion(next, ottawaRegion)).toBe(true);
+    expect(isInsideSeedRegion(next!, ottawaRegion)).toBe(true);
   });
 });

@@ -1,10 +1,7 @@
 import type { Asset } from "@dominion-dynamics/shared";
 import { stepAsset } from "../sim/movement.js";
 import { distanceM, headingToward } from "../../lib/geo/distanceAndHeading.js";
-import {
-  resolveChaseSpeed,
-  resolveChaseSteerPoint,
-} from "./shadowChase.js";
+import { resolveChaseSpeed, resolveChaseSteerPoint } from "./shadowChase.js";
 
 /** Move one tick toward a fixed lon/lat with heading set from the drone position. */
 export function stepDroneTowardPoint(
@@ -24,12 +21,7 @@ export function stepDroneTowardPoint(
     return { ...asset, speed: 0 };
   }
 
-  const heading = headingToward(
-    asset.lon,
-    asset.lat,
-    targetLon,
-    targetLat,
-  );
+  const heading = headingToward(asset.lon, asset.lat, targetLon, targetLat);
 
   return stepAsset({
     asset: { ...asset, heading },
@@ -44,12 +36,7 @@ export function advanceChaseTowardTarget(
   deltaSeconds: number,
 ): Asset {
   const steerPoint = resolveChaseSteerPoint(drone, target);
-  const chaseSpeed = resolveChaseSpeed(
-    drone,
-    target,
-    steerPoint,
-    deltaSeconds,
-  );
+  const chaseSpeed = resolveChaseSpeed(drone, target, steerPoint, deltaSeconds);
   const chasing = {
     ...drone,
     ...chaseSpeed,

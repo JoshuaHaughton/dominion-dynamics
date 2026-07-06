@@ -1,38 +1,58 @@
 import type { SimBounds } from "@dominion-dynamics/shared";
+import { DEFAULT_SIM_SEED_REGION } from "@dominion-dynamics/shared";
+import { z } from "zod";
 
-export type IngestMode = "seed" | "poll";
-
-// Sim defaults (overridable via env vars).
+/** Simulated asset count when ASSET_COUNT is unset. */
 export const DEFAULT_ASSET_COUNT = 120;
+/** Sim tick interval when TICK_MS is unset. */
 export const DEFAULT_TICK_MS = 1000;
-export const DEFAULT_POLL_INTERVAL_MS = 30_000;
 
-// Random ranges for synthetic aircraft at seed time.
+/** Minimum synthetic aircraft altitude at seed time (meters). */
 export const SYNTHETIC_ALT_MIN_M = 500;
+/** Maximum synthetic aircraft altitude at seed time (meters). */
 export const SYNTHETIC_ALT_MAX_M = 12_000;
 
-// Spread entry headings so respawned tracks don't all aim at the region center.
+/** Spread entry headings so respawned tracks don't all aim at the region center. */
 export const RESPAWN_HEADING_JITTER_DEG = 30;
 
-// Ottawa-Gatineau operating area (demo AOI).
-// Box around the capital region for synthetic spawn and OpenSky seed.
-// Map stays global; frontend should fitBounds here on first load.
-export const DEFAULT_SIM_SEED_MIN_LAT = 45.2;
-export const DEFAULT_SIM_SEED_MAX_LAT = 45.6;
-export const DEFAULT_SIM_SEED_MIN_LON = -76.1;
-export const DEFAULT_SIM_SEED_MAX_LON = -75.3;
+const SimEnvSchema = z.object({
+  ASSET_COUNT: z.coerce.number().int().positive().default(DEFAULT_ASSET_COUNT),
+  TICK_MS: z.coerce.number().int().positive().default(DEFAULT_TICK_MS),
+  SIM_SEED_MIN_LAT: z.coerce
+    .number()
+    .min(-90)
+    .max(90)
+    .default(DEFAULT_SIM_SEED_REGION.minLat),
+  SIM_SEED_MAX_LAT: z.coerce
+    .number()
+    .min(-90)
+    .max(90)
+    .default(DEFAULT_SIM_SEED_REGION.maxLat),
+  SIM_SEED_MIN_LON: z.coerce
+    .number()
+    .min(-180)
+    .max(180)
+    .default(DEFAULT_SIM_SEED_REGION.minLon),
+  SIM_SEED_MAX_LON: z.coerce
+    .number()
+    .min(-180)
+    .max(180)
+    .default(DEFAULT_SIM_SEED_REGION.maxLon),
+});
 
+const simEnv = SimEnvSchema.parse(process.env);
+
+/** Seed/respawn bounding box, overridable per-edge via SIM_SEED_* env vars. */
 export const SIM_SEED_REGION: SimBounds = {
-  minLat: Number(process.env.SIM_SEED_MIN_LAT ?? DEFAULT_SIM_SEED_MIN_LAT),
-  maxLat: Number(process.env.SIM_SEED_MAX_LAT ?? DEFAULT_SIM_SEED_MAX_LAT),
-  minLon: Number(process.env.SIM_SEED_MIN_LON ?? DEFAULT_SIM_SEED_MIN_LON),
-  maxLon: Number(process.env.SIM_SEED_MAX_LON ?? DEFAULT_SIM_SEED_MAX_LON),
+  minLat: simEnv.SIM_SEED_MIN_LAT,
+  maxLat: simEnv.SIM_SEED_MAX_LAT,
+  minLon: simEnv.SIM_SEED_MIN_LON,
+  maxLon: simEnv.SIM_SEED_MAX_LON,
 };
 
+/** Resolved sim runtime configuration (env overrides applied). */
 export const simConfig = {
-  assetCount: Number(process.env.ASSET_COUNT ?? DEFAULT_ASSET_COUNT),
-  tickMs: Number(process.env.TICK_MS ?? DEFAULT_TICK_MS),
-  ingestMode: (process.env.INGEST_MODE ?? "seed") as IngestMode,
-  pollIntervalMs: Number(process.env.OPENSKY_POLL_MS ?? DEFAULT_POLL_INTERVAL_MS),
+  assetCount: simEnv.ASSET_COUNT,
+  tickMs: simEnv.TICK_MS,
   seedRegion: SIM_SEED_REGION,
 };

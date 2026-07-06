@@ -4,7 +4,11 @@ import { point } from "@turf/helpers";
 import type { Asset } from "@dominion-dynamics/shared";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import { distanceM } from "../../lib/geo/distanceAndHeading.js";
-import { testAsset } from "../../testFixtures/asset.js";
+import {
+  TEST_IDS,
+  testAsset,
+  testDispatchMission,
+} from "@dominion-dynamics/shared/testing";
 import {
   advanceDispatchDrone,
   resolveDispatchChasePhase,
@@ -12,21 +16,16 @@ import {
 import { clearDispatchDroneStates } from "./dispatchDroneStore.js";
 import { createSpawnedDispatchDrone } from "./createDispatchDrone.js";
 import type { DispatchMission } from "./types.js";
-import { getAirportByIdent } from "../airport/registry.js";
+import { findAirportByIdent } from "../airport/registry.js";
 import { trailPointBehindTarget } from "../patrol/shadowChase.js";
 
-const DISPATCH_DRONE_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-
 describe("advanceDispatchDrone", () => {
-  const mission: DispatchMission = {
-    targetId: "critical-1",
-    droneId: DISPATCH_DRONE_ID,
-    assignmentSource: "spawn",
-    homeAirportIdent: "CYOW",
+  const DISPATCH_DRONE_ID = TEST_IDS.DISPATCH_DRONE;
+  const mission: DispatchMission = testDispatchMission({
     assignedAtMs: Date.now(),
-  };
+  });
 
-  const cyow = getAirportByIdent("CYOW")!;
+  const cyow = findAirportByIdent("CYOW")!;
 
   beforeEach(() => {
     clearDispatchDroneStates();
@@ -142,17 +141,15 @@ describe("advanceDispatchDrone", () => {
   });
 
   it("despawns after RTB movement crosses the arrival threshold", () => {
-    const spawnPoint = destination(
-      point([cyow.lon, cyow.lat]),
-      0.08,
-      180,
-      { units: "kilometers" },
-    );
-    const [spawnLon, spawnLat] = spawnPoint.geometry.coordinates;
+    const spawnPoint = destination(point([cyow.lon, cyow.lat]), 0.08, 180, {
+      units: "kilometers",
+    });
+    const [spawnLon = cyow.lon, spawnLat = cyow.lat] =
+      spawnPoint.geometry.coordinates;
 
-    expect(
-      distanceM(spawnLon, spawnLat, cyow.lon, cyow.lat),
-    ).toBeGreaterThan(75);
+    expect(distanceM(spawnLon, spawnLat, cyow.lon, cyow.lat)).toBeGreaterThan(
+      75,
+    );
 
     let state = createSpawnedDispatchDrone(
       mission,

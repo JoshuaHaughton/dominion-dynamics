@@ -1,5 +1,11 @@
 import type { Asset, PatrolMode, PathGeoJson } from "@dominion-dynamics/shared";
 
+/** Persisted patrol route (row id + geometry) as resolved by the path service. */
+export type ResolvedPatrolPath = {
+  id: number;
+  geojson: PathGeoJson;
+};
+
 export type PatrolPathDirection = "forward" | "reverse";
 
 export type PatrolDroneState = {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { testAsset } from "../../testFixtures/asset.js";
-import { getAirportByIdent } from "../airport/registry.js";
+import { testAsset, UUID_PATTERN } from "@dominion-dynamics/shared/testing";
+import { findAirportByIdent } from "../airport/registry.js";
 import {
   clearDispatchDroneStates,
   getDispatchDroneState,
@@ -13,11 +13,8 @@ import {
 } from "./missionStore.js";
 import { syncDispatchAllocator } from "./syncDispatchAllocator.js";
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 describe("syncDispatchAllocator", () => {
-  const cyow = getAirportByIdent("CYOW")!;
+  const cyow = findAirportByIdent("CYOW")!;
 
   afterEach(() => {
     clearDispatchMissions();

@@ -7,7 +7,7 @@ import type {
   AssetHistoryPoint,
   PredictedPathLine,
 } from "@dominion-dynamics/shared";
-import { WARNING_WINDOW_SECONDS } from "./constants.js";
+import { THREAT_WARNING_WINDOW_SECONDS } from "@dominion-dynamics/shared";
 
 type PredictPathOptions = {
   /** Draw a line to this point instead of forward projection (shadow target or rejoin snap). */
@@ -43,8 +43,13 @@ function deriveMotion(
     return { heading: asset.heading, speed: asset.speed };
   }
 
-  const first = history[0]!;
-  const last = history.at(-1)!;
+  const first = history[0];
+  const last = history.at(-1);
+
+  if (!first || !last) {
+    return { heading: asset.heading, speed: asset.speed };
+  }
+
   const elapsedSeconds = (last.ts - first.ts) / 1000;
 
   if (elapsedSeconds <= 0) {
@@ -92,9 +97,9 @@ export function predictAssetPath(
 
   // Default: project straight ahead for the five-minute warning window using
   // history-derived motion for traffic, or instantaneous speed/heading for patrol.
-  const distanceKm = (speed * WARNING_WINDOW_SECONDS) / 1000;
+  const distanceKm = (speed * THREAT_WARNING_WINDOW_SECONDS) / 1000;
   const end = destination(origin, distanceKm, heading, { units: "kilometers" });
-  const [endLon, endLat] = end.geometry.coordinates;
+  const [endLon = asset.lon, endLat = asset.lat] = end.geometry.coordinates;
 
   return {
     type: "LineString",

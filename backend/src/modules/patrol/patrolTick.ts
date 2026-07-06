@@ -1,8 +1,5 @@
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import type { Asset } from "@dominion-dynamics/shared";
-import { db } from "../../db/index.js";
-import type { AppDatabase } from "../../db/types.js";
-import { resolvePatrolPath } from "../../services/patrol/patrolPathService.js";
 import { createInitialPatrolDroneState } from "./createInitialPatrolDroneState.js";
 import { realignPatrolDroneToPath } from "./realignPatrolDroneToPath.js";
 import {
@@ -13,13 +10,13 @@ import {
 import { advancePatrolDrone } from "./advancePatrolDrone.js";
 import { patrolAssetFromState } from "./toWireAsset.js";
 import { isPatrolOnDispatchMission } from "../dispatch/dispatchDroneStore.js";
-import { tickDispatchDrones } from "../dispatch/dispatchTick.js";
+import type { ResolvedPatrolPath } from "./types.js";
 
-/** Place the patrol drone at the start of the saved route, or clear it when none exists. */
-export function initializePatrolDrone(database: AppDatabase = db): void {
-  const resolved = resolvePatrolPath(database);
-
-  if (!resolved) {
+/** Place the patrol drone at the start of the given route, or clear it when none exists. */
+export function initializePatrolDrone(
+  patrolPath: ResolvedPatrolPath | null,
+): void {
+  if (!patrolPath) {
     deletePatrolDroneState(PATROL_ASSET_ID);
     return;
   }
@@ -30,40 +27,39 @@ export function initializePatrolDrone(database: AppDatabase = db): void {
   setPatrolDroneState(
     PATROL_ASSET_ID,
     existing
-      ? realignPatrolDroneToPath(existing, resolved.geojson, resolved.id)
-      : createInitialPatrolDroneState(resolved.geojson, resolved.id),
+      ? realignPatrolDroneToPath(existing, patrolPath.geojson, patrolPath.id)
+      : createInitialPatrolDroneState(patrolPath.geojson, patrolPath.id),
   );
 }
 
 type TickPatrolDroneParams = {
   liveAssets: readonly Asset[];
   deltaSeconds: number;
-  database?: AppDatabase;
+  /** Resolved by the caller (ticker/bootstrap); modules never touch the DB. */
+  patrolPath: ResolvedPatrolPath | null;
 };
 
 /** Advance patrol one tick against enriched traffic, or null when no route is saved. */
 export function tickPatrolDrone({
   liveAssets,
   deltaSeconds,
-  database = db,
+  patrolPath,
 }: TickPatrolDroneParams): Asset | null {
   if (isPatrolOnDispatchMission(PATROL_ASSET_ID)) {
     return null;
   }
 
-  const resolved = resolvePatrolPath(database);
-
-  if (!resolved) {
+  if (!patrolPath) {
     return null;
   }
 
   const current =
     getPatrolDroneState(PATROL_ASSET_ID) ??
-    createInitialPatrolDroneState(resolved.geojson, resolved.id);
+    createInitialPatrolDroneState(patrolPath.geojson, patrolPath.id);
 
   const next = advancePatrolDrone({
-    state: { ...current, pathId: resolved.id },
-    path: resolved.geojson,
+    state: { ...current, pathId: patrolPath.id },
+    path: patrolPath.geojson,
     liveAssets,
     deltaSeconds,
   });
@@ -71,12 +67,4 @@ export function tickPatrolDrone({
   setPatrolDroneState(PATROL_ASSET_ID, next);
 
   return patrolAssetFromState(next);
-}
-
-/** Advance every drone sim slot; returns wire assets for the live snapshot. */
-export function tickAllDrones(params: TickPatrolDroneParams): Asset[] {
-  const dispatch = tickDispatchDrones(params);
-  const patrol = tickPatrolDrone(params);
-
-  return patrol ? [...dispatch, patrol] : dispatch;
 }

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
-import { testAsset } from "../../testFixtures/asset.js";
+import {
+  testAsset,
+  testDispatchMission,
+} from "@dominion-dynamics/shared/testing";
 import {
   applyDispatchAssignment,
   createDispatchDroneFromAsset,
@@ -24,13 +27,11 @@ describe("applyDispatchAssignment", () => {
   });
 
   it("keeps patrol origin when reusing the patrol slot on a reuse decision", () => {
-    const mission: DispatchMission = {
-      targetId: "critical-1",
+    const mission: DispatchMission = testDispatchMission({
       droneId: PATROL_ASSET_ID,
       assignmentSource: "reuse",
       homeAirportIdent: null,
-      assignedAtMs: Date.now(),
-    };
+    });
 
     const state = applyDispatchAssignment(
       mission,
@@ -43,13 +44,11 @@ describe("applyDispatchAssignment", () => {
   });
 
   it("sets patrol origin on a fresh patrol diversion", () => {
-    const mission: DispatchMission = {
-      targetId: "critical-1",
+    const mission: DispatchMission = testDispatchMission({
       droneId: PATROL_ASSET_ID,
       assignmentSource: "patrol",
       homeAirportIdent: null,
-      assignedAtMs: Date.now(),
-    };
+    });
 
     const state = applyDispatchAssignment(
       mission,
@@ -81,13 +80,11 @@ describe("applyDispatchAssignment", () => {
       },
     });
 
-    const mission: DispatchMission = {
+    const mission: DispatchMission = testDispatchMission({
       targetId: "critical-2",
       droneId: "dispatch-drone-1",
       assignmentSource: "reuse",
-      homeAirportIdent: "CYOW",
-      assignedAtMs: Date.now(),
-    };
+    });
 
     const state = createDispatchDroneFromAsset(
       mission,

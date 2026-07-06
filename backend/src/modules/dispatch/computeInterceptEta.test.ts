@@ -8,9 +8,10 @@ describe("computeInterceptEtaSeconds", () => {
     speed: 200,
   };
 
+  // Due north of the drone by 0.009° latitude ≈ 1,001 m great-circle.
   const target = {
-    lat: 45.41,
-    lon: -75.69,
+    lat: 45.409,
+    lon: -75.7,
   };
 
   it("returns null when the drone is not closing on a target", () => {
@@ -19,10 +20,11 @@ describe("computeInterceptEtaSeconds", () => {
   });
 
   it("estimates seconds from distance and closing speed while en-route", () => {
+    // ~1,001 m at 200 m/s → ~5.0 s.
     const eta = computeInterceptEtaSeconds(drone, target, "enroute");
 
     expect(eta).not.toBeNull();
-    expect(eta!).toBeGreaterThan(0);
-    expect(eta!).toBeLessThan(120);
+    expect(eta!).toBeGreaterThan(4.9);
+    expect(eta!).toBeLessThan(5.1);
   });
 });

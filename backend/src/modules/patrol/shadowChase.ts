@@ -2,30 +2,34 @@ import destination from "@turf/destination";
 import { point } from "@turf/helpers";
 import type { Asset } from "@dominion-dynamics/shared";
 import { distanceM, headingToward } from "../../lib/geo/distanceAndHeading.js";
+import { clamp, lerp } from "../../lib/math/interpolate.js";
 import {
   PATROL_DRONE_ALT_M,
   PATROL_MAX_INTERCEPT_MPS,
   PATROL_VERTICAL_RATE_MPS,
   SHADOW_APPROACH_EASE_M,
   SHADOW_LEAD_LAG_THRESHOLD_M,
-  SHADOW_LEAD_SECONDS,
   SHADOW_TAIL_ANGLE_DEG,
   SHADOW_TRAIL_ARRIVAL_M,
   SHADOW_TRAIL_OFFSET_M,
 } from "./constants.js";
 
+/** Leave headroom so one tick's step lands short of the remaining distance. */
+const CHASE_MAX_STEP_DISTANCE_FRACTION = 0.9;
+
+/** Target velocity within this angle of the drone bearing counts as head-on closure. */
+const HEAD_ON_CLOSURE_ANGLE_DEG = 90;
+
+/** Fraction of the target distance used as lateral stand-off on head-on merges. */
+const LATERAL_STANDOFF_FACTOR = 0.5;
+
+/** Brake early on head-on closure within this range of the target. */
+const HEAD_ON_DECEL_RANGE_M = SHADOW_TRAIL_OFFSET_M * 2;
+
 function angleDiffDegrees(a: number, b: number): number {
   const diff = Math.abs(a - b) % 360;
 
   return diff > 180 ? 360 - diff : diff;
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
 }
 
 /** Cap speed so one tick cannot overshoot a remaining distance. */
@@ -39,7 +43,8 @@ export function capSpeedForRemainingDistance(
     return speed;
   }
 
-  const maxForStep = (distanceM / deltaSeconds) * 0.9;
+  const maxForStep =
+    (distanceM / deltaSeconds) * CHASE_MAX_STEP_DISTANCE_FRACTION;
 
   return Math.min(speed, Math.max(minSpeed, maxForStep));
 }
@@ -60,7 +65,10 @@ export function isTargetClosingOnDrone(
     drone.lat,
   );
 
-  return angleDiffDegrees(bearingTargetToDrone, target.heading) <= 90;
+  return (
+    angleDiffDegrees(bearingTargetToDrone, target.heading) <=
+    HEAD_ON_CLOSURE_ANGLE_DEG
+  );
 }
 
 /** Patrol drone is in the target's wake, not off to the side or in front. */
@@ -76,24 +84,10 @@ export function isTrailingTarget(
   );
   const tailHeading = (target.heading + 180) % 360;
 
-  return angleDiffDegrees(bearingFromTargetToDrone, tailHeading) <= SHADOW_TAIL_ANGLE_DEG;
-}
-
-/** Point ahead of the target on its velocity vector — used while closing from far away. */
-export function leadPointAheadOfTarget(
-  target: Pick<Asset, "lat" | "lon" | "heading" | "speed">,
-  leadSeconds = SHADOW_LEAD_SECONDS,
-): { lon: number; lat: number } {
-  const leadKm = Math.max((target.speed * leadSeconds) / 1000, 0.5);
-  const lead = destination(
-    point([target.lon, target.lat]),
-    leadKm,
-    target.heading,
-    { units: "kilometers" },
+  return (
+    angleDiffDegrees(bearingFromTargetToDrone, tailHeading) <=
+    SHADOW_TAIL_ANGLE_DEG
   );
-  const [lon, lat] = lead.geometry.coordinates;
-
-  return { lon, lat };
 }
 
 /**
@@ -110,7 +104,7 @@ export function trailPointBehindTarget(
     (target.heading + 180) % 360,
     { units: "kilometers" },
   );
-  const [lon, lat] = trail.geometry.coordinates;
+  const [lon = target.lon, lat = target.lat] = trail.geometry.coordinates;
 
   return { lon, lat };
 }
@@ -139,7 +133,7 @@ function lateralMergePointWhenClosing(
     angleDiffDegrees(bearingToDrone, leftHeading);
   const lateralHeading = useRight ? rightHeading : leftHeading;
   const standOffM = clamp(
-    distanceToTargetM * 0.5,
+    distanceToTargetM * LATERAL_STANDOFF_FACTOR,
     SHADOW_TRAIL_ARRIVAL_M,
     SHADOW_TRAIL_OFFSET_M,
   );
@@ -149,7 +143,7 @@ function lateralMergePointWhenClosing(
     lateralHeading,
     { units: "kilometers" },
   );
-  const [lon, lat] = merge.geometry.coordinates;
+  const [lon = target.lon, lat = target.lat] = merge.geometry.coordinates;
 
   return { lon, lat };
 }
@@ -221,19 +215,15 @@ export function resolveChaseSpeed(
     } else {
       const range = SHADOW_TRAIL_OFFSET_M - SHADOW_TRAIL_ARRIVAL_M;
       const blend = 1 - (distanceToSteerM - SHADOW_TRAIL_ARRIVAL_M) / range;
-      speed = lerp(
-        PATROL_MAX_INTERCEPT_MPS,
-        target.speed,
-        clamp(blend, 0, 1),
-      );
+      speed = lerp(PATROL_MAX_INTERCEPT_MPS, target.speed, clamp(blend, 0, 1));
     }
-  } else if (closing && distanceToTargetM <= SHADOW_TRAIL_OFFSET_M * 2) {
+  } else if (closing && distanceToTargetM <= HEAD_ON_DECEL_RANGE_M) {
     speed = Math.max(
       target.speed,
       lerp(
         target.speed,
         PATROL_MAX_INTERCEPT_MPS,
-        distanceToTargetM / (SHADOW_TRAIL_OFFSET_M * 2),
+        distanceToTargetM / HEAD_ON_DECEL_RANGE_M,
       ),
     );
   }

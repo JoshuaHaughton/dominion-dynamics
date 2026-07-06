@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { testAsset } from "../../testFixtures/asset.js";
-import { getAirportByIdent } from "../airport/registry.js";
+import {
+  TEST_IDS,
+  testAsset,
+  testDispatchMission,
+} from "@dominion-dynamics/shared/testing";
+import { findAirportByIdent } from "../airport/registry.js";
 import {
   clearDispatchDroneStates,
   getDispatchDroneState,
@@ -10,23 +14,18 @@ import { tickDispatchDrones } from "./dispatchTick.js";
 import { createSpawnedDispatchDrone } from "./createDispatchDrone.js";
 import type { DispatchMission } from "./types.js";
 
-const DISPATCH_DRONE_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-
 describe("tickDispatchDrones", () => {
-  const mission: DispatchMission = {
-    targetId: "critical-1",
-    droneId: DISPATCH_DRONE_ID,
-    assignmentSource: "spawn",
-    homeAirportIdent: "CYOW",
+  const DISPATCH_DRONE_ID = TEST_IDS.DISPATCH_DRONE;
+  const mission: DispatchMission = testDispatchMission({
     assignedAtMs: Date.now(),
-  };
+  });
 
   afterEach(() => {
     clearDispatchDroneStates();
   });
 
   it("returns wire assets for active dispatch drones", () => {
-    const cyow = getAirportByIdent("CYOW")!;
+    const cyow = findAirportByIdent("CYOW")!;
     const state = createSpawnedDispatchDrone(
       mission,
       cyow.lat,
@@ -60,7 +59,7 @@ describe("tickDispatchDrones", () => {
   });
 
   it("removes despawned dispatch drones from the store", () => {
-    const cyow = getAirportByIdent("CYOW")!;
+    const cyow = findAirportByIdent("CYOW")!;
     const state = createSpawnedDispatchDrone(
       mission,
       cyow.lat,

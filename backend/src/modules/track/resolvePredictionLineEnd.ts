@@ -1,5 +1,5 @@
 import type { Asset, DispatchPhase } from "@dominion-dynamics/shared";
-import { getAirportByIdent } from "../airport/registry.js";
+import { findAirportByIdent } from "../airport/registry.js";
 import {
   isTrailingTarget,
   resolveChaseSteerPoint,
@@ -43,18 +43,14 @@ export function resolvePredictionLineEnd({
   const dispatch = asset.drone?.dispatch;
 
   if (dispatch?.phase === "rtb" && dispatch.homeAirportIdent.length > 0) {
-    const airport = getAirportByIdent(dispatch.homeAirportIdent);
+    const airport = findAirportByIdent(dispatch.homeAirportIdent);
 
     if (airport) {
       return { lon: airport.lon, lat: airport.lat };
     }
   }
 
-  if (
-    dispatch &&
-    DISPATCH_CHASE_PHASES.has(dispatch.phase) &&
-    dispatchTarget
-  ) {
+  if (dispatch && DISPATCH_CHASE_PHASES.has(dispatch.phase) && dispatchTarget) {
     return chasePredictionEnd(asset, dispatchTarget, dispatch.phase);
   }
 

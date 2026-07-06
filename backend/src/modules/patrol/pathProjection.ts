@@ -1,6 +1,6 @@
-import distance from "@turf/distance";
-import { point } from "@turf/helpers";
 import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
+import { distanceM } from "../../lib/geo/distanceAndHeading.js";
+import { lonLatFromPosition } from "../../lib/geo/position.js";
 import { isClosedPatrolPath, patrolPathSegmentCount } from "./pathGeometry.js";
 
 export type PathProjection = {
@@ -50,32 +50,43 @@ export function projectOntoPatrolPath(
   const vertexCount = coordinates.length;
   const closed = isClosedPatrolPath(path);
   const segmentCount = patrolPathSegmentCount(path);
-  const dronePoint = point([drone.lon, drone.lat]);
+
+  const firstVertex = lonLatFromPosition(coordinates[0]);
+
+  if (!firstVertex) {
+    throw new Error("Patrol path needs at least one vertex");
+  }
 
   let bestDistanceM = Infinity;
-  let bestLon = coordinates[0]![0];
-  let bestLat = coordinates[0]![1];
+  let bestLon = firstVertex.lon;
+  let bestLat = firstVertex.lat;
   let bestSegmentStart = 0;
 
   for (let index = 0; index < segmentCount; index += 1) {
-    const start = coordinates[index]!;
-    const end = coordinates[closed ? (index + 1) % vertexCount : index + 1]!;
-    const [startLon, startLat] = start;
-    const [endLon, endLat] = end;
+    const start = lonLatFromPosition(coordinates[index]);
+    const end = lonLatFromPosition(
+      coordinates[closed ? (index + 1) % vertexCount : index + 1],
+    );
+
+    if (!start || !end) {
+      continue;
+    }
 
     const closest = closestPointOnSegment(
       drone.lon,
       drone.lat,
-      startLon,
-      startLat,
-      endLon,
-      endLat,
+      start.lon,
+      start.lat,
+      end.lon,
+      end.lat,
     );
 
-    const segmentDistanceM =
-      distance(dronePoint, point([closest.lon, closest.lat]), {
-        units: "kilometers",
-      }) * 1000;
+    const segmentDistanceM = distanceM(
+      drone.lon,
+      drone.lat,
+      closest.lon,
+      closest.lat,
+    );
 
     if (segmentDistanceM < bestDistanceM) {
       bestDistanceM = segmentDistanceM;

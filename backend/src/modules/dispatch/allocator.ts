@@ -42,7 +42,9 @@ function missionStillValid(
     return false;
   }
 
-  const drone = drones.find((candidate) => candidate.droneId === mission.droneId);
+  const drone = drones.find(
+    (candidate) => candidate.droneId === mission.droneId,
+  );
 
   // Drop missions when the assigned drone no longer exists (despawn / reset).
   return drone !== undefined;
@@ -63,7 +65,6 @@ export function syncDispatchMissions({
 }: SyncDispatchMissionsParams): DispatchSyncResult {
   const criticalTargetIds = new Set(criticalTargets.map((target) => target.id));
   const nextMissions = new Map<string, DispatchMission>();
-  const releasedTargetIds: string[] = [];
   const assignments: Array<{
     targetId: string;
     decision: DispatchAssignmentDecision;
@@ -72,10 +73,7 @@ export function syncDispatchMissions({
   const reservedDroneIds = new Set<string>();
 
   for (const [targetId, mission] of missions) {
-    if (!missionStillValid(mission, criticalTargetIds, drones)) {
-      releasedTargetIds.push(targetId);
-      continue;
-    }
+    if (!missionStillValid(mission, criticalTargetIds, drones)) continue;
 
     nextMissions.set(targetId, mission);
     reservedDroneIds.add(mission.droneId);
@@ -107,7 +105,6 @@ export function syncDispatchMissions({
 
   return {
     missions: nextMissions,
-    releasedTargetIds,
     assignments,
   };
 }

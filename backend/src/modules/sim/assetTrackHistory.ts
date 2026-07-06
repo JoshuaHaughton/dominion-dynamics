@@ -37,9 +37,12 @@ function chronologicalPoints(ring: AssetTrackRing): AssetHistoryPoint[] {
   const points: AssetHistoryPoint[] = [];
 
   for (let index = 0; index < ring.size; index += 1) {
-    points.push(
-      ring.slots[(ring.start + index) % TRACK_HISTORY_CAPACITY] as AssetHistoryPoint,
-    );
+    const slot = ring.slots[(ring.start + index) % TRACK_HISTORY_CAPACITY];
+
+    // A full ring has every slot populated; skip rather than assert.
+    if (slot) {
+      points.push(slot);
+    }
   }
 
   return points;

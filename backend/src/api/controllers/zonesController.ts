@@ -12,25 +12,24 @@ export function listZonesHandler(_req: Request, res: Response): void {
   res.json(listZones());
 }
 
-/** POST /api/zones */
-export function createZoneHandler(req: Request, res: Response): void {
-  const body = req.body as CreateZoneRequest;
-  const zone = createZone(body);
+/** POST /api/zones — body validated by CreateZoneRequestSchema middleware. */
+export function createZoneHandler(
+  req: Request<Record<string, string>, unknown, CreateZoneRequest>,
+  res: Response,
+): void {
+  const zone = createZone(req.body);
 
   republishLiveSnapshot();
 
   res.status(201).json(zone);
 }
 
-/** DELETE /api/zones/:id */
-export function deleteZoneHandler(req: Request, res: Response): void {
+/** DELETE /api/zones/:id — params validated by ZoneIdParamSchema middleware. */
+export function deleteZoneHandler(
+  req: Request<{ id: string }>,
+  res: Response,
+): void {
   const id = Number(req.params.id);
-
-  if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({ error: "Invalid zone id" });
-    return;
-  }
-
   const deleted = deleteZone(id);
 
   if (!deleted) {

@@ -7,7 +7,9 @@ type RequestPart = "body" | "params" | "query";
 type ValidateRequestSchemas = Partial<Record<RequestPart, ZodType>>;
 
 /** Validate selected req parts against shared Zod schemas before the controller runs. */
-export function validateRequest(schemas: ValidateRequestSchemas): RequestHandler {
+export function validateRequest(
+  schemas: ValidateRequestSchemas,
+): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     for (const part of ["params", "query", "body"] as const) {
       const schema = schemas[part];

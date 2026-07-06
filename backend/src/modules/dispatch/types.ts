@@ -9,7 +9,7 @@ export type DispatchPatrolCandidateMode = "patrol" | "shadow" | "rejoin";
 export type DispatchMission = {
   targetId: string;
   droneId: string;
-  /** How the drone was sourced; drives post-mission return in the movement layer (S10.4). */
+  /** How the drone was sourced; determines RTB-to-airport vs patrol rejoin in `advanceDispatchDrone`. */
   assignmentSource: DispatchAssignmentSource;
   /** ICAO airport the drone lands at when the mission ends; null when a patrol drone rejoins its route. */
   homeAirportIdent: string | null;
@@ -53,13 +53,10 @@ export type DispatchPatrolDecision = {
 };
 
 export type DispatchAssignmentDecision =
-  | DispatchSpawnDecision
-  | DispatchReuseDecision
-  | DispatchPatrolDecision;
+  DispatchSpawnDecision | DispatchReuseDecision | DispatchPatrolDecision;
 
 export type DispatchSyncResult = {
   missions: Map<string, DispatchMission>;
-  releasedTargetIds: string[];
   assignments: Array<{
     targetId: string;
     decision: DispatchAssignmentDecision;

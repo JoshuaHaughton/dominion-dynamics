@@ -1,74 +1,31 @@
-import Database from "better-sqlite3";
-import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
-import * as schema from "../../db/schema.js";
-import { savePatrolPath } from "../../services/patrol/patrolPathService.js";
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { ottawaPatrolPathOpen } from "@dominion-dynamics/shared/testing";
 import { clearPatrolDroneStates, getPatrolDroneState } from "./droneStore.js";
 import { initializePatrolDrone, tickPatrolDrone } from "./patrolTick.js";
-import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
-
-function createTestDb(): {
-  database: BetterSQLite3Database<typeof schema>;
-  sqlite: Database.Database;
-} {
-  const sqlite = new Database(":memory:");
-
-  sqlite.exec(`
-    CREATE TABLE paths (
-      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-      kind text NOT NULL,
-      label text,
-      geojson text NOT NULL,
-      assigned_drone_id text,
-      created_at integer NOT NULL DEFAULT (unixepoch()),
-      updated_at integer NOT NULL DEFAULT (unixepoch())
-    );
-  `);
-
-  return {
-    sqlite,
-    database: drizzle(sqlite, { schema }),
-  };
-}
+import type { ResolvedPatrolPath } from "./types.js";
 
 describe("patrolTick", () => {
-  const customLine = {
-    type: "Feature" as const,
-    properties: {},
-    geometry: {
-      type: "LineString" as const,
-      coordinates: [
-        [-75.8, 45.3],
-        [-75.7, 45.35],
-        [-75.6, 45.4],
-      ],
-    },
+  const patrolPath: ResolvedPatrolPath = {
+    id: 1,
+    geojson: ottawaPatrolPathOpen(),
   };
 
-  let sqlite: Database.Database | undefined;
-
   afterEach(() => {
-    sqlite?.close();
-    sqlite = undefined;
     clearPatrolDroneStates();
   });
 
-  it("does nothing when no patrol path is saved", () => {
-    const { database, sqlite: testSqlite } = createTestDb();
-    sqlite = testSqlite;
-
-    initializePatrolDrone(database);
+  it("does nothing when no patrol path exists", () => {
+    initializePatrolDrone(null);
 
     expect(getPatrolDroneState(PATROL_ASSET_ID)).toBeUndefined();
-    expect(tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, database })).toBeNull();
+    expect(
+      tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, patrolPath: null }),
+    ).toBeNull();
   });
 
   it("initializes the patrol drone at the saved route start", () => {
-    const { database, sqlite: testSqlite } = createTestDb();
-    sqlite = testSqlite;
-
-    savePatrolPath({ geojson: customLine }, database);
-    initializePatrolDrone(database);
+    initializePatrolDrone(patrolPath);
 
     const state = getPatrolDroneState(PATROL_ASSET_ID);
 
@@ -78,14 +35,18 @@ describe("patrolTick", () => {
   });
 
   it("returns a patrol wire asset that moves on tick", () => {
-    const { database, sqlite: testSqlite } = createTestDb();
-    sqlite = testSqlite;
+    initializePatrolDrone(patrolPath);
 
-    savePatrolPath({ geojson: customLine }, database);
-    initializePatrolDrone(database);
-
-    const first = tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, database });
-    const second = tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, database });
+    const first = tickPatrolDrone({
+      liveAssets: [],
+      deltaSeconds: 1,
+      patrolPath,
+    });
+    const second = tickPatrolDrone({
+      liveAssets: [],
+      deltaSeconds: 1,
+      patrolPath,
+    });
 
     expect(first?.id).toBe(PATROL_ASSET_ID);
     expect(first?.role).toBe("drone");
@@ -94,33 +55,31 @@ describe("patrolTick", () => {
   });
 
   it("realigns onto a replaced route without teleporting to the start", () => {
-    const { database, sqlite: testSqlite } = createTestDb();
-    sqlite = testSqlite;
+    initializePatrolDrone(patrolPath);
 
-    savePatrolPath({ geojson: customLine }, database);
-    initializePatrolDrone(database);
-
-    tickPatrolDrone({ liveAssets: [], deltaSeconds: 60, database });
-    tickPatrolDrone({ liveAssets: [], deltaSeconds: 60, database });
+    tickPatrolDrone({ liveAssets: [], deltaSeconds: 60, patrolPath });
+    tickPatrolDrone({ liveAssets: [], deltaSeconds: 60, patrolPath });
 
     const beforeReplace = getPatrolDroneState(PATROL_ASSET_ID);
     expect(beforeReplace).toBeDefined();
 
-    const replacementLine = {
-      type: "Feature" as const,
-      properties: {},
-      geometry: {
-        type: "LineString" as const,
-        coordinates: [
-          [-76.0, 45.1],
-          [-75.9, 45.15],
-          [-75.8, 45.2],
-        ],
+    const replacementPath: ResolvedPatrolPath = {
+      id: 2,
+      geojson: {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [-76.0, 45.1],
+            [-75.9, 45.15],
+            [-75.8, 45.2],
+          ],
+        },
       },
     };
 
-    savePatrolPath({ geojson: replacementLine }, database);
-    initializePatrolDrone(database);
+    initializePatrolDrone(replacementPath);
 
     const afterReplace = getPatrolDroneState(PATROL_ASSET_ID);
 

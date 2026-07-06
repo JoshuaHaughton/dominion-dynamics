@@ -2,21 +2,24 @@ import bbox from "@turf/bbox";
 import polygonToLine from "@turf/polygon-to-line";
 import type { Zone } from "@dominion-dynamics/shared";
 import type { Feature, GeoJsonProperties, LineString } from "geojson";
-import { listZones } from "../../services/zones/zoneService.js";
 import type { CachedZone } from "./types.js";
 
 function isLineStringFeature(
   value: unknown,
 ): value is Feature<LineString, GeoJsonProperties> {
-  if (typeof value !== "object" || value === null) {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("type" in value) ||
+    value.type !== "Feature" ||
+    !("geometry" in value)
+  ) {
     return false;
   }
 
-  const feature = value as Feature;
+  const { geometry } = value as Feature;
 
-  return (
-    feature.type === "Feature" && feature.geometry?.type === "LineString"
-  );
+  return geometry?.type === "LineString";
 }
 
 /** Precompute the outer ring outline for boundary distance queries. */
@@ -45,16 +48,13 @@ export function toCachedZone(zone: Zone): CachedZone {
   };
 }
 
-/** Load all zones from SQLite into the in-memory geometry cache (server startup). */
-export function loadZoneGeometryCache(): void {
-  try {
-    cachedZones = listZones().map(toCachedZone);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-
-    console.warn(`Failed to load zone geometry cache (${detail}); using no zones.`);
-    cachedZones = [];
-  }
+/**
+ * Replace the cache with the given persisted zones (bootstrap hydration).
+ * The cache is a passive read-model: it never loads data itself — the zone
+ * service is its only writer after startup.
+ */
+export function primeZoneGeometryCache(zones: readonly Zone[]): void {
+  cachedZones = zones.map(toCachedZone);
 }
 
 /** Append one zone after POST /api/zones succeeds. */

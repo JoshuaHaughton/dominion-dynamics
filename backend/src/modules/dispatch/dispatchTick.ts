@@ -1,13 +1,11 @@
 import type { Asset } from "@dominion-dynamics/shared";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
-import { beginRejoin } from "../patrol/advancePatrolDrone.js";
+import { beginRejoin } from "../patrol/rejoinToPath.js";
 import {
   getPatrolDroneState,
   setPatrolDroneState,
 } from "../patrol/droneStore.js";
-import { resolvePatrolPath } from "../../services/patrol/patrolPathService.js";
-import type { AppDatabase } from "../../db/types.js";
-import { db } from "../../db/index.js";
+import type { ResolvedPatrolPath } from "../patrol/types.js";
 import { advanceDispatchDrone } from "./advanceDispatchDrone.js";
 import {
   deleteDispatchDroneState,
@@ -19,14 +17,15 @@ import { dispatchAssetFromState } from "./toWireAsset.js";
 type TickDispatchDronesParams = {
   liveAssets: readonly Asset[];
   deltaSeconds: number;
-  database?: AppDatabase;
+  /** Resolved by the caller (ticker/bootstrap); modules never touch the DB. */
+  patrolPath?: ResolvedPatrolPath | null;
 };
 
 /** Advance every dispatch drone and emit wire assets (excludes despawned units). */
 export function tickDispatchDrones({
   liveAssets,
   deltaSeconds,
-  database = db,
+  patrolPath = null,
 }: TickDispatchDronesParams): Asset[] {
   const wireAssets: Asset[] = [];
 
@@ -44,7 +43,7 @@ export function tickDispatchDrones({
 
     if (result.kind === "release_to_patrol") {
       deleteDispatchDroneState(droneId);
-      handPatrolBackToRoute(result.asset, database);
+      handPatrolBackToRoute(result.asset, patrolPath);
       continue;
     }
 
@@ -55,23 +54,15 @@ export function tickDispatchDrones({
   return wireAssets;
 }
 
-function handPatrolBackToRoute(asset: Asset, database: AppDatabase): void {
-  const resolved = resolvePatrolPath(database);
+function handPatrolBackToRoute(
+  asset: Asset,
+  patrolPath: ResolvedPatrolPath | null,
+): void {
   const existing = getPatrolDroneState(PATROL_ASSET_ID);
 
-  if (!resolved || !existing) {
-    return;
-  }
+  if (!patrolPath || !existing) return;
 
-  const rejoining = beginRejoin(
-    {
-      ...existing,
-      asset,
-      mode: "shadow",
-      shadowTargetId: null,
-    },
-    resolved.geojson,
-  );
+  const rejoining = beginRejoin({ ...existing, asset }, patrolPath.geojson);
 
   setPatrolDroneState(PATROL_ASSET_ID, rejoining);
 }

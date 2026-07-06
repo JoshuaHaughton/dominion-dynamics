@@ -7,7 +7,6 @@ import {
 import {
   isTargetClosingOnDrone,
   isTrailingTarget,
-  leadPointAheadOfTarget,
   resolveChaseSpeed,
   resolveChaseSteerPoint,
   trailPointBehindTarget,

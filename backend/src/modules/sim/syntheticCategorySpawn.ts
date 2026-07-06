@@ -1,4 +1,5 @@
 import type { IcaoEmitterCategory } from "@dominion-dynamics/shared";
+import { randomInRange } from "../../lib/math/random.js";
 
 type SpeedRange = { minMps: number; maxMps: number };
 
@@ -7,9 +8,14 @@ export const SYNTHETIC_SPAWNABLE_CATEGORIES = [
   2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14,
 ] as const satisfies readonly IcaoEmitterCategory[];
 
-export type SyntheticSpawnableCategory = (typeof SYNTHETIC_SPAWNABLE_CATEGORIES)[number];
+export type SyntheticSpawnableCategory =
+  (typeof SYNTHETIC_SPAWNABLE_CATEGORIES)[number];
 
-export const SYNTHETIC_CATEGORY_WEIGHTS: Record<SyntheticSpawnableCategory, number> = {
+/** Spawn probability per category; weights sum to 1 (roughly real-world traffic mix). */
+export const SYNTHETIC_CATEGORY_WEIGHTS: Record<
+  SyntheticSpawnableCategory,
+  number
+> = {
   2: 0.16,
   3: 0.12,
   4: 0.2,
@@ -24,7 +30,11 @@ export const SYNTHETIC_CATEGORY_WEIGHTS: Record<SyntheticSpawnableCategory, numb
   14: 0.09,
 };
 
-export const SPEED_RANGE_BY_CATEGORY: Record<SyntheticSpawnableCategory, SpeedRange> = {
+/** Plausible cruise speed range (m/s) per ICAO emitter category. */
+export const SPEED_RANGE_BY_CATEGORY: Record<
+  SyntheticSpawnableCategory,
+  SpeedRange
+> = {
   2: { minMps: 40, maxMps: 80 },
   3: { minMps: 60, maxMps: 120 },
   4: { minMps: 150, maxMps: 250 },
@@ -56,10 +66,12 @@ export function pickSyntheticCategory(): SyntheticSpawnableCategory {
 }
 
 /** Sample a speed in m/s for an ICAO emitter category. */
-export function sampleSpeedForCategory(category: SyntheticSpawnableCategory): number {
+export function sampleSpeedForCategory(
+  category: SyntheticSpawnableCategory,
+): number {
   const { minMps, maxMps } = SPEED_RANGE_BY_CATEGORY[category];
 
-  return minMps + Math.random() * (maxMps - minMps);
+  return randomInRange(minMps, maxMps);
 }
 
 /** Pick category and matching speed for a new synthetic track. */

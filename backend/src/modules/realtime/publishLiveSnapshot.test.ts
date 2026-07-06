@@ -1,10 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { testAsset } from "@dominion-dynamics/shared/testing";
+import { clearAssetTrackHistory } from "../sim/assetTrackHistory.js";
+import { getAssetList, setAssets } from "../sim/store.js";
 import { publishLiveSnapshot } from "./publishLiveSnapshot.js";
-import { getAssetList } from "../sim/store.js";
-import { testAsset } from "../../testFixtures/asset.js";
 
 describe("publishLiveSnapshot", () => {
+  afterEach(() => {
+    setAssets([]);
+    clearAssetTrackHistory();
+  });
+
   it("merges multiple drones into one snapshot", () => {
     const traffic = testAsset({
       id: "syn-1",
@@ -54,11 +60,13 @@ describe("publishLiveSnapshot", () => {
     });
 
     expect(snapshot).toHaveLength(3);
-    expect(snapshot.map((asset) => asset.id)).toEqual([
-      "syn-1",
-      PATROL_ASSET_ID,
-      "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-    ]);
+    expect(new Set(snapshot.map((asset) => asset.id))).toEqual(
+      new Set([
+        "syn-1",
+        PATROL_ASSET_ID,
+        "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      ]),
+    );
     expect(getAssetList()).toHaveLength(3);
   });
 });

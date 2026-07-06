@@ -21,6 +21,7 @@ export function distanceM(
   );
 }
 
+/** Compass heading (0..360 clockwise from north) from one WGS84 point toward another. */
 export function headingToward(
   fromLon: number,
   fromLat: number,

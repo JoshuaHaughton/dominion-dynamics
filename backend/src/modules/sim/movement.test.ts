@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stepAsset } from "./movement.js";
 import type { Asset } from "@dominion-dynamics/shared";
-import { testAsset } from "../../testFixtures/asset.js";
+import { testAsset } from "@dominion-dynamics/shared/testing";
 
 describe("stepAsset", () => {
   const baseAsset: Asset = testAsset({

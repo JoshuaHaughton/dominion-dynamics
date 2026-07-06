@@ -1,9 +1,13 @@
 import type { Asset } from "@dominion-dynamics/shared";
 import type { DispatchPhase } from "@dominion-dynamics/shared";
-import { isDrone } from "../sim/store.js";
-import { getAirportByIdent } from "../airport/registry.js";
+import { findAirportByIdent } from "../airport/registry.js";
 import { distanceM } from "../../lib/geo/distanceAndHeading.js";
-import { advanceChaseTowardTarget, stepDroneTowardPoint } from "../patrol/chaseStep.js";
+import { resolveApproachSpeedMps } from "../../lib/motion/approachSpeed.js";
+import { isCriticalTrafficAsset } from "../threat/criticalTraffic.js";
+import {
+  advanceChaseTowardTarget,
+  stepDroneTowardPoint,
+} from "../patrol/chaseStep.js";
 import {
   capSpeedForRemainingDistance,
   isTrailingTarget,
@@ -25,10 +29,6 @@ export type AdvanceDispatchDroneParams = {
   liveAssets: readonly Asset[];
   deltaSeconds: number;
 };
-
-function isCriticalTrafficAsset(asset: Asset): boolean {
-  return !isDrone(asset) && asset.zone?.threat === "critical";
-}
 
 function findMissionTarget(
   targetId: string | null,
@@ -71,28 +71,21 @@ export function resolveDispatchChasePhase(
 }
 
 function resolveRtbApproachSpeed(
-  distanceM: number,
+  distanceToBaseM: number,
   deltaSeconds: number,
 ): number {
-  if (distanceM <= PATROL_WAYPOINT_ARRIVAL_M) {
-    return Math.min(PATROL_MAX_INTERCEPT_MPS, distanceM / deltaSeconds);
-  }
-
-  if (distanceM >= PATROL_APPROACH_DECEL_M) {
-    return PATROL_MAX_INTERCEPT_MPS;
-  }
-
-  const blend =
-    (distanceM - PATROL_WAYPOINT_ARRIVAL_M) /
-    (PATROL_APPROACH_DECEL_M - PATROL_WAYPOINT_ARRIVAL_M);
-
-  const decelSpeed = PATROL_MAX_INTERCEPT_MPS * blend;
-  // Just outside the arrival radius, decel alone can leave the drone crawling
-  // forever; ensure at least enough speed to close the gap this tick.
-  const minSpeedToCloseGap =
-    (distanceM - PATROL_WAYPOINT_ARRIVAL_M) / deltaSeconds;
-
-  return Math.max(decelSpeed, minSpeedToCloseGap);
+  return resolveApproachSpeedMps({
+    distanceM: distanceToBaseM,
+    arrivalM: PATROL_WAYPOINT_ARRIVAL_M,
+    decelM: PATROL_APPROACH_DECEL_M,
+    deltaSeconds,
+    maxSpeed: PATROL_MAX_INTERCEPT_MPS,
+    arrivalCapSpeed: PATROL_MAX_INTERCEPT_MPS,
+    bandFloorSpeed: 0,
+    // Just outside the arrival radius, decel alone can leave the drone crawling
+    // forever; ensure at least enough speed to close the gap this tick.
+    ensureGapClosure: true,
+  });
 }
 
 function advanceRtbTowardAirport(
@@ -166,14 +159,6 @@ function advanceRtbTowardAirport(
 }
 
 function beginRtb(state: DispatchDroneState): DispatchDroneState {
-  if (state.assignmentSource === "patrol") {
-    return {
-      ...state,
-      phase: "rtb",
-      targetId: null,
-    };
-  }
-
   return {
     ...state,
     phase: "rtb",
@@ -199,7 +184,7 @@ export function advanceDispatchDrone({
       return { kind: "despawn" };
     }
 
-    const airport = getAirportByIdent(state.homeAirportIdent);
+    const airport = findAirportByIdent(state.homeAirportIdent);
 
     if (!airport) {
       return { kind: "despawn" };
@@ -226,7 +211,7 @@ export function advanceDispatchDrone({
       return { kind: "despawn" };
     }
 
-    const airport = getAirportByIdent(rtbState.homeAirportIdent);
+    const airport = findAirportByIdent(rtbState.homeAirportIdent);
 
     if (!airport) {
       return { kind: "despawn" };

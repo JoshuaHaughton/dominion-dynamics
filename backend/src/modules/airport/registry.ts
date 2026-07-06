@@ -30,11 +30,14 @@ function buildRegistry(): AirportRegistry {
 }
 
 /** O(1) lookup by ICAO / OurAirports ident. */
-export function getAirportByIdent(ident: string): Airport | undefined {
+export function findAirportByIdent(ident: string): Airport | undefined {
   return REGISTRY.byIdent.get(ident.trim().toUpperCase());
 }
 
-/** Closest registry airport to a lat/lon (haversine via spatial index). */
-export function findNearestAirport(lat: number, lon: number): Airport {
+/**
+ * Closest registry airport to a lat/lon (haversine via spatial index).
+ * Throws if the bundled registry is empty — a broken-build condition.
+ */
+export function requireNearestAirport(lat: number, lon: number): Airport {
   return findNearestAirportInIndex(REGISTRY.spatialIndex, lat, lon);
 }

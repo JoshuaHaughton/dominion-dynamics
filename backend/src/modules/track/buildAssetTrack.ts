@@ -18,7 +18,7 @@ function loadTrackContext(assetId: string) {
   const shadowTargetId = asset.drone?.patrol?.shadowTargetId;
   const shadowTarget =
     shadowTargetId !== undefined && shadowTargetId !== null
-      ? getAssetById(shadowTargetId)
+      ? (getAssetById(shadowTargetId) ?? null)
       : null;
 
   const droneState = getPatrolDroneState(assetId);

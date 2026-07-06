@@ -2,6 +2,7 @@ import destination from "@turf/destination";
 import { point } from "@turf/helpers";
 import type { Asset } from "@dominion-dynamics/shared";
 
+/** Inputs for one dead-reckoning movement step. */
 export type StepAssetParams = {
   asset: Asset;
   /** Seconds elapsed since the previous tick. */
@@ -24,7 +25,7 @@ export function stepAsset({ asset, deltaSeconds }: StepAssetParams): Asset {
     { units: "kilometers" },
   );
 
-  const [lon, lat] = moved.geometry.coordinates;
+  const [lon = asset.lon, lat = asset.lat] = moved.geometry.coordinates;
 
   return { ...asset, lat, lon };
 }

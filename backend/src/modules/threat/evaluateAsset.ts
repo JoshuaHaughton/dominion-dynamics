@@ -1,19 +1,16 @@
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
-import type { Asset, AssetZoneState, ThreatLevel } from "@dominion-dynamics/shared";
+import type {
+  Asset,
+  AssetZoneState,
+  ThreatLevel,
+} from "@dominion-dynamics/shared";
 import { isAssetNearZoneBbox } from "./bboxPrefilter.js";
-import { WARNING_WINDOW_SECONDS, DEFAULT_TRAFFIC_ZONE } from "./constants.js";
+import { THREAT_WARNING_WINDOW_SECONDS } from "@dominion-dynamics/shared";
+import { DEFAULT_TRAFFIC_ZONE } from "./constants.js";
 import { rayTteSeconds } from "./rayTte.js";
 import { distancePointToBoundaryM } from "./zoneBoundaryDistance.js";
 import type { CachedZone } from "./types.js";
-
-/** Whether the asset position is inside the zone polygon. */
-function isInsideZone(
-  asset: Pick<Asset, "lat" | "lon">,
-  zone: CachedZone,
-): boolean {
-  return booleanPointInPolygon(point([asset.lon, asset.lat]), zone.polygon);
-}
 
 /**
  * Classify one traffic asset against all restricted zones in a single pass.
@@ -42,7 +39,7 @@ export function evaluateZoneThreat(
       nearestBoundaryM = boundaryM;
     }
 
-    if (!isAssetNearZoneBbox(asset, zone, WARNING_WINDOW_SECONDS)) {
+    if (!isAssetNearZoneBbox(asset, zone, THREAT_WARNING_WINDOW_SECONDS)) {
       continue;
     }
 
@@ -55,7 +52,10 @@ export function evaluateZoneThreat(
     }
   }
 
-  if (minTteSeconds !== null && minTteSeconds <= WARNING_WINDOW_SECONDS) {
+  if (
+    minTteSeconds !== null &&
+    minTteSeconds <= THREAT_WARNING_WINDOW_SECONDS
+  ) {
     return {
       threat: "warning",
       zoneTteSeconds: minTteSeconds,

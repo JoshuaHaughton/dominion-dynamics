@@ -5,9 +5,18 @@ import { getCachedZones } from "../threat/zoneGeometryCache.js";
 import type { Asset } from "@dominion-dynamics/shared";
 import { broadcastSnapshot } from "./ws.server.js";
 
-/** Push a fully-built snapshot to the store, history ring, and WS clients. */
-export function publishSnapshotAssets(assets: readonly Asset[]): Asset[] {
-  const snapshot = [...assets];
+type PublishLiveSnapshotParams = {
+  /** Traffic already enriched with zone threat by the caller. */
+  traffic: readonly Asset[];
+  drones?: readonly Asset[];
+};
+
+/** Merge enriched traffic and drones, then push to the store, history ring, and WS clients. */
+export function publishLiveSnapshot({
+  traffic,
+  drones = [],
+}: PublishLiveSnapshotParams): Asset[] {
+  const snapshot = [...traffic, ...drones];
 
   setAssets(snapshot);
   recordAssetTrackHistory(snapshot);
@@ -16,36 +25,14 @@ export function publishSnapshotAssets(assets: readonly Asset[]): Asset[] {
   return snapshot;
 }
 
-type PublishLiveSnapshotParams = {
-  traffic: readonly Asset[];
-  drones?: readonly Asset[];
-  enrich?: boolean;
-};
-
-/** Enrich traffic when requested, merge drones, and publish one live snapshot. */
-export function publishLiveSnapshot({
-  traffic,
-  drones = [],
-  enrich = false,
-}: PublishLiveSnapshotParams): Asset[] {
-  const enriched = enrich
-    ? enrichTrafficWithZoneThreat(traffic, getCachedZones())
-    : [...traffic];
-
-  return publishSnapshotAssets(
-    drones.length > 0 ? [...enriched, ...drones] : enriched,
-  );
-}
-
-/** Re-enrich stored traffic and keep every drone in the snapshot. */
+/** Re-enrich stored traffic (zones changed) and keep every drone in the snapshot. */
 export function republishLiveSnapshot(): Asset[] {
   const stored = getAssetList();
   const drones = stored.filter(isDrone);
   const traffic = stored.filter((asset) => !isDrone(asset));
 
   return publishLiveSnapshot({
-    traffic,
+    traffic: enrichTrafficWithZoneThreat(traffic, getCachedZones()),
     drones,
-    enrich: true,
   });
 }

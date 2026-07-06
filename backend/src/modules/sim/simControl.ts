@@ -1,7 +1,8 @@
 import { simConfig } from "./config.js";
 import { seedAssets } from "./seed.js";
-import { getAssetList } from "./store.js";
 import { publishLiveSnapshot } from "../realtime/publishLiveSnapshot.js";
+import { enrichTrafficWithZoneThreat } from "../threat/enrichTrafficWithZoneThreat.js";
+import { getCachedZones } from "../threat/zoneGeometryCache.js";
 import { startTicker, stopTicker } from "./ticker.js";
 import type { Asset } from "@dominion-dynamics/shared";
 
@@ -18,7 +19,9 @@ export function startSim(options: StartSimOptions = {}): void {
   running = true;
 
   const initialTraffic = seedAssets(simConfig.assetCount);
-  publishLiveSnapshot({ traffic: initialTraffic, enrich: true });
+  publishLiveSnapshot({
+    traffic: enrichTrafficWithZoneThreat(initialTraffic, getCachedZones()),
+  });
 
   startTicker((assets) => {
     options.onTick?.(assets);
@@ -29,9 +32,4 @@ export function startSim(options: StartSimOptions = {}): void {
 export function stopSim(): void {
   stopTicker();
   running = false;
-}
-
-/** Read-only snapshot of current assets (positions and threat fields). */
-export function getAssets(): readonly Asset[] {
-  return getAssetList();
 }

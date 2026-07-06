@@ -1,7 +1,7 @@
 import type { Feature, Polygon } from "geojson";
 import { describe, expect, it } from "vitest";
 import type { AssetHistoryPoint } from "@dominion-dynamics/shared";
-import { testAsset } from "../../testFixtures/asset.js";
+import { testAsset } from "@dominion-dynamics/shared/testing";
 import { evaluateZoneThreat } from "./evaluateAsset.js";
 import { predictAssetPath } from "./predictPath.js";
 import { toCachedZone } from "./zoneGeometryCache.js";

@@ -28,9 +28,7 @@ function serializeSnapshot(
   const { selectedAssetId, trackSynced } = state;
 
   if (selectedAssetId === null) {
-    return JSON.stringify(
-      buildSnapshotMessage({ assets: [...assets], ts }),
-    );
+    return JSON.stringify(buildSnapshotMessage({ assets: [...assets], ts }));
   }
 
   if (!trackSynced) {
@@ -151,6 +149,7 @@ export function closeWebSocketServer(): void {
 
   for (const client of wss.clients) {
     if (client.readyState === WebSocket.OPEN) {
+      // 1001 = RFC 6455 "going away".
       client.close(1001, "Server shutting down");
     } else {
       client.terminate();

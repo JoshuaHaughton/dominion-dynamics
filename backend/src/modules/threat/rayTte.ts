@@ -3,7 +3,7 @@ import distance from "@turf/distance";
 import lineIntersect from "@turf/line-intersect";
 import { lineString, point } from "@turf/helpers";
 import type { Asset } from "@dominion-dynamics/shared";
-import { WARNING_WINDOW_SECONDS } from "./constants.js";
+import { THREAT_WARNING_WINDOW_SECONDS } from "@dominion-dynamics/shared";
 import type { CachedZone } from "./types.js";
 
 /** Ignore hits at the ray origin; we want the next fence crossing ahead, not grazing the start. */
@@ -22,9 +22,9 @@ export function rayTteSeconds(
   }
 
   const start = point([asset.lon, asset.lat]);
-  const maxKm = (asset.speed * WARNING_WINDOW_SECONDS) / 1000;
+  const maxKm = (asset.speed * THREAT_WARNING_WINDOW_SECONDS) / 1000;
   const end = destination(start, maxKm, asset.heading, { units: "kilometers" });
-  const [endLon, endLat] = end.geometry.coordinates;
+  const [endLon = asset.lon, endLat = asset.lat] = end.geometry.coordinates;
 
   // Forward path at current heading, capped at the five-minute warning window.
   const ray = lineString([

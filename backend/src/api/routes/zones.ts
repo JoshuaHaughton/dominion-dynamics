@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { CreateZoneRequestSchema } from "@dominion-dynamics/shared";
+import {
+  CreateZoneRequestSchema,
+  ZoneIdParamSchema,
+} from "@dominion-dynamics/shared";
 import {
   createZoneHandler,
   deleteZoneHandler,
@@ -15,4 +18,8 @@ zonesRouter.post(
   validateRequest({ body: CreateZoneRequestSchema }),
   createZoneHandler,
 );
-zonesRouter.delete("/:id", deleteZoneHandler);
+zonesRouter.delete(
+  "/:id",
+  validateRequest({ params: ZoneIdParamSchema }),
+  deleteZoneHandler,
+);

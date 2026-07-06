@@ -1,9 +1,9 @@
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import type { Asset } from "@dominion-dynamics/shared";
 import { headingToward } from "../../lib/geo/distanceAndHeading.js";
+import { buildDroneAsset } from "../drones/buildDroneAsset.js";
 import {
   PATROL_DRONE_ALT_M,
-  PATROL_DRONE_SPEED_MPS,
   PATROL_MAX_INTERCEPT_MPS,
 } from "../patrol/constants.js";
 import { issueDispatchCallsign } from "./dispatchDroneStore.js";
@@ -12,29 +12,6 @@ import type {
   DispatchDroneState,
   DispatchMission,
 } from "./types.js";
-
-function baseDispatchAsset(
-  droneId: string,
-  callsign: string,
-  lat: number,
-  lon: number,
-  heading: number,
-): Asset {
-  return {
-    id: droneId,
-    lat,
-    lon,
-    alt: PATROL_DRONE_ALT_M,
-    heading,
-    speed: PATROL_MAX_INTERCEPT_MPS,
-    role: "drone",
-    category: 14,
-    callsign,
-    originCountry: null,
-    onGround: false,
-    zone: null,
-  };
-}
 
 /** Airport-born drone placed at the scramble base, enroute to its first target. */
 export function createSpawnedDispatchDrone(
@@ -50,13 +27,14 @@ export function createSpawnedDispatchDrone(
     assignmentSource: mission.assignmentSource,
     homeAirportIdent: mission.homeAirportIdent,
     origin: "dispatch",
-    asset: baseDispatchAsset(
-      mission.droneId,
-      issueDispatchCallsign(),
-      spawnLat,
-      spawnLon,
-      headingToward(spawnLon, spawnLat, targetLon, targetLat),
-    ),
+    asset: buildDroneAsset({
+      id: mission.droneId,
+      callsign: issueDispatchCallsign(),
+      lat: spawnLat,
+      lon: spawnLon,
+      heading: headingToward(spawnLon, spawnLat, targetLon, targetLat),
+      speed: PATROL_MAX_INTERCEPT_MPS,
+    }),
   };
 }
 
@@ -80,6 +58,7 @@ export function createDispatchDroneFromAsset(
   };
 }
 
+/** Materialize an allocator decision into runtime dispatch drone sim state. */
 export function applyDispatchAssignment(
   mission: DispatchMission,
   decision: DispatchAssignmentDecision,
@@ -133,25 +112,4 @@ function resolveAssignmentOrigin(
   }
 
   return "dispatch";
-}
-
-/** Idle dispatch drone between missions (RTB complete, awaiting despawn or reuse). */
-export function createIdleDispatchDroneAtBase(
-  droneId: string,
-  homeAirportIdent: string,
-  callsign: string,
-  lat: number,
-  lon: number,
-): DispatchDroneState {
-  return {
-    phase: "at_base",
-    targetId: null,
-    assignmentSource: "spawn",
-    homeAirportIdent,
-    origin: "dispatch",
-    asset: {
-      ...baseDispatchAsset(droneId, callsign, lat, lon, 0),
-      speed: PATROL_DRONE_SPEED_MPS,
-    },
-  };
 }

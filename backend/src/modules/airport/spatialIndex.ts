@@ -1,6 +1,5 @@
 import type { Airport } from "@dominion-dynamics/shared";
-
-const EARTH_RADIUS_M = 6_371_000;
+import { distanceM as geoDistanceM } from "../../lib/geo/distanceAndHeading.js";
 
 /** Bucket size at module load; ~111 km latitude per degree of cell width. */
 export const AIRPORT_GRID_CELL_DEG = 1;
@@ -30,20 +29,14 @@ export function buildAirportSpatialIndex(
   return { airports, grid };
 }
 
+/** Haversine distance in meters; lat-first args kept for grid-math readability here. */
 function haversineDistanceM(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number,
 ): number {
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
+  return geoDistanceM(lon1, lat1, lon2, lat2);
 }
 
 /**
@@ -102,21 +95,25 @@ function findNearestAirportBruteForceInList(
   lat: number,
   lon: number,
 ): Airport {
-  if (airports.length === 0) {
-    throw new Error("Airport list is empty");
+  let nearest: Airport | undefined;
+  let nearestDistanceM = Infinity;
+
+  for (const candidate of airports) {
+    const candidateDistanceM = haversineDistanceM(
+      lat,
+      lon,
+      candidate.lat,
+      candidate.lon,
+    );
+
+    if (candidateDistanceM < nearestDistanceM) {
+      nearest = candidate;
+      nearestDistanceM = candidateDistanceM;
+    }
   }
 
-  let nearest = airports[0]!;
-  let nearestDistanceM = haversineDistanceM(lat, lon, nearest.lat, nearest.lon);
-
-  for (let index = 1; index < airports.length; index++) {
-    const candidate = airports[index]!;
-    const distanceM = haversineDistanceM(lat, lon, candidate.lat, candidate.lon);
-
-    if (distanceM < nearestDistanceM) {
-      nearest = candidate;
-      nearestDistanceM = distanceM;
-    }
+  if (!nearest) {
+    throw new Error("Airport list is empty");
   }
 
   return nearest;
@@ -151,7 +148,12 @@ export function findNearestAirportInIndex(
       lonCell,
       ring,
     )) {
-      const distanceM = haversineDistanceM(lat, lon, candidate.lat, candidate.lon);
+      const distanceM = haversineDistanceM(
+        lat,
+        lon,
+        candidate.lat,
+        candidate.lon,
+      );
 
       if (distanceM < nearestDistanceM) {
         nearest = candidate;

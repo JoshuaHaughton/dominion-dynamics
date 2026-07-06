@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { testAsset } from "../../testFixtures/asset.js";
-import { getAirportByIdent } from "../airport/registry.js";
+import { testAsset } from "@dominion-dynamics/shared/testing";
+import { findAirportByIdent } from "../airport/registry.js";
 import { resolvePredictionLineEnd } from "./resolvePredictionLineEnd.js";
 
 describe("resolvePredictionLineEnd", () => {
-  const cyow = getAirportByIdent("CYOW")!;
+  const cyow = findAirportByIdent("CYOW")!;
 
   it("points RTB dispatch drones at their home airport", () => {
     const drone = testAsset({

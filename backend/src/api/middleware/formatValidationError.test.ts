@@ -13,14 +13,17 @@ describe("formatValidationError", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(formatValidationError(result.error)).toEqual({
-        error: "Validation failed",
-        fieldErrors: {
-          name: ["String must contain at least 1 character(s)"],
-          count: ["Expected number, received string"],
-        },
-        formErrors: [],
-      });
+      const formatted = formatValidationError(result.error);
+
+      // Assert structure only; exact message copy belongs to zod, not us.
+      expect(formatted.error).toBe("Validation failed");
+      expect(formatted.formErrors).toEqual([]);
+      expect(Object.keys(formatted.fieldErrors ?? {}).sort()).toEqual([
+        "count",
+        "name",
+      ]);
+      expect(formatted.fieldErrors?.name).toHaveLength(1);
+      expect(formatted.fieldErrors?.count).toHaveLength(1);
     }
   });
 });

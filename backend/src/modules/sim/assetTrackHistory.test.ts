@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearAssetTrackHistory,
   getAssetTrackHistory,
   recordAssetTrackHistory,
   TRACK_HISTORY_CAPACITY,
 } from "./assetTrackHistory.js";
-import { testAsset } from "../../testFixtures/asset.js";
+import { testAsset } from "@dominion-dynamics/shared/testing";
 
 describe("assetTrackHistory", () => {
   const sampleAsset = testAsset({
@@ -17,9 +17,11 @@ describe("assetTrackHistory", () => {
     speed: 100,
   });
 
-  it("stores chronological points per asset", () => {
+  beforeEach(() => {
     clearAssetTrackHistory();
+  });
 
+  it("stores chronological points per asset", () => {
     recordAssetTrackHistory([sampleAsset], 1000);
     recordAssetTrackHistory([{ ...sampleAsset, lat: 45.41 }], 2000);
 
@@ -30,8 +32,6 @@ describe("assetTrackHistory", () => {
   });
 
   it("drops the oldest point when capacity is exceeded", () => {
-    clearAssetTrackHistory();
-
     for (let i = 0; i < TRACK_HISTORY_CAPACITY + 1; i += 1) {
       recordAssetTrackHistory([{ ...sampleAsset, lat: 45 + i * 0.001 }], i);
     }
@@ -44,11 +44,18 @@ describe("assetTrackHistory", () => {
   });
 
   it("removes history for asset ids no longer in the live snapshot", () => {
-    clearAssetTrackHistory();
-
     recordAssetTrackHistory([sampleAsset], 1000);
     recordAssetTrackHistory(
-      [testAsset({ id: "a2", lat: 45.5, lon: -75.8, alt: 1000, heading: 90, speed: 100 })],
+      [
+        testAsset({
+          id: "a2",
+          lat: 45.5,
+          lon: -75.8,
+          alt: 1000,
+          heading: 90,
+          speed: 100,
+        }),
+      ],
       2000,
     );
 

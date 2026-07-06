@@ -4,6 +4,10 @@ import { PATROL_MAX_INTERCEPT_MPS } from "../patrol/constants.js";
 
 const ETA_PHASES = new Set<DispatchPhase>(["enroute", "intercepting"]);
 
+/** ETA floor assumptions so a momentarily stopped drone never reports an infinite ETA. */
+const MIN_ETA_CLOSING_SPEED_FRACTION = 0.25;
+const MIN_ETA_CLOSING_SPEED_MPS = 1;
+
 /** Rough time-to-intercept from current position and closing speed. */
 export function computeInterceptEtaSeconds(
   drone: Pick<Asset, "lat" | "lon" | "speed">,
@@ -27,8 +31,8 @@ export function computeInterceptEtaSeconds(
 
   const closingSpeedMps = Math.max(
     drone.speed,
-    1,
-    PATROL_MAX_INTERCEPT_MPS * 0.25,
+    MIN_ETA_CLOSING_SPEED_MPS,
+    PATROL_MAX_INTERCEPT_MPS * MIN_ETA_CLOSING_SPEED_FRACTION,
   );
 
   return distanceToTargetM / closingSpeedMps;

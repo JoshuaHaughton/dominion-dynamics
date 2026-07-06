@@ -1,5 +1,6 @@
 import type { Asset } from "@dominion-dynamics/shared";
-import { getAirportByIdent } from "../airport/registry.js";
+import { findAirportByIdent } from "../airport/registry.js";
+import { droneWireAsset } from "../drones/droneWireAsset.js";
 import { computeInterceptEtaSeconds } from "./computeInterceptEta.js";
 import type { DispatchDroneState } from "./types.js";
 
@@ -10,29 +11,20 @@ export function dispatchAssetFromState(
 ): Asset {
   const { asset, origin, phase, targetId, homeAirportIdent } = state;
   const homeIdent = homeAirportIdent ?? "";
-  const homeAirport = homeIdent ? getAirportByIdent(homeIdent) : undefined;
+  const homeAirport = homeIdent ? findAirportByIdent(homeIdent) : undefined;
   const target =
     targetId !== null
       ? liveAssets.find((candidate) => candidate.id === targetId)
       : undefined;
 
-  return {
-    ...asset,
-    role: "drone",
-    zone: null,
-    drone: {
-      origin,
-      dispatch: {
-        targetId: targetId ?? "",
-        phase,
-        homeAirportIdent: homeIdent,
-        homeAirportName: homeAirport?.name,
-        interceptEtaSeconds: computeInterceptEtaSeconds(
-          asset,
-          target,
-          phase,
-        ),
-      },
+  return droneWireAsset(asset, {
+    origin,
+    dispatch: {
+      targetId: targetId ?? "",
+      phase,
+      homeAirportIdent: homeIdent,
+      homeAirportName: homeAirport?.name,
+      interceptEtaSeconds: computeInterceptEtaSeconds(asset, target, phase),
     },
-  };
+  });
 }

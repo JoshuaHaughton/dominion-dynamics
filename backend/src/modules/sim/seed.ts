@@ -13,6 +13,7 @@ import {
 import { issueTrackCallsign } from "./assetCallsigns.js";
 import { sampleSyntheticMotion } from "./syntheticCategorySpawn.js";
 import { turfBearingToHeading } from "../../lib/geo/distanceAndHeading.js";
+import { randomInRange } from "../../lib/math/random.js";
 import { DEFAULT_TRAFFIC_ZONE } from "../threat/constants.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
@@ -131,8 +132,4 @@ export function respawnAtBoundary(asset: Asset, region: SimBounds): Asset {
     originCountry: null,
     onGround: false,
   };
-}
-
-function randomInRange(min: number, max: number): number {
-  return min + Math.random() * (max - min);
 }

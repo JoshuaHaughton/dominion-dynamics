@@ -19,7 +19,12 @@ function buildOvalCoordinates(): [number, number][] {
     ]);
   }
 
-  coordinates.push(coordinates[0]!);
+  const first = coordinates[0];
+
+  // Close the loop on the first vertex (OVAL_VERTICES > 0 guarantees it exists).
+  if (first) {
+    coordinates.push(first);
+  }
 
   return coordinates;
 }

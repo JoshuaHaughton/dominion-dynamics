@@ -5,15 +5,11 @@ import {
   findNearestAirportInIndex,
 } from "./spatialIndex.js";
 
-function airport(
-  ident: string,
-  lat: number,
-  lon: number,
-): Airport {
-  return { ident, name: ident, lat, lon };
-}
-
 describe("airport spatial index", () => {
+  function airport(ident: string, lat: number, lon: number): Airport {
+    return { ident, name: ident, lat, lon };
+  }
+
   const ottawaFixture = [
     airport("CYOW", 45.3225, -75.6692),
     airport("CYRO", 45.4215, -75.6972),
