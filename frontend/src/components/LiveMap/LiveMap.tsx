@@ -143,6 +143,7 @@ export function LiveMap({ styleId }: LiveMapProps) {
       <OperationsPanel
         assets={assets}
         zones={zones}
+        zonesError={zoneDrawError}
         selectedAssetId={selectedAssetId}
         entityTab={entityTab}
         statusFilter={statusFilter}

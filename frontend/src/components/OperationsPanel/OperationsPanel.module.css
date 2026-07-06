@@ -85,6 +85,17 @@
   font-size: 0.8125rem;
 }
 
+.error {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-glass);
+  color: var(--color-danger-text);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
 .pinnedSection {
   margin-bottom: 0.5rem;
   padding-bottom: 0.45rem;

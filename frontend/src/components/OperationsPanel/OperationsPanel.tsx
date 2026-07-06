@@ -25,6 +25,7 @@ import styles from "./OperationsPanel.module.css";
 type OperationsPanelProps = {
   assets: readonly Asset[];
   zones: readonly ZoneView[];
+  zonesError: string | null;
   selectedAssetId: string | null;
   entityTab: OperationsEntityTab;
   statusFilter: OperationsStatusFilter;
@@ -99,6 +100,7 @@ function rowFields(entry: OperationsRow): AssetRowField[] {
 export function OperationsPanel({
   assets,
   zones,
+  zonesError,
   selectedAssetId,
   entityTab,
   statusFilter,
@@ -140,6 +142,11 @@ export function OperationsPanel({
         <AnimatePresence initial={false} mode="wait">
           {entityTab === "zones" ? (
             <motion.div key="zones" {...fadeMotion}>
+              {zonesError !== null ? (
+                <p className={styles.error} role="alert">
+                  {zonesError}
+                </p>
+              ) : null}
               {zoneRows.length === 0 ? (
                 <p className={styles.empty}>{emptyMessage("zones")}</p>
               ) : (

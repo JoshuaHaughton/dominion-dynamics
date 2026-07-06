@@ -33,7 +33,7 @@ export type UseZonesResult = {
   error: string | null;
   isLoaded: boolean;
   addZoneFromDraw: (geojson: ZoneGeoJson) => void;
-  removeZone: (zoneId: number) => Promise<void>;
+  removeZone: (zoneId: number) => void;
   reportDrawError: (message: string) => void;
 };
 
@@ -121,17 +121,19 @@ export function useZones(): UseZonesResult {
     });
   }
 
-  async function removeZone(zoneId: number) {
+  function removeZone(zoneId: number) {
     setError(null);
 
-    try {
-      await deleteZone(zoneId);
-      setZones((current) =>
-        current.filter((zone) => isPendingZone(zone) || zone.id !== zoneId),
+    setZones((current) => {
+      void deleteZone(zoneId).catch((err: unknown) => {
+        setZones(current);
+        setError(err instanceof Error ? err.message : "Failed to delete zone");
+      });
+
+      return current.filter(
+        (zone) => isPendingZone(zone) || zone.id !== zoneId,
       );
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to delete zone");
-    }
+    });
   }
 
   return {

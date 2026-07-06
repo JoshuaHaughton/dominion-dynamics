@@ -138,8 +138,8 @@ describe("useZones", () => {
       expect(result.current.zones).toHaveLength(1);
     });
 
-    await act(async () => {
-      await result.current.removeZone(savedZone.id);
+    act(() => {
+      result.current.removeZone(savedZone.id);
     });
 
     expect(result.current.zones).toEqual([]);
@@ -154,11 +154,13 @@ describe("useZones", () => {
       expect(result.current.zones).toHaveLength(1);
     });
 
-    await act(async () => {
-      await result.current.removeZone(savedZone.id);
+    act(() => {
+      result.current.removeZone(savedZone.id);
     });
 
-    expect(result.current.zones).toEqual([savedZone]);
-    expect(result.current.error).toBe("Failed to delete zone");
+    await waitFor(() => {
+      expect(result.current.zones).toEqual([savedZone]);
+      expect(result.current.error).toBe("Failed to delete zone");
+    });
   });
 });
