@@ -3,12 +3,12 @@ import type { Feature, Polygon } from "geojson";
 import { lonLatPairSchema } from "../lib/coordinates.js";
 
 function isClosedRing(ring: [number, number][]): boolean {
-  if (ring.length < 4) {
-    return false;
-  }
-
   const first = ring[0];
   const last = ring[ring.length - 1];
+
+  if (ring.length < 4 || !first || !last) {
+    return false;
+  }
 
   return first[0] === last[0] && first[1] === last[1];
 }
@@ -45,9 +45,16 @@ export const ZoneGeoJsonSchema: z.ZodType<ZoneGeoJson> = z
   }) as z.ZodType<ZoneGeoJson>;
 
 /** POST /api/zones request body. */
-export const CreateZoneRequestSchema = z.object({
-  name: z.string().trim().min(1, "Zone name is required"),
-  geojson: ZoneGeoJsonSchema,
+export const CreateZoneRequestSchema = z
+  .object({
+    name: z.string().trim().min(1, "Zone name is required"),
+    geojson: ZoneGeoJsonSchema,
+  })
+  .strict();
+
+/** DELETE /api/zones/:id route params. */
+export const ZoneIdParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
 });
 
 /** Persisted zone returned by the zones API. */

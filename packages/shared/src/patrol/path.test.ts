@@ -61,21 +61,17 @@ describe("patrol path schemas", () => {
     });
   });
 
-  describe("SavePatrolPathRequestSchema", () => {
-    it("accepts a patrol path payload", () => {
-      expect(
-        SavePatrolPathRequestSchema.parse({ geojson: validLine }),
-      ).toEqual({ geojson: validLine });
+  it.each([
+    ["SavePatrolPathRequestSchema", SavePatrolPathRequestSchema],
+    ["PatrolPathResponseSchema", PatrolPathResponseSchema],
+    ["PatrolPathSchema", PatrolPathSchema],
+  ])("%s accepts a patrol path payload", (_name, schema) => {
+    expect(schema.parse({ geojson: validLine })).toEqual({
+      geojson: validLine,
     });
   });
 
   describe("PatrolPathResponseSchema", () => {
-    it("accepts a saved patrol path response", () => {
-      expect(PatrolPathResponseSchema.parse({ geojson: validLine })).toEqual({
-        geojson: validLine,
-      });
-    });
-
     it("accepts an empty patrol path response", () => {
       expect(PatrolPathResponseSchema.parse({ geojson: null })).toEqual({
         geojson: null,
@@ -112,12 +108,6 @@ describe("patrol path schemas", () => {
   });
 
   describe("PatrolPathSchema", () => {
-    it("accepts a patrol path response", () => {
-      expect(PatrolPathSchema.parse({ geojson: validLine })).toEqual({
-        geojson: validLine,
-      });
-    });
-
     it("rejects an empty patrol path payload", () => {
       expect(PatrolPathSchema.safeParse({ geojson: null }).success).toBe(false);
     });

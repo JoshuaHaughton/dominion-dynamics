@@ -1,15 +1,21 @@
 import { z } from "zod";
+import { AssetRoleSchema, ThreatLevelSchema } from "./types.js";
+import {
+  DispatchPhaseSchema,
+  DroneOriginSchema,
+} from "../dispatch/constants.js";
+import { PatrolModeSchema } from "../patrol/constants.js";
 import { AssetTrackDetailSchema, SelectedTrackDeltaSchema } from "./track.js";
 
 export const AssetZoneStateSchema = z.object({
-  threat: z.enum(["normal", "warning", "critical"]),
+  threat: ThreatLevelSchema,
   zoneTteSeconds: z.number().finite().nullable(),
   nearestBoundaryM: z.number().finite().min(0).nullable(),
 });
 
 /** Route-following state for drones with {@link AssetDroneStateSchema.shape.origin} `"patrol"`. */
 export const DroneRouteStateSchema = z.object({
-  mode: z.enum(["patrol", "shadow", "rejoin"]),
+  mode: PatrolModeSchema,
   shadowTargetId: z.string().nullable(),
   /** Set when the route is persisted; omitted until the user saves a patrol path. */
   pathId: z.number().int().positive().optional(),
@@ -18,7 +24,7 @@ export const DroneRouteStateSchema = z.object({
 /** Airport scramble mission state while auto-dispatching on critical traffic. */
 export const DroneDispatchStateSchema = z.object({
   targetId: z.string(),
-  phase: z.enum(["enroute", "intercepting", "trailing", "rtb", "at_base"]),
+  phase: DispatchPhaseSchema,
   homeAirportIdent: z.string(),
   /** Resolved from the airport registry for operator-facing labels. */
   homeAirportName: z.string().optional(),
@@ -27,7 +33,7 @@ export const DroneDispatchStateSchema = z.object({
 });
 
 export const AssetDroneStateSchema = z.object({
-  origin: z.enum(["patrol", "dispatch"]),
+  origin: DroneOriginSchema,
   patrol: DroneRouteStateSchema.optional(),
   dispatch: DroneDispatchStateSchema.optional(),
 });
@@ -39,7 +45,7 @@ export const AssetSchema = z.object({
   alt: z.number().finite(),
   heading: z.number().finite(),
   speed: z.number().finite(),
-  role: z.enum(["traffic", "drone"]),
+  role: AssetRoleSchema,
   category: z.number().int().min(0).max(20),
   callsign: z.string().nullable(),
   originCountry: z.string().nullable(),

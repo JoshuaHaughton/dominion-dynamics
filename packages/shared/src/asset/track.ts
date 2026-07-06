@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-/** GET /api/assets/:id route params. */
-export const AssetIdParamSchema = z.object({
-  id: z.string().min(1),
-});
-
 export const AssetHistoryPointSchema = z.object({
   lat: z.number().finite(),
   lon: z.number().finite(),
@@ -13,10 +8,12 @@ export const AssetHistoryPointSchema = z.object({
 
 export const PredictedPathLineSchema = z.object({
   type: z.literal("LineString"),
-  coordinates: z.array(z.tuple([z.number().finite(), z.number().finite()])).min(2),
+  coordinates: z
+    .array(z.tuple([z.number().finite(), z.number().finite()]))
+    .min(2),
 });
 
-/** History and prediction for one asset (REST or snapshot selectedTrack). */
+/** History and prediction for one asset (snapshot selectedTrack). */
 export const AssetTrackDetailSchema = z.object({
   assetId: z.string().min(1),
   history: z.array(AssetHistoryPointSchema),

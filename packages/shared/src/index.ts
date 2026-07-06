@@ -1,4 +1,9 @@
 export type { AssetRole, SimBounds, ThreatLevel } from "./asset/types.js";
+export {
+  AssetRoleSchema,
+  DEFAULT_SIM_SEED_REGION,
+  ThreatLevelSchema,
+} from "./asset/types.js";
 
 export type {
   Asset,
@@ -27,7 +32,6 @@ export type {
 } from "./asset/track.js";
 export {
   AssetHistoryPointSchema,
-  AssetIdParamSchema,
   AssetTrackDetailSchema,
   PredictedPathLineSchema,
   SelectedTrackDeltaSchema,
@@ -36,7 +40,7 @@ export {
 export {
   DEFAULT_SIM_TICK_MS,
   DEFAULT_TRACK_HISTORY_CAPACITY,
-  TRACK_HISTORY_WINDOW_SECONDS,
+  THREAT_WARNING_WINDOW_SECONDS,
   trackHistoryCapacity,
 } from "./track/history.js";
 
@@ -44,17 +48,18 @@ export type {
   ClientLiveMessage,
   DeselectAssetMessage,
   SelectAssetMessage,
-} from "./live/client.js";
+} from "./realtime/clientMessages.js";
 export {
   ClientLiveMessageSchema,
   DeselectAssetMessageSchema,
   SelectAssetMessageSchema,
-} from "./live/client.js";
+} from "./realtime/clientMessages.js";
 
 export type { CreateZoneRequest, Zone, ZoneGeoJson } from "./zone/schema.js";
 export {
   CreateZoneRequestSchema,
   ZoneGeoJsonSchema,
+  ZoneIdParamSchema,
   ZoneListSchema,
   ZoneSchema,
 } from "./zone/schema.js";
@@ -80,12 +85,21 @@ export type { ValidationErrorBody } from "./api/validationError.js";
 export { ValidationErrorBodySchema } from "./api/validationError.js";
 
 export type { PatrolMode } from "./patrol/constants.js";
-export { PATROL_ASSET_ID, PATROL_CALLSIGN } from "./patrol/constants.js";
+export {
+  DRONE_ICAO_CATEGORY,
+  PATROL_ASSET_ID,
+  PATROL_CALLSIGN,
+  PatrolModeSchema,
+} from "./patrol/constants.js";
 
 export type { Airport } from "./airport/schema.js";
 export { AirportSchema } from "./airport/schema.js";
 
 export type { DispatchPhase, DroneOrigin } from "./dispatch/constants.js";
+export {
+  DispatchPhaseSchema,
+  DroneOriginSchema,
+} from "./dispatch/constants.js";
 
 export type { IcaoEmitterCategory } from "./icao/emitterCategory.js";
 export {

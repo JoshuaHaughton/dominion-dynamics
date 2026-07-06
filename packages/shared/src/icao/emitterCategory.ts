@@ -30,34 +30,38 @@ export type IcaoEmitterCategory =
  * Full official ICAO / OpenSky labels for each emitter category code.
  * Use in panels or docs when space is not a constraint.
  */
-export const ICAO_EMITTER_CATEGORY_LABELS: Record<IcaoEmitterCategory, string> = {
-  0: "No information at all",
-  1: "No ADS-B emitter category information",
-  2: "Light (< 15,500 lbs)",
-  3: "Small (15,500 to 75,000 lbs)",
-  4: "Large (75,000 to 300,000 lbs)",
-  5: "High vortex large (aircraft such as B-757)",
-  6: "Heavy (> 300,000 lbs)",
-  7: "High performance (> 5g acceleration and 400 kts)",
-  8: "Rotorcraft",
-  9: "Glider / sailplane",
-  10: "Lighter-than-air",
-  11: "Parachutist / skydiver",
-  12: "Ultralight / hang-glider / paraglider",
-  13: "Reserved",
-  14: "Unmanned aerial vehicle",
-  15: "Space / trans-atmospheric vehicle",
-  16: "Surface vehicle – emergency vehicle",
-  17: "Surface vehicle – service vehicle",
-  18: "Point obstacle (includes tethered balloons)",
-  19: "Cluster obstacle",
-  20: "Line obstacle",
-};
+export const ICAO_EMITTER_CATEGORY_LABELS: Record<IcaoEmitterCategory, string> =
+  {
+    0: "No information at all",
+    1: "No ADS-B emitter category information",
+    2: "Light (< 15,500 lbs)",
+    3: "Small (15,500 to 75,000 lbs)",
+    4: "Large (75,000 to 300,000 lbs)",
+    5: "High vortex large (aircraft such as B-757)",
+    6: "Heavy (> 300,000 lbs)",
+    7: "High performance (> 5g acceleration and 400 kts)",
+    8: "Rotorcraft",
+    9: "Glider / sailplane",
+    10: "Lighter-than-air",
+    11: "Parachutist / skydiver",
+    12: "Ultralight / hang-glider / paraglider",
+    13: "Reserved",
+    14: "Unmanned aerial vehicle",
+    15: "Space / trans-atmospheric vehicle",
+    16: "Surface vehicle – emergency vehicle",
+    17: "Surface vehicle – service vehicle",
+    18: "Point obstacle (includes tethered balloons)",
+    19: "Cluster obstacle",
+    20: "Line obstacle",
+  };
 
 /**
  * Shorter panel-friendly labels derived from the official ICAO names.
  */
-export const ICAO_EMITTER_CATEGORY_SHORT_LABELS: Record<IcaoEmitterCategory, string> = {
+export const ICAO_EMITTER_CATEGORY_SHORT_LABELS: Record<
+  IcaoEmitterCategory,
+  string
+> = {
   0: "No information",
   1: "No category information",
   2: "Light",
@@ -84,7 +88,9 @@ export const ICAO_EMITTER_CATEGORY_SHORT_LABELS: Record<IcaoEmitterCategory, str
 /**
  * Whether `value` is a valid ICAO emitter category (integer 0–20).
  */
-export function isIcaoEmitterCategory(value: number): value is IcaoEmitterCategory {
+export function isIcaoEmitterCategory(
+  value: number,
+): value is IcaoEmitterCategory {
   return Number.isInteger(value) && value >= 0 && value <= 20;
 }
 

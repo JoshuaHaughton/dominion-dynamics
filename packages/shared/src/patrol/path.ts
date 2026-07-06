@@ -34,9 +34,11 @@ export const PathRecordSchema = z.object({
 });
 
 /** PUT /api/patrol-path request body. */
-export const SavePatrolPathRequestSchema = z.object({
-  geojson: PathGeoJsonSchema,
-});
+export const SavePatrolPathRequestSchema = z
+  .object({
+    geojson: PathGeoJsonSchema,
+  })
+  .strict();
 
 /** GET /api/patrol-path response body. */
 export const PatrolPathResponseSchema = z.object({
