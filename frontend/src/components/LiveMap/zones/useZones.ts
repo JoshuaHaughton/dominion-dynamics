@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Zone, ZoneGeoJson } from "@dominion-dynamics/shared";
 import { ZoneGeoJsonSchema } from "@dominion-dynamics/shared";
 import {
@@ -44,8 +44,11 @@ export type UseZonesResult = {
  */
 export function useZones(): UseZonesResult {
   const [zones, setZones] = useState<ZoneView[]>([]);
+  const zonesRef = useRef(zones);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  zonesRef.current = zones;
 
   useEffect(() => {
     let cancelled = false;
@@ -107,32 +110,36 @@ export function useZones(): UseZonesResult {
 
     setError(null);
 
-    setZones((current) => {
-      const pendingZone: PendingZone = {
-        clientId: crypto.randomUUID(),
-        name: nextZoneName(current.length),
-        geojson,
-        pending: true,
-      };
+    const pendingZone: PendingZone = {
+      clientId: crypto.randomUUID(),
+      name: nextZoneName(zonesRef.current.length),
+      geojson,
+      pending: true,
+    };
 
-      void persistPendingZone(pendingZone);
-
-      return [...current, pendingZone];
-    });
+    setZones((current) => [...current, pendingZone]);
+    void persistPendingZone(pendingZone);
   }
 
   function removeZone(zoneId: number) {
     setError(null);
 
-    setZones((current) => {
-      void deleteZone(zoneId).catch((err: unknown) => {
-        setZones(current);
-        setError(err instanceof Error ? err.message : "Failed to delete zone");
-      });
+    const snapshot = zonesRef.current;
+    const exists = snapshot.some(
+      (zone) => !isPendingZone(zone) && zone.id === zoneId,
+    );
 
-      return current.filter(
-        (zone) => isPendingZone(zone) || zone.id !== zoneId,
-      );
+    if (!exists) {
+      return;
+    }
+
+    setZones(
+      snapshot.filter((zone) => isPendingZone(zone) || zone.id !== zoneId),
+    );
+
+    void deleteZone(zoneId).catch((err: unknown) => {
+      setZones(snapshot);
+      setError(err instanceof Error ? err.message : "Failed to delete zone");
     });
   }
 

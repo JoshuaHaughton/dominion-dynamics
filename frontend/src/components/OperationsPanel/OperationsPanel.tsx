@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Asset, ZoneGeoJson } from "@dominion-dynamics/shared";
 import type { ZoneView } from "../LiveMap/zones/useZones.js";
@@ -112,17 +111,10 @@ export function OperationsPanel({
 }: OperationsPanelProps) {
   const fadeMotion = useFadeMotionProps();
 
-  const rows = useMemo(
-    () => buildOperationsRows(assets, entityTab, statusFilter),
-    [assets, entityTab, statusFilter],
-  );
-
-  const zoneRows = useMemo(() => buildZoneRows(zones), [zones]);
-
-  const pinnedPatrol = useMemo(
-    () => (entityTab === "drones" ? buildPinnedPatrolRow(assets) : null),
-    [assets, entityTab],
-  );
+  const rows = buildOperationsRows(assets, entityTab, statusFilter);
+  const zoneRows = buildZoneRows(zones);
+  const pinnedPatrol =
+    entityTab === "drones" ? buildPinnedPatrolRow(assets) : null;
 
   const listRows = rows.filter(
     (entry) => entry.assetId !== pinnedPatrol?.assetId,

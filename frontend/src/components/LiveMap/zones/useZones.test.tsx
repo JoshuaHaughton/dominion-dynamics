@@ -143,6 +143,7 @@ describe("useZones", () => {
     });
 
     expect(result.current.zones).toEqual([]);
+    expect(deleteZone).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the zone and sets an error when the delete fails", async () => {

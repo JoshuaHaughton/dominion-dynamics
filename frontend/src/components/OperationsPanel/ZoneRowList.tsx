@@ -45,7 +45,8 @@ export function ZoneRowList({
                 type="button"
                 className={styles.deleteButton}
                 aria-label={`Delete ${entry.label}`}
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   onDeleteZone(zoneId);
                 }}
               >
