@@ -15,13 +15,13 @@ describe("assetsToFeatureCollection", () => {
     callsign: null,
     originCountry: null,
     onGround: false,
-    zone: { threat: "normal", tteSeconds: null, nearestBoundaryM: null },
+    zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
   };
 
   const warningAsset: Asset = {
     ...syntheticAsset,
     id: "warn-test",
-    zone: { threat: "warning", tteSeconds: 120, nearestBoundaryM: 500 },
+    zone: { threat: "warning", zoneTteSeconds: 120, nearestBoundaryM: 500 },
   };
 
   it("returns an empty collection for no assets", () => {

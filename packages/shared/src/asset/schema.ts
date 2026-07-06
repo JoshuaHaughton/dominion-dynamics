@@ -3,7 +3,7 @@ import { AssetTrackDetailSchema, SelectedTrackDeltaSchema } from "./track.js";
 
 export const AssetZoneStateSchema = z.object({
   threat: z.enum(["normal", "warning", "critical"]),
-  tteSeconds: z.number().finite().nullable(),
+  zoneTteSeconds: z.number().finite().nullable(),
   nearestBoundaryM: z.number().finite().min(0).nullable(),
 });
 

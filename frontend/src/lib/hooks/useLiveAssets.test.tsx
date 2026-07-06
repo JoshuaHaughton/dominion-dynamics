@@ -62,7 +62,7 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", tteSeconds: null, nearestBoundaryM: null },
+            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
           },
         ],
       }),
@@ -98,7 +98,7 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", tteSeconds: null, nearestBoundaryM: null },
+            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
           },
         ],
         selectedTrack: {
@@ -136,7 +136,7 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", tteSeconds: null, nearestBoundaryM: null },
+            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
           },
         ],
         selectedTrackDelta: {
@@ -195,7 +195,7 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", tteSeconds: null, nearestBoundaryM: null },
+            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
           },
         ],
         selectedTrack: {

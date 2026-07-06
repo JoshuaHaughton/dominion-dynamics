@@ -17,16 +17,16 @@ function formatTte(zone: AssetZoneState): string {
     return "Inside zone";
   }
 
-  if (zone.tteSeconds === null) {
+  if (zone.zoneTteSeconds === null) {
     return "None";
   }
 
-  if (zone.tteSeconds < 60) {
-    return `${Math.round(zone.tteSeconds)}s`;
+  if (zone.zoneTteSeconds < 60) {
+    return `${Math.round(zone.zoneTteSeconds)}s`;
   }
 
-  const minutes = Math.floor(zone.tteSeconds / 60);
-  const seconds = Math.round(zone.tteSeconds % 60);
+  const minutes = Math.floor(zone.zoneTteSeconds / 60);
+  const seconds = Math.round(zone.zoneTteSeconds % 60);
 
   return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
 }

@@ -45,7 +45,7 @@ describe("evaluateZoneThreat", () => {
 
     expect(evaluateZoneThreat(asset, [])).toEqual({
       threat: "normal",
-      tteSeconds: null,
+      zoneTteSeconds: null,
       nearestBoundaryM: null,
     });
   });
@@ -55,7 +55,7 @@ describe("evaluateZoneThreat", () => {
 
     expect(evaluateZoneThreat(asset, [cachedZone])).toEqual({
       threat: "critical",
-      tteSeconds: 0,
+      zoneTteSeconds: 0,
       nearestBoundaryM: 0,
     });
   });
@@ -66,9 +66,9 @@ describe("evaluateZoneThreat", () => {
     const result = evaluateZoneThreat(asset, [cachedZone]);
 
     expect(result.threat).toBe("warning");
-    expect(result.tteSeconds).not.toBeNull();
-    expect(result.tteSeconds!).toBeGreaterThan(0);
-    expect(result.tteSeconds!).toBeLessThanOrEqual(300);
+    expect(result.zoneTteSeconds).not.toBeNull();
+    expect(result.zoneTteSeconds!).toBeGreaterThan(0);
+    expect(result.zoneTteSeconds!).toBeLessThanOrEqual(300);
   });
 
   it("returns normal when the asset flies parallel to the zone", () => {
@@ -76,7 +76,7 @@ describe("evaluateZoneThreat", () => {
 
     expect(evaluateZoneThreat(asset, [cachedZone])).toEqual({
       threat: "normal",
-      tteSeconds: null,
+      zoneTteSeconds: null,
       nearestBoundaryM: expect.any(Number),
     });
   });
@@ -107,7 +107,7 @@ describe("evaluateZoneThreat", () => {
     const result = evaluateZoneThreat(asset, [cachedZone, nearerZone]);
 
     expect(result.threat).toBe("warning");
-    expect(result.tteSeconds).not.toBeNull();
+    expect(result.zoneTteSeconds).not.toBeNull();
   });
 });
 
@@ -154,7 +154,7 @@ describe("enrichTrafficWithZoneThreat", () => {
       id: "test-asset",
       zone: {
         threat: "critical",
-        tteSeconds: 0,
+        zoneTteSeconds: 0,
         nearestBoundaryM: 0,
       },
     });

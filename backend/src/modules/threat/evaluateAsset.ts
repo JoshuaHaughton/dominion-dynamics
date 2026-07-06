@@ -33,7 +33,7 @@ export function evaluateZoneThreat(
 
   for (const zone of zones) {
     if (booleanPointInPolygon(assetPoint, zone.polygon)) {
-      return { threat: "critical", tteSeconds: 0, nearestBoundaryM: 0 };
+      return { threat: "critical", zoneTteSeconds: 0, nearestBoundaryM: 0 };
     }
 
     const boundaryM = distancePointToBoundaryM(assetPoint, zone.boundary);
@@ -58,12 +58,12 @@ export function evaluateZoneThreat(
   if (minTteSeconds !== null && minTteSeconds <= WARNING_WINDOW_SECONDS) {
     return {
       threat: "warning",
-      tteSeconds: minTteSeconds,
+      zoneTteSeconds: minTteSeconds,
       nearestBoundaryM,
     };
   }
 
   const threat: ThreatLevel = "normal";
 
-  return { threat, tteSeconds: null, nearestBoundaryM };
+  return { threat, zoneTteSeconds: null, nearestBoundaryM };
 }

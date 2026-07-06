@@ -6,6 +6,6 @@ export const WARNING_WINDOW_SECONDS = 300;
 /** Placeholder zone state before threat enrichment runs on a traffic asset. */
 export const DEFAULT_TRAFFIC_ZONE: AssetZoneState = {
   threat: "normal",
-  tteSeconds: null,
+  zoneTteSeconds: null,
   nearestBoundaryM: null,
 };
