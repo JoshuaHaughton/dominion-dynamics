@@ -49,5 +49,9 @@ export function syncGeoJsonLayers<T>(
     return;
   }
 
+  if (!map.isStyleLoaded()) {
+    return;
+  }
+
   config.addLayerStack(map, data);
 }

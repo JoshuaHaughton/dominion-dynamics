@@ -14,7 +14,10 @@ import {
   syncAssetTrackLayers,
   updateAssetTrackLayerData,
 } from "../assets/assetTrackMapUtils.js";
-import { syncZoneLayers } from "../zones/zoneMapUtils.js";
+import {
+  syncZoneLayers,
+  updateZoneLayerData,
+} from "../zones/zoneMapUtils.js";
 import {
   syncPatrolPathLayers,
   updatePatrolPathLayerData,
@@ -102,7 +105,11 @@ export function useMapLayerSync({
 
     if (!map) return;
 
-    syncZoneLayers(map, zones);
+    if (map.getLayer(MAP_LAYERS.zonesFill)) {
+      updateZoneLayerData(map, zones);
+    } else if (map.isStyleLoaded()) {
+      syncZoneLayers(map, zones);
+    }
   }, [zones]);
 
   /** Push the latest patrol route into the GeoJSON source. */
