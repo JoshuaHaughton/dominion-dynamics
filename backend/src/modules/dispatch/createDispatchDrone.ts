@@ -1,3 +1,4 @@
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import type { Asset } from "@dominion-dynamics/shared";
 import { headingToward } from "../../lib/geo/distanceAndHeading.js";
 import {
@@ -101,7 +102,7 @@ export function applyDispatchAssignment(
     );
   }
 
-  const origin = decision.type === "patrol" ? "patrol" : "dispatch";
+  const origin = resolveAssignmentOrigin(mission, existingAsset);
   const state = createDispatchDroneFromAsset(mission, existingAsset, origin);
 
   return {
@@ -116,6 +117,22 @@ export function applyDispatchAssignment(
       ),
     },
   };
+}
+
+/** Wire origin for reuse/patrol decisions — not the same as assignmentSource. */
+function resolveAssignmentOrigin(
+  mission: DispatchMission,
+  existingAsset: Asset,
+): "dispatch" | "patrol" {
+  if (
+    mission.assignmentSource === "patrol" ||
+    existingAsset.id === PATROL_ASSET_ID ||
+    existingAsset.drone?.origin === "patrol"
+  ) {
+    return "patrol";
+  }
+
+  return "dispatch";
 }
 
 /** Idle dispatch drone between missions (RTB complete, awaiting despawn or reuse). */

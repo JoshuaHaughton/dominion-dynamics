@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import destination from "@turf/destination";
+import { point } from "@turf/helpers";
 import type { Asset } from "@dominion-dynamics/shared";
+import { distanceM } from "../../lib/geo/distanceAndHeading.js";
 import { testAsset } from "../../testFixtures/asset.js";
 import {
   advanceDispatchDrone,
@@ -135,6 +138,96 @@ describe("advanceDispatchDrone", () => {
     });
 
     expect(result.kind).toBe("despawn");
+  });
+
+  it("despawns after RTB movement crosses the arrival threshold", () => {
+    const spawnPoint = destination(
+      point([cyow.lon, cyow.lat]),
+      0.08,
+      180,
+      { units: "kilometers" },
+    );
+    const [spawnLon, spawnLat] = spawnPoint.geometry.coordinates;
+
+    expect(
+      distanceM(spawnLon, spawnLat, cyow.lon, cyow.lat),
+    ).toBeGreaterThan(75);
+
+    let state = createSpawnedDispatchDrone(
+      mission,
+      spawnLat,
+      spawnLon,
+      cyow.lat + 0.1,
+      cyow.lon + 0.1,
+    );
+
+    state = {
+      ...state,
+      phase: "rtb",
+      targetId: null,
+    };
+
+    for (let tick = 0; tick < 5; tick += 1) {
+      const result = advanceDispatchDrone({
+        state,
+        liveAssets: [],
+        deltaSeconds: 1,
+      });
+
+      if (result.kind === "despawn") {
+        expect(tick).toBeLessThan(5);
+        return;
+      }
+
+      expect(result.kind).toBe("continue");
+
+      if (result.kind !== "continue") {
+        return;
+      }
+
+      state = result.state;
+    }
+
+    throw new Error("expected RTB despawn near the arrival radius");
+  });
+
+  it("despawns during a full RTB without stalling near the arrival radius", () => {
+    const initial = createSpawnedDispatchDrone(
+      mission,
+      cyow.lat + 0.02,
+      cyow.lon,
+      cyow.lat + 0.1,
+      cyow.lon + 0.1,
+    );
+
+    let state: typeof initial = {
+      ...initial,
+      phase: "rtb",
+      targetId: null,
+    };
+
+    for (let tick = 0; tick < 300; tick += 1) {
+      const result = advanceDispatchDrone({
+        state,
+        liveAssets: [],
+        deltaSeconds: 1,
+      });
+
+      if (result.kind === "despawn") {
+        expect(tick).toBeLessThan(300);
+        return;
+      }
+
+      expect(result.kind).toBe("continue");
+
+      if (result.kind !== "continue") {
+        return;
+      }
+
+      state = result.state;
+    }
+
+    throw new Error("dispatch drone never despawned during RTB");
   });
 
   it("hands patrol-born assignments back to the patrol layer on rtb", () => {

@@ -86,7 +86,13 @@ function resolveRtbApproachSpeed(
     (distanceM - PATROL_WAYPOINT_ARRIVAL_M) /
     (PATROL_APPROACH_DECEL_M - PATROL_WAYPOINT_ARRIVAL_M);
 
-  return PATROL_MAX_INTERCEPT_MPS * blend;
+  const decelSpeed = PATROL_MAX_INTERCEPT_MPS * blend;
+  // Just outside the arrival radius, decel alone can leave the drone crawling
+  // forever; ensure at least enough speed to close the gap this tick.
+  const minSpeedToCloseGap =
+    (distanceM - PATROL_WAYPOINT_ARRIVAL_M) / deltaSeconds;
+
+  return Math.max(decelSpeed, minSpeedToCloseGap);
 }
 
 function advanceRtbTowardAirport(
@@ -106,9 +112,18 @@ function advanceRtbTowardAirport(
     return { kind: "despawn" };
   }
 
+  const distanceBeyondArrivalM = Math.max(
+    0,
+    distanceToBaseM - PATROL_WAYPOINT_ARRIVAL_M,
+  );
+
+  if (distanceBeyondArrivalM < 0.01) {
+    return { kind: "despawn" };
+  }
+
   const approachSpeed = capSpeedForRemainingDistance(
     resolveRtbApproachSpeed(distanceToBaseM, deltaSeconds),
-    distanceToBaseM,
+    distanceBeyondArrivalM,
     deltaSeconds,
     0,
   );
@@ -123,6 +138,21 @@ function advanceRtbTowardAirport(
     airportLat,
     deltaSeconds,
   );
+
+  const distanceAfterM = distanceM(
+    moved.lon,
+    moved.lat,
+    airportLon,
+    airportLat,
+  );
+
+  if (distanceAfterM <= PATROL_WAYPOINT_ARRIVAL_M) {
+    return { kind: "despawn" };
+  }
+
+  if (moved.speed === 0) {
+    return { kind: "despawn" };
+  }
 
   return {
     kind: "continue",
