@@ -7,7 +7,7 @@ import {
   clearAssetTrackHistory,
   recordAssetTrackHistory,
 } from "../sim/assetTrackHistory.js";
-import { getAssetList, setAssets } from "../sim/store.js";
+import { getAssetSnapshot, setAssets } from "../sim/store.js";
 import {
   attachWebSocket,
   broadcastSnapshot,
@@ -78,7 +78,7 @@ describe("ws.server select_asset flow", () => {
     recordAssetTrackHistory([asset], 1000);
 
     server = createServer();
-    attachWebSocket({ server, getConnectSnapshot: () => getAssetList() });
+    attachWebSocket({ server, getConnectSnapshot: getAssetSnapshot });
 
     await new Promise<void>((resolve) => {
       server.listen(0, resolve);
@@ -114,7 +114,7 @@ describe("ws.server select_asset flow", () => {
     expect(selectResponse.selectedTrackDelta).toBeUndefined();
 
     recordAssetTrackHistory([{ ...asset, lat: asset.lat + 0.001 }], 2000);
-    broadcastSnapshot(getAssetList());
+    broadcastSnapshot(getAssetSnapshot());
 
     const broadcast = await client.nextMessage();
     expect(broadcast.selectedTrack).toBeUndefined();
@@ -142,7 +142,7 @@ describe("ws.server select_asset flow", () => {
 
     // Deselect sends no immediate reply; the next broadcast must be plain.
     await new Promise((resolve) => setTimeout(resolve, 50));
-    broadcastSnapshot(getAssetList());
+    broadcastSnapshot(getAssetSnapshot());
 
     const broadcast = await client.nextMessage();
     expect(broadcast.selectedTrack).toBeUndefined();

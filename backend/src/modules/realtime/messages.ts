@@ -6,7 +6,7 @@ import type {
 } from "@dominion-dynamics/shared";
 
 type BuildSnapshotMessageParams = {
-  assets: Asset[];
+  assets: readonly Asset[];
   ts?: number;
   selectedTrack?: AssetTrackDetail;
   selectedTrackDelta?: SelectedTrackDelta;
@@ -22,7 +22,7 @@ export function buildSnapshotMessage({
   return {
     type: "snapshot",
     ts,
-    assets,
+    assets: [...assets],
     ...(selectedTrack ? { selectedTrack } : {}),
     ...(selectedTrackDelta ? { selectedTrackDelta } : {}),
   };

@@ -18,8 +18,8 @@ export function setAssets(next: readonly Asset[]): void {
   }
 }
 
-/** Shallow copy of all assets for broadcast or logging. */
-export function getAssetList(): Asset[] {
+/** One shallow copy of all assets for WebSocket broadcast (call once per tick). */
+export function getAssetSnapshot(): readonly Asset[] {
   return [...assets.values()];
 }
 

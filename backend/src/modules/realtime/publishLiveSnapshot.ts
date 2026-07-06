@@ -1,4 +1,4 @@
-import { getAssetList, isDrone, setAssets } from "../sim/store.js";
+import { getAssetSnapshot, isDrone, setAssets } from "../sim/store.js";
 import { recordAssetTrackHistory } from "../sim/assetTrackHistory.js";
 import { enrichTrafficWithZoneThreat } from "../threat/enrichTrafficWithZoneThreat.js";
 import { getCachedZones } from "../threat/zoneGeometryCache.js";
@@ -27,7 +27,7 @@ export function publishLiveSnapshot({
 
 /** Re-enrich stored traffic (zones changed) and keep every drone in the snapshot. */
 export function republishLiveSnapshot(): Asset[] {
-  const stored = getAssetList();
+  const stored = getAssetSnapshot();
   const drones = stored.filter(isDrone);
   const traffic = stored.filter((asset) => !isDrone(asset));
 

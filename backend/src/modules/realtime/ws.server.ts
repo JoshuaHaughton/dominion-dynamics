@@ -6,7 +6,7 @@ import {
   buildSelectedTrackDelta,
   getAssetTrackDetail,
 } from "../track/buildAssetTrack.js";
-import { getAssetList } from "../sim/store.js";
+import { getAssetSnapshot } from "../sim/store.js";
 import { getConnectionState, type ConnectionState } from "./connectionState.js";
 import { buildSnapshotMessage } from "./messages.js";
 
@@ -28,7 +28,7 @@ function serializeSnapshot(
   const { selectedAssetId, trackSynced } = state;
 
   if (selectedAssetId === null) {
-    return JSON.stringify(buildSnapshotMessage({ assets: [...assets], ts }));
+    return JSON.stringify(buildSnapshotMessage({ assets, ts }));
   }
 
   if (!trackSynced) {
@@ -36,7 +36,7 @@ function serializeSnapshot(
 
     return JSON.stringify(
       buildSnapshotMessage({
-        assets: [...assets],
+        assets,
         ts,
         selectedTrack,
       }),
@@ -48,7 +48,7 @@ function serializeSnapshot(
 
   return JSON.stringify(
     buildSnapshotMessage({
-      assets: [...assets],
+      assets,
       ts,
       selectedTrackDelta,
     }),
@@ -95,7 +95,7 @@ function handleClientMessage(ws: WebSocket, raw: string): void {
   if (parsed.data.type === "select_asset") {
     state.selectedAssetId = parsed.data.assetId;
     state.trackSynced = false;
-    sendSnapshot(ws, getAssetList(), state);
+    sendSnapshot(ws, getAssetSnapshot(), state);
     return;
   }
 
