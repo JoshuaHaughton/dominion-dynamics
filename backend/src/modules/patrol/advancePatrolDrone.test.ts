@@ -3,6 +3,10 @@ import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import { testAsset } from "../../testFixtures/asset.js";
 import {
+  clearDispatchMissions,
+  setDispatchMissions,
+} from "../dispatch/missionStore.js";
+import {
   advancePatrolDrone,
   findNearestCriticalAsset,
   resolveShadowTarget,
@@ -32,6 +36,7 @@ describe("advancePatrolDrone", () => {
 
   beforeEach(() => {
     clearShadowAssignments();
+    clearDispatchMissions();
   });
 
   it("creates the patrol drone at the first waypoint facing the second", () => {
@@ -146,6 +151,37 @@ describe("advancePatrolDrone", () => {
     });
 
     expect(resolveShadowTarget(initial, [takenCritical])).toBeNull();
+  });
+
+  it("does not shadow a critical already covered by a dispatch mission", () => {
+    const initial = createInitialPatrolDroneState(patrolPath);
+
+    const coveredCritical: Asset = testAsset({
+      id: "critical-covered",
+      lat: initial.asset.lat + 0.001,
+      lon: initial.asset.lon + 0.001,
+      alt: 1000,
+      heading: 90,
+      speed: 200,
+      zone: { threat: "critical", zoneTteSeconds: 0, nearestBoundaryM: 0 },
+    });
+
+    setDispatchMissions(
+      new Map([
+        [
+          "critical-covered",
+          {
+            targetId: "critical-covered",
+            droneId: "dispatch-drone-1",
+            assignmentSource: "spawn",
+            homeAirportIdent: "CYOW",
+            assignedAtMs: 0,
+          },
+        ],
+      ]),
+    );
+
+    expect(resolveShadowTarget(initial, [coveredCritical])).toBeNull();
   });
 
   it("intercepts at max speed when the target is slow and far away", () => {

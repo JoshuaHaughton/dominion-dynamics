@@ -10,6 +10,7 @@ import {
 } from "./constants.js";
 import { isClosedPatrolPath } from "./pathGeometry.js";
 import { projectOntoPatrolPath } from "./pathProjection.js";
+import { getDispatchMission } from "../dispatch/missionStore.js";
 import {
   deleteShadowAssignment,
   getShadowDroneId,
@@ -329,6 +330,21 @@ function advanceShadowingTarget(
   };
 }
 
+function isShadowableCritical(
+  asset: Asset,
+  patrolDroneId: string,
+): boolean {
+  const mission = getDispatchMission(asset.id);
+
+  if (mission !== undefined && mission.droneId !== patrolDroneId) {
+    return false;
+  }
+
+  const owner = getShadowDroneId(asset.id);
+
+  return owner === undefined || owner === patrolDroneId;
+}
+
 /**
  * Pick a shadow target: keep the current assignment when still critical,
  * otherwise claim the nearest unassigned critical asset.
@@ -337,15 +353,17 @@ export function resolveShadowTarget(
   state: PatrolDroneState,
   liveAssets: readonly Asset[],
 ): Asset | null {
+  const patrolDroneId = state.asset.id;
+
   if (state.shadowTargetId) {
     const current = liveAssets.find((asset) => asset.id === state.shadowTargetId);
 
-    if (current && isCriticalTrafficAsset(current)) {
-      const owner = getShadowDroneId(state.shadowTargetId);
-
-      if (owner === undefined || owner === state.asset.id) {
-        return current;
-      }
+    if (
+      current &&
+      isCriticalTrafficAsset(current) &&
+      isShadowableCritical(current, patrolDroneId)
+    ) {
+      return current;
     }
   }
 
@@ -357,9 +375,7 @@ export function resolveShadowTarget(
       continue;
     }
 
-    const owner = getShadowDroneId(asset.id);
-
-    if (owner !== undefined && owner !== state.asset.id) {
+    if (!isShadowableCritical(asset, patrolDroneId)) {
       continue;
     }
 

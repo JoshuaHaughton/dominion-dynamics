@@ -37,3 +37,8 @@ export function deleteDispatchMission(targetId: string): void {
 export function clearDispatchMissions(): void {
   missions.clear();
 }
+
+/** Critical target ids with an active dispatch mission this tick. */
+export function getDispatchMissionTargetIds(): ReadonlySet<string> {
+  return new Set(missions.keys());
+}
