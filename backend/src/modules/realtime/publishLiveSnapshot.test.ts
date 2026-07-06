@@ -29,14 +29,14 @@ describe("publishLiveSnapshot", () => {
       },
     });
     const dispatch = testAsset({
-      id: "dispatch-drone-1",
+      id: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
       lat: 45.3225,
       lon: -75.6692,
       alt: 500,
       heading: 45,
       speed: 120,
       role: "drone",
-      callsign: "DISP1",
+      callsign: "SCRAM1",
       zone: null,
       drone: {
         origin: "dispatch",
@@ -57,7 +57,7 @@ describe("publishLiveSnapshot", () => {
     expect(snapshot.map((asset) => asset.id)).toEqual([
       "syn-1",
       PATROL_ASSET_ID,
-      "dispatch-drone-1",
+      "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
     ]);
     expect(getAssetList()).toHaveLength(3);
   });

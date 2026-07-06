@@ -10,10 +10,12 @@ import { tickDispatchDrones } from "./dispatchTick.js";
 import { createSpawnedDispatchDrone } from "./createDispatchDrone.js";
 import type { DispatchMission } from "./types.js";
 
+const DISPATCH_DRONE_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+
 describe("tickDispatchDrones", () => {
   const mission: DispatchMission = {
     targetId: "critical-1",
-    droneId: "dispatch-drone-1",
+    droneId: DISPATCH_DRONE_ID,
     assignmentSource: "spawn",
     homeAirportIdent: "CYOW",
     assignedAtMs: Date.now(),
@@ -53,7 +55,8 @@ describe("tickDispatchDrones", () => {
     expect(drones).toHaveLength(1);
     expect(drones[0]?.drone?.origin).toBe("dispatch");
     expect(drones[0]?.drone?.dispatch?.targetId).toBe("critical-1");
-    expect(getDispatchDroneState("dispatch-drone-1")).toBeDefined();
+    expect(getDispatchDroneState(DISPATCH_DRONE_ID)).toBeDefined();
+    expect(drones[0]?.callsign).toBe("SCRAM1");
   });
 
   it("removes despawned dispatch drones from the store", () => {
@@ -84,6 +87,6 @@ describe("tickDispatchDrones", () => {
     });
 
     expect(drones).toHaveLength(0);
-    expect(getDispatchDroneState("dispatch-drone-1")).toBeUndefined();
+    expect(getDispatchDroneState(DISPATCH_DRONE_ID)).toBeUndefined();
   });
 });

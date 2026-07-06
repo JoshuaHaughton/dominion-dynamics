@@ -1,4 +1,3 @@
-import { DISPATCH_DRONE_ID_PREFIX } from "@dominion-dynamics/shared";
 import type { Asset } from "@dominion-dynamics/shared";
 import {
   filterAssignableDrones,
@@ -17,12 +16,7 @@ export type SyncDispatchMissionsParams = {
   drones: readonly DispatchDroneCandidate[];
   missions: ReadonlyMap<string, DispatchMission>;
   nowMs: number;
-  nextDispatchDroneIndex: number;
 };
-
-function buildNextDispatchDroneId(index: number): string {
-  return `${DISPATCH_DRONE_ID_PREFIX}-${index}`;
-}
 
 function missionFromDecision(
   targetId: string,
@@ -66,7 +60,6 @@ export function syncDispatchMissions({
   drones,
   missions,
   nowMs,
-  nextDispatchDroneIndex,
 }: SyncDispatchMissionsParams): DispatchSyncResult {
   const criticalTargetIds = new Set(criticalTargets.map((target) => target.id));
   const nextMissions = new Map<string, DispatchMission>();
@@ -76,7 +69,6 @@ export function syncDispatchMissions({
     decision: DispatchAssignmentDecision;
   }> = [];
 
-  let dispatchDroneIndex = nextDispatchDroneIndex;
   const reservedDroneIds = new Set<string>();
 
   for (const [targetId, mission] of missions) {
@@ -104,12 +96,7 @@ export function syncDispatchMissions({
       target,
       drones,
       reservedDroneIds,
-      nextDispatchDroneId: buildNextDispatchDroneId(dispatchDroneIndex),
     });
-
-    if (decision.type === "spawn") {
-      dispatchDroneIndex += 1;
-    }
 
     const mission = missionFromDecision(target.id, decision, nowMs);
 
@@ -122,6 +109,5 @@ export function syncDispatchMissions({
     missions: nextMissions,
     releasedTargetIds,
     assignments,
-    nextDispatchDroneIndex: dispatchDroneIndex,
   };
 }

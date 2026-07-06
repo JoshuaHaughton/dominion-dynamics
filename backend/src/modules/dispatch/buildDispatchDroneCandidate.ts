@@ -1,4 +1,4 @@
-import { DISPATCH_DRONE_ID_PREFIX, PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import type { Asset } from "@dominion-dynamics/shared";
 import { getPatrolDroneState } from "../patrol/droneStore.js";
 import {
@@ -7,10 +7,6 @@ import {
   getDispatchDroneStates,
 } from "./dispatchDroneStore.js";
 import type { DispatchDroneCandidate, DispatchDroneState } from "./types.js";
-
-function isDispatchBornDroneId(droneId: string): boolean {
-  return droneId.startsWith(`${DISPATCH_DRONE_ID_PREFIX}-`);
-}
 
 function patrolCandidateFromState(
   state: DispatchDroneState,
@@ -80,7 +76,7 @@ export function buildDispatchDroneCandidates(
 
 /** Whether a dispatch-born drone slot still exists in sim. */
 export function dispatchDroneExists(droneId: string): boolean {
-  return isDispatchBornDroneId(droneId) && getDispatchDroneState(droneId) !== undefined;
+  return getDispatchDroneState(droneId)?.origin === "dispatch";
 }
 
 /** Resolve the live asset backing a dispatch assignment decision. */

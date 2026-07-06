@@ -11,10 +11,12 @@ import type { DispatchMission } from "./types.js";
 import { getAirportByIdent } from "../airport/registry.js";
 import { trailPointBehindTarget } from "../patrol/shadowChase.js";
 
+const DISPATCH_DRONE_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+
 describe("advanceDispatchDrone", () => {
   const mission: DispatchMission = {
     targetId: "critical-1",
-    droneId: "dispatch-drone-1",
+    droneId: DISPATCH_DRONE_ID,
     assignmentSource: "spawn",
     homeAirportIdent: "CYOW",
     assignedAtMs: Date.now(),
@@ -178,7 +180,7 @@ describe("advanceDispatchDrone", () => {
     });
     const trail = trailPointBehindTarget(target);
     const drone: Asset = {
-      id: "dispatch-drone-1",
+      id: DISPATCH_DRONE_ID,
       lat: trail.lat,
       lon: trail.lon,
       alt: 500,
@@ -207,7 +209,7 @@ describe("advanceDispatchDrone", () => {
     });
     const drone: Asset = {
       ...target,
-      id: "dispatch-drone-1",
+      id: DISPATCH_DRONE_ID,
       role: "drone",
       zone: null,
       lat: target.lat + 0.001,

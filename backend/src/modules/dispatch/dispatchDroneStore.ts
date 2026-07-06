@@ -1,6 +1,14 @@
 import type { DispatchDroneState } from "./types.js";
 
 const dispatchDrones = new Map<string, DispatchDroneState>();
+let nextScramCallsignNumber = 1;
+
+/** Human-readable label for spawned dispatch drones (`SCRAM1`, `SCRAM2`, …). */
+export function issueScramCallsign(): string {
+  const callsign = `SCRAM${nextScramCallsignNumber}`;
+  nextScramCallsignNumber += 1;
+  return callsign;
+}
 
 export function getDispatchDroneState(
   droneId: string,
@@ -25,6 +33,7 @@ export function deleteDispatchDroneState(droneId: string): void {
 
 export function clearDispatchDroneStates(): void {
   dispatchDrones.clear();
+  nextScramCallsignNumber = 1;
 }
 
 /** True when the patrol asset is owned by the dispatch movement layer this tick. */

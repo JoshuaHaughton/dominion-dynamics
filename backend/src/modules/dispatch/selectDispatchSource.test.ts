@@ -3,6 +3,11 @@ import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import { selectDispatchSource } from "./selectDispatchSource.js";
 import type { DispatchDroneCandidate } from "./types.js";
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const IDLE_DISPATCH_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+
 describe("selectDispatchSource", () => {
   const target = { id: "critical-1", lat: 45.3225, lon: -75.6692 };
 
@@ -11,14 +16,16 @@ describe("selectDispatchSource", () => {
       target,
       drones: [],
       reservedDroneIds: new Set(),
-      nextDispatchDroneId: "dispatch-drone-1",
     });
 
     expect(decision).toMatchObject({
       type: "spawn",
-      droneId: "dispatch-drone-1",
       homeAirportIdent: "CYOW",
     });
+
+    if (decision.type === "spawn") {
+      expect(decision.droneId).toMatch(UUID_PATTERN);
+    }
   });
 
   it("assigns idle patrol when it is closer than the nearest airport", () => {
@@ -38,7 +45,6 @@ describe("selectDispatchSource", () => {
       target,
       drones,
       reservedDroneIds: new Set(),
-      nextDispatchDroneId: "dispatch-drone-1",
     });
 
     expect(decision).toEqual({ type: "patrol", droneId: PATROL_ASSET_ID });
@@ -61,7 +67,6 @@ describe("selectDispatchSource", () => {
       target,
       drones,
       reservedDroneIds: new Set(),
-      nextDispatchDroneId: "dispatch-drone-1",
     });
 
     expect(decision.type).toBe("spawn");
@@ -70,7 +75,7 @@ describe("selectDispatchSource", () => {
   it("reuses the closest available non-route drone before spawning", () => {
     const drones: DispatchDroneCandidate[] = [
       {
-        droneId: "dispatch-drone-1",
+        droneId: IDLE_DISPATCH_ID,
         lat: 45.33,
         lon: -75.67,
         origin: "dispatch",
@@ -84,12 +89,11 @@ describe("selectDispatchSource", () => {
       target,
       drones,
       reservedDroneIds: new Set(),
-      nextDispatchDroneId: "dispatch-drone-2",
     });
 
     expect(decision).toEqual({
       type: "reuse",
-      droneId: "dispatch-drone-1",
+      droneId: IDLE_DISPATCH_ID,
       homeAirportIdent: "CYOW",
     });
   });
@@ -111,7 +115,6 @@ describe("selectDispatchSource", () => {
       target,
       drones,
       reservedDroneIds: new Set(),
-      nextDispatchDroneId: "dispatch-drone-1",
     });
 
     expect(decision.type).toBe("spawn");
@@ -120,7 +123,7 @@ describe("selectDispatchSource", () => {
   it("skips drones already reserved for another assignment", () => {
     const drones: DispatchDroneCandidate[] = [
       {
-        droneId: "dispatch-drone-1",
+        droneId: IDLE_DISPATCH_ID,
         lat: 45.33,
         lon: -75.67,
         origin: "dispatch",
@@ -132,14 +135,15 @@ describe("selectDispatchSource", () => {
     const decision = selectDispatchSource({
       target,
       drones,
-      reservedDroneIds: new Set(["dispatch-drone-1"]),
-      nextDispatchDroneId: "dispatch-drone-2",
+      reservedDroneIds: new Set([IDLE_DISPATCH_ID]),
     });
 
-    expect(decision).toMatchObject({
-      type: "spawn",
-      droneId: "dispatch-drone-2",
-    });
+    expect(decision.type).toBe("spawn");
+
+    if (decision.type === "spawn") {
+      expect(decision.droneId).toMatch(UUID_PATTERN);
+      expect(decision.droneId).not.toBe(IDLE_DISPATCH_ID);
+    }
   });
 
   it("reuses patrol on rejoin before comparing idle patrol to airport", () => {
@@ -159,7 +163,6 @@ describe("selectDispatchSource", () => {
       target,
       drones,
       reservedDroneIds: new Set(),
-      nextDispatchDroneId: "dispatch-drone-1",
     });
 
     expect(decision).toEqual({

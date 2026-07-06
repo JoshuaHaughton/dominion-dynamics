@@ -4,6 +4,7 @@ import { getAirportByIdent } from "../airport/registry.js";
 import {
   clearDispatchDroneStates,
   getDispatchDroneState,
+  getDispatchDroneStates,
 } from "./dispatchDroneStore.js";
 import {
   clearDispatchMissions,
@@ -11,6 +12,9 @@ import {
   listDispatchMissions,
 } from "./missionStore.js";
 import { syncDispatchAllocator } from "./syncDispatchAllocator.js";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 describe("syncDispatchAllocator", () => {
   const cyow = getAirportByIdent("CYOW")!;
@@ -33,16 +37,22 @@ describe("syncDispatchAllocator", () => {
 
     syncDispatchAllocator([critical], 1_700_000_000_000);
 
+    const mission = getDispatchMission("critical-1");
+
     expect(listDispatchMissions()).toHaveLength(1);
-    expect(getDispatchMission("critical-1")).toMatchObject({
-      droneId: "dispatch-drone-1",
+    expect(mission).toMatchObject({
       assignmentSource: "spawn",
       homeAirportIdent: "CYOW",
     });
-    expect(getDispatchDroneState("dispatch-drone-1")).toMatchObject({
+    expect(mission?.droneId).toMatch(UUID_PATTERN);
+
+    const state = getDispatchDroneState(mission!.droneId);
+
+    expect(state).toMatchObject({
       phase: "enroute",
       targetId: "critical-1",
     });
+    expect(state?.asset.callsign).toBe("SCRAM1");
   });
 
   it("keeps sticky missions while the target stays critical", () => {
@@ -57,12 +67,12 @@ describe("syncDispatchAllocator", () => {
     });
 
     syncDispatchAllocator([critical], 1_700_000_000_000);
+    const firstDroneId = getDispatchMission("critical-1")!.droneId;
+
     syncDispatchAllocator([critical], 1_700_000_000_100);
 
-    expect(listDispatchMissions()).toHaveLength(1);
-    expect(getDispatchDroneState("dispatch-drone-1")?.targetId).toBe(
-      "critical-1",
-    );
+    expect(getDispatchMission("critical-1")?.droneId).toBe(firstDroneId);
+    expect(getDispatchDroneState(firstDroneId)?.targetId).toBe("critical-1");
   });
 
   it("releases missions when a target is no longer critical", () => {
@@ -81,10 +91,12 @@ describe("syncDispatchAllocator", () => {
     });
 
     syncDispatchAllocator([critical], 1_700_000_000_000);
+    const droneId = getDispatchMission("critical-1")!.droneId;
+
     syncDispatchAllocator([normal], 1_700_000_000_100);
 
     expect(listDispatchMissions()).toHaveLength(0);
-    expect(getDispatchDroneState("dispatch-drone-1")).toBeDefined();
+    expect(getDispatchDroneState(droneId)).toBeDefined();
   });
 
   it("does nothing when no traffic is critical", () => {
@@ -101,6 +113,6 @@ describe("syncDispatchAllocator", () => {
     syncDispatchAllocator([normal], 1_700_000_000_000);
 
     expect(listDispatchMissions()).toHaveLength(0);
-    expect(getDispatchDroneState("dispatch-drone-1")).toBeUndefined();
+    expect(getDispatchDroneStates().size).toBe(0);
   });
 });

@@ -9,11 +9,10 @@ import { applyDispatchAssignment } from "./createDispatchDrone.js";
 import { setDispatchDroneState } from "./dispatchDroneStore.js";
 import {
   getDispatchMissionMap,
-  getNextDispatchDroneIndex,
   setDispatchMissions,
-  setNextDispatchDroneIndex,
 } from "./missionStore.js";
 
+/** Traffic targets that need a dispatch assignment this tick. */
 function extractCriticalTargets(
   liveAssets: readonly Asset[],
 ): Array<Pick<Asset, "id" | "lat" | "lon">> {
@@ -28,6 +27,7 @@ function extractCriticalTargets(
     }));
 }
 
+/** Invert mission store for candidate busy/available lookup by drone id. */
 function missionByDroneIdFromStore(): Map<string, string> {
   const missionByDroneId = new Map<string, string>();
 
@@ -55,12 +55,11 @@ export function syncDispatchAllocator(
     drones: candidates,
     missions: getDispatchMissionMap(),
     nowMs,
-    nextDispatchDroneIndex: getNextDispatchDroneIndex(),
   });
 
   setDispatchMissions(result.missions);
-  setNextDispatchDroneIndex(result.nextDispatchDroneIndex);
 
+  // Apply only brand-new assignments; sticky missions keep their existing sim state.
   for (const { targetId, decision } of result.assignments) {
     const mission = result.missions.get(targetId);
 

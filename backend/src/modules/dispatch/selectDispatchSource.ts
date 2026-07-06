@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import { findNearestAirport } from "../airport/registry.js";
 import { distanceM } from "../../lib/geo/distanceAndHeading.js";
@@ -10,7 +11,6 @@ type SelectDispatchSourceParams = {
   target: { id: string; lat: number; lon: number };
   drones: readonly DispatchDroneCandidate[];
   reservedDroneIds: ReadonlySet<string>;
-  nextDispatchDroneId: string;
 };
 
 function distanceToTarget(
@@ -94,7 +94,6 @@ export function selectDispatchSource({
   target,
   drones,
   reservedDroneIds,
-  nextDispatchDroneId,
 }: SelectDispatchSourceParams): DispatchAssignmentDecision {
   const assignable = filterAssignableDrones(drones, reservedDroneIds);
 
@@ -133,7 +132,7 @@ export function selectDispatchSource({
 
   return {
     type: "spawn",
-    droneId: nextDispatchDroneId,
+    droneId: randomUUID(),
     homeAirportIdent: nearestAirport.ident,
     spawnLat: nearestAirport.lat,
     spawnLon: nearestAirport.lon,

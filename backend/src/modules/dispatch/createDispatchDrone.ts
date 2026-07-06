@@ -5,18 +5,16 @@ import {
   PATROL_DRONE_SPEED_MPS,
   PATROL_MAX_INTERCEPT_MPS,
 } from "../patrol/constants.js";
+import { issueScramCallsign } from "./dispatchDroneStore.js";
 import type {
   DispatchAssignmentDecision,
   DispatchDroneState,
   DispatchMission,
 } from "./types.js";
 
-function dispatchCallsign(droneId: string): string {
-  return droneId.replace("dispatch-drone-", "SCRAM");
-}
-
 function baseDispatchAsset(
   droneId: string,
+  callsign: string,
   lat: number,
   lon: number,
   heading: number,
@@ -30,7 +28,7 @@ function baseDispatchAsset(
     speed: PATROL_MAX_INTERCEPT_MPS,
     role: "drone",
     category: 14,
-    callsign: dispatchCallsign(droneId),
+    callsign,
     originCountry: null,
     onGround: false,
     zone: null,
@@ -53,6 +51,7 @@ export function createSpawnedDispatchDrone(
     origin: "dispatch",
     asset: baseDispatchAsset(
       mission.droneId,
+      issueScramCallsign(),
       spawnLat,
       spawnLon,
       headingToward(spawnLon, spawnLat, targetLon, targetLat),
@@ -123,6 +122,7 @@ export function applyDispatchAssignment(
 export function createIdleDispatchDroneAtBase(
   droneId: string,
   homeAirportIdent: string,
+  callsign: string,
   lat: number,
   lon: number,
 ): DispatchDroneState {
@@ -133,7 +133,7 @@ export function createIdleDispatchDroneAtBase(
     homeAirportIdent,
     origin: "dispatch",
     asset: {
-      ...baseDispatchAsset(droneId, lat, lon, 0),
+      ...baseDispatchAsset(droneId, callsign, lat, lon, 0),
       speed: PATROL_DRONE_SPEED_MPS,
     },
   };

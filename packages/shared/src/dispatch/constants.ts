@@ -9,5 +9,5 @@ export type DispatchPhase =
   | "rtb"
   | "at_base";
 
-/** Prefix for sim ids of airport-born dispatch drones (`dispatch-drone-1`, …). */
+/** Legacy prefix; dispatch drone ids are now opaque UUIDs with monotonic SCRAM callsigns. */
 export const DISPATCH_DRONE_ID_PREFIX = "dispatch-drone";

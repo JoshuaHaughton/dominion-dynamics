@@ -64,7 +64,6 @@ export type DispatchSyncResult = {
     targetId: string;
     decision: DispatchAssignmentDecision;
   }>;
-  nextDispatchDroneIndex: number;
 };
 
 /** Runtime sim state for a drone executing a dispatch mission. */
