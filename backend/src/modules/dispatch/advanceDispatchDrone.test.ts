@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import destination from "@turf/destination";
 import { point } from "@turf/helpers";
 import type { Asset } from "@dominion-dynamics/shared";
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import { distanceM } from "../../lib/geo/distanceAndHeading.js";
 import { testAsset } from "../../testFixtures/asset.js";
 import {
@@ -233,7 +234,7 @@ describe("advanceDispatchDrone", () => {
   it("hands patrol-born assignments back to the patrol layer on rtb", () => {
     const patrolMission: DispatchMission = {
       ...mission,
-      droneId: "patrol-drone",
+      droneId: PATROL_ASSET_ID,
       assignmentSource: "patrol",
       homeAirportIdent: null,
     };

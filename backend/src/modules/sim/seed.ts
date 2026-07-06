@@ -10,14 +10,15 @@ import {
   SYNTHETIC_ALT_MAX_M,
   SYNTHETIC_ALT_MIN_M,
 } from "./config.js";
+import { issueTrackCallsign } from "./assetCallsigns.js";
 import { sampleSyntheticMotion } from "./syntheticCategorySpawn.js";
 import { turfBearingToHeading } from "../../lib/geo/distanceAndHeading.js";
 import { DEFAULT_TRAFFIC_ZONE } from "../threat/constants.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 
-/** Unique id for a sim-generated track at seed or boundary respawn. */
-function createSyntheticId(): string {
-  return `syn-${randomUUID()}`;
+/** Opaque id for a sim-generated track at seed or boundary respawn. */
+function createTrafficId(): string {
+  return randomUUID();
 }
 
 /**
@@ -77,7 +78,7 @@ function createSyntheticAsset(): Asset {
   const { category, speed } = sampleSyntheticMotion();
 
   return {
-    id: createSyntheticId(),
+    id: createTrafficId(),
     lat: randomInRange(seedRegion.minLat, seedRegion.maxLat),
     lon: randomInRange(seedRegion.minLon, seedRegion.maxLon),
     alt: randomInRange(SYNTHETIC_ALT_MIN_M, SYNTHETIC_ALT_MAX_M),
@@ -85,7 +86,7 @@ function createSyntheticAsset(): Asset {
     speed,
     category,
     role: "traffic",
-    callsign: null,
+    callsign: issueTrackCallsign(),
     originCountry: null,
     onGround: false,
     zone: DEFAULT_TRAFFIC_ZONE,
@@ -119,14 +120,14 @@ export function respawnAtBoundary(asset: Asset, region: SimBounds): Asset {
 
   return {
     ...asset,
-    id: createSyntheticId(),
+    id: createTrafficId(),
     lat,
     lon,
     heading,
     speed,
     category,
     role: "traffic",
-    callsign: null,
+    callsign: issueTrackCallsign(),
     originCountry: null,
     onGround: false,
   };

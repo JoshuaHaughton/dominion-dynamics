@@ -1,5 +1,5 @@
 import type { PathGeoJson } from "@dominion-dynamics/shared";
-import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import { PATROL_ASSET_ID, PATROL_CALLSIGN } from "@dominion-dynamics/shared";
 import { headingToward } from "../../lib/geo/distanceAndHeading.js";
 import {
   PATROL_DRONE_ALT_M,
@@ -32,7 +32,7 @@ export function createInitialPatrolDroneState(
       speed: PATROL_DRONE_SPEED_MPS,
       role: "drone",
       category: 14,
-      callsign: "PATROL1",
+      callsign: PATROL_CALLSIGN,
       originCountry: null,
       onGround: false,
       zone: null,

@@ -48,7 +48,9 @@ describe("advanceAssets", () => {
     });
 
     expect(next.id).not.toBe(exitingAsset.id);
-    expect(next.id).toMatch(/^syn-/);
+    expect(next.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
     expect(isInsideSeedRegion(next, ottawaRegion)).toBe(true);
   });
 });

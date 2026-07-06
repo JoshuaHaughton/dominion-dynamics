@@ -1,8 +1,12 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_TRAFFIC_ZONE } from "../threat/constants.js";
+import { resetAssetCallsignCounters } from "./assetCallsigns.js";
 import { isInsideSeedRegion, respawnAtBoundary } from "./seed.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
 import { SPEED_RANGE_BY_CATEGORY } from "./syntheticCategorySpawn.js";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function mockRespawnRandom(
   edgeRandom: number,
@@ -72,6 +76,10 @@ describe("respawnAtBoundary", () => {
     zone: DEFAULT_TRAFFIC_ZONE,
   };
 
+  beforeEach(() => {
+    resetAssetCallsignCounters();
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -109,7 +117,7 @@ describe("respawnAtBoundary", () => {
       const respawned = respawnAtBoundary(sampleAsset, ottawaRegion);
 
       expect(respawned.id).not.toBe(sampleAsset.id);
-      expect(respawned.id).toMatch(/^syn-/);
+      expect(respawned.id).toMatch(UUID_PATTERN);
       expect(respawned.lat).toBeCloseTo(expectedLat, 5);
       expect(respawned.lon).toBeCloseTo(expectedLon, 5);
       expect(respawned.heading).toBeGreaterThanOrEqual(0);
@@ -125,7 +133,7 @@ describe("respawnAtBoundary", () => {
     expect(respawned.alt).toBe(sampleAsset.alt);
     expect(respawned.category).toBe(14);
     expect(respawned.speed).toBe(SPEED_RANGE_BY_CATEGORY[14].minMps);
-    expect(respawned.callsign).toBeNull();
+    expect(respawned.callsign).toBe("Track-1");
     expect(respawned.originCountry).toBeNull();
     expect(respawned.onGround).toBe(false);
     expect(respawned.role).toBe("traffic");
@@ -148,7 +156,7 @@ describe("respawnAtBoundary", () => {
     );
 
     expect(respawned.role).toBe("traffic");
-    expect(respawned.callsign).toBeNull();
+    expect(respawned.callsign).toBe("Track-1");
     expect(respawned.originCountry).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import * as schema from "../db/schema.js";
 import {
   getPatrolPath,
@@ -69,7 +70,7 @@ describe("pathRepository", () => {
 
     expect(saved.kind).toBe("patrol");
     expect(saved.geojson).toEqual(validLine);
-    expect(saved.assignedDroneId).toBe("patrol-drone");
+    expect(saved.assignedDroneId).toBe(PATROL_ASSET_ID);
     expect(getPatrolPath(database)?.geojson).toEqual(validLine);
     expect(getPathById(saved.id, database)).toEqual(saved);
     expect(listPaths(database, "patrol")).toEqual([saved]);
