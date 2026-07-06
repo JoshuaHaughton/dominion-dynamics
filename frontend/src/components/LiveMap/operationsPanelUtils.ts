@@ -110,6 +110,7 @@ export type ZoneRow = {
   label: string;
   statusLabel: string;
   geojson: ZoneGeoJson;
+  zoneId: number | null;
 };
 
 export function buildZoneRows(zones: readonly ZoneView[]): ZoneRow[] {
@@ -120,6 +121,7 @@ export function buildZoneRows(zones: readonly ZoneView[]): ZoneRow[] {
         label: zone.name,
         statusLabel: "Saving…",
         geojson: zone.geojson,
+        zoneId: null,
       };
     }
 
@@ -128,6 +130,7 @@ export function buildZoneRows(zones: readonly ZoneView[]): ZoneRow[] {
       label: zone.name,
       statusLabel: "Active",
       geojson: zone.geojson,
+      zoneId: zone.id,
     };
   });
 }

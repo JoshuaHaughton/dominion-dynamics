@@ -183,3 +183,31 @@
 .threatNormal {
   color: #94a3b8;
 }
+
+.zoneRow {
+  display: flex;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.zoneRow .rowButton {
+  flex: 1;
+  min-width: 0;
+}
+
+.deleteButton {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #7f1d1d;
+  border-radius: 0.375rem;
+  background: #450a0a;
+  color: #fecaca;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  background: #7f1d1d;
+}

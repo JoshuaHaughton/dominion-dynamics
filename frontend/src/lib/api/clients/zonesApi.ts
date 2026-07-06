@@ -32,3 +32,14 @@ export async function createZone(input: {
 
   return parseAndValidate(ZoneSchema, await response.json(), "zone response");
 }
+
+/** Delete a persisted restricted zone. */
+export async function deleteZone(zoneId: number): Promise<void> {
+  const response = await fetch(`${API_ORIGIN}/api/zones/${zoneId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(await readApiError(response, "Failed to delete zone"));
+  }
+}

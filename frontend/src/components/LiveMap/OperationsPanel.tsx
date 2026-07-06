@@ -24,6 +24,7 @@ type OperationsPanelProps = {
   onStatusFilterChange: (filter: OperationsStatusFilter) => void;
   onSelectAsset: (assetId: string) => void;
   onSelectZone: (geojson: ZoneGeoJson) => void;
+  onDeleteZone: (zoneId: number) => void;
 };
 
 const ENTITY_TABS: readonly {
@@ -73,6 +74,7 @@ export function OperationsPanel({
   onStatusFilterChange,
   onSelectAsset,
   onSelectZone,
+  onDeleteZone,
 }: OperationsPanelProps) {
   const rows = useMemo(
       () => buildOperationsRows(assets, entityTab, statusFilter),
@@ -160,7 +162,7 @@ export function OperationsPanel({
             ) : (
               <ul className={styles.list}>
                 {zoneRows.map((entry) => (
-                  <li key={entry.key}>
+                  <li key={entry.key} className={styles.zoneRow}>
                     <button
                       type="button"
                       className={styles.rowButton}
@@ -179,6 +181,18 @@ export function OperationsPanel({
                         </div>
                       </dl>
                     </button>
+                    {entry.zoneId !== null ? (
+                      <button
+                        type="button"
+                        className={styles.deleteButton}
+                        aria-label={`Delete ${entry.label}`}
+                        onClick={() => {
+                          void onDeleteZone(entry.zoneId);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    ) : null}
                   </li>
                 ))}
               </ul>

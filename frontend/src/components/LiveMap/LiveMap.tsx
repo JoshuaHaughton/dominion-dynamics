@@ -25,6 +25,7 @@ type LiveMapProps = {
   trackDetail: AssetTrackDetail | null;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
   onPatrolPathDrawn: (geojson: PathGeoJson) => void;
+  onZoneDelete: (zoneId: number) => void;
   onZoneDrawError: (message: string) => void;
   onPatrolDrawError: (message: string) => void;
   zoneDrawError: string | null;
@@ -41,6 +42,7 @@ export function LiveMap({
   trackDetail,
   onZoneDrawn,
   onPatrolPathDrawn,
+  onZoneDelete,
   zoneDrawError,
   patrolDrawError,
   onZoneDrawError,
@@ -168,7 +170,7 @@ export function LiveMap({
               aria-pressed={isDrawingZone}
               onClick={beginZoneDraw}
             >
-              Draw zone
+              Draw restricted zone
             </button>
             <button
               type="button"
@@ -224,6 +226,7 @@ export function LiveMap({
         onStatusFilterChange={setStatusFilter}
         onSelectAsset={onAssetSelect}
         onSelectZone={handleSelectZone}
+        onDeleteZone={onZoneDelete}
       />
       {selectedAsset !== null && (
         <AssetInfoPanel
