@@ -1,18 +1,15 @@
 .panel {
+  composes: chromePanel from "../../styles/surface.module.css";
   position: absolute;
-  top: var(--map-chrome-inset, 0.75rem);
-  right: var(--map-chrome-inset, 0.75rem);
-  z-index: 2;
+  top: var(--map-chrome-inset);
+  right: var(--map-chrome-inset);
+  z-index: var(--z-chrome);
   display: flex;
   flex-direction: column;
-  width: var(--map-panel-width, min(20rem, calc(100% - 1.5rem)));
+  width: var(--map-panel-width);
   height: 18rem;
   overflow: hidden;
   padding: 0.65rem 0.75rem;
-  border: 1px solid #334155;
-  border-radius: 0.375rem;
-  background: rgb(15 23 42 / 0.94);
-  color: #f8fafc;
 }
 
 .header {
@@ -31,7 +28,7 @@
 
 .summary {
   margin: 0;
-  color: #94a3b8;
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   line-height: 1.35;
 }
@@ -42,26 +39,22 @@
 }
 
 .entityTab {
+  composes: btn from "../../styles/button.module.css";
+  composes: focusRing from "../../styles/button.module.css";
   flex: 1;
-  margin: 0;
   padding: 0.35rem 0.4rem;
-  border: 1px solid #334155;
-  border-radius: 0.375rem;
-  background: #0f172a;
-  color: #cbd5e1;
+  color: var(--color-text-subtle);
   font-size: 0.75rem;
   font-weight: 600;
-  cursor: pointer;
 }
 
 .entityTab:hover {
-  background: #1e293b;
+  background: var(--color-surface-muted);
 }
 
 .entityTabActive {
-  border-color: #60a5fa;
-  background: #172554;
-  color: #f8fafc;
+  composes: btnActive from "../../styles/button.module.css";
+  color: var(--color-text);
 }
 
 .statusChips {
@@ -71,26 +64,13 @@
 }
 
 .statusChip {
-  margin: 0;
-  padding: 0.2rem 0.45rem;
-  border: 1px solid #334155;
-  border-radius: 999px;
-  background: #0f172a;
-  color: #94a3b8;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.statusChip:hover {
-  background: #1e293b;
-  color: #e2e8f0;
+  composes: btnPill from "../../styles/button.module.css";
 }
 
 .statusChipActive {
-  border-color: #64748b;
-  background: #1e293b;
-  color: #f8fafc;
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
 }
 
 .body {
@@ -101,19 +81,19 @@
 
 .empty {
   margin: 0;
-  color: #94a3b8;
+  color: var(--color-text-muted);
   font-size: 0.8125rem;
 }
 
 .pinnedSection {
   margin-bottom: 0.5rem;
   padding-bottom: 0.45rem;
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .pinnedLabel {
   margin: 0 0 0.35rem;
-  color: #93c5fd;
+  color: var(--color-accent-label);
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -121,7 +101,7 @@
 }
 
 .pinnedRow {
-  border-color: #1d4ed8;
+  border-color: var(--color-accent-pin);
 }
 
 .list {
@@ -134,54 +114,38 @@
 }
 
 .rowButton {
+  composes: btn from "../../styles/button.module.css";
+  composes: focusRing from "../../styles/button.module.css";
   display: block;
   width: 100%;
-  margin: 0;
   padding: 0.45rem 0.5rem;
-  border: 1px solid #334155;
-  border-radius: 0.375rem;
-  background: #0f172a;
-  color: #f8fafc;
+  color: var(--color-text);
   text-align: left;
-  cursor: pointer;
 }
 
 .rowButton:hover {
-  background: #1e293b;
+  background: var(--color-surface-muted);
 }
 
 .rowButtonSelected {
-  border-color: #60a5fa;
-  background: #172554;
+  composes: btnActive from "../../styles/button.module.css";
 }
 
 .rowGrid {
-  display: grid;
-  grid-template-columns: 4.75rem 1fr;
-  gap: 0.2rem 0.45rem;
-  font-size: 0.8125rem;
-}
-
-.rowGrid dt {
-  margin: 0;
-  color: #94a3b8;
-}
-
-.rowGrid dd {
-  margin: 0;
-  color: #f8fafc;
+  composes: dlGrid from "../../styles/dlGrid.module.css";
+  --dl-label-width: 4.75rem;
 }
 
 .threatCritical {
-  color: #fca5a5;
+  color: var(--color-threat-critical-text);
 }
 
 .threatWarning {
-  color: #fcd34d;
+  color: var(--color-threat-warning-text);
 }
 
 .threatNormal {
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 .zoneRow {
@@ -196,18 +160,7 @@
 }
 
 .deleteButton {
+  composes: btnDanger from "../../styles/button.module.css";
   flex-shrink: 0;
-  margin: 0;
   padding: 0.45rem 0.55rem;
-  border: 1px solid #7f1d1d;
-  border-radius: 0.375rem;
-  background: #450a0a;
-  color: #fecaca;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.deleteButton:hover {
-  background: #7f1d1d;
 }

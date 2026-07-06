@@ -1,0 +1,77 @@
+.toolbarPanel {
+  composes: chromePanel from "../../../styles/surface.module.css";
+  position: absolute;
+  top: var(--map-chrome-inset);
+  left: var(--map-chrome-inset);
+  z-index: var(--z-chrome);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: fit-content;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.5rem;
+}
+
+.toolbarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.toolbarDivider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 2rem;
+  background: var(--color-border);
+}
+
+.focusGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.drawGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.drawButton {
+  composes: btnGhostLg from "../../../styles/button.module.css";
+}
+
+.drawButtonActive {
+  composes: btnActive from "../../../styles/button.module.css";
+}
+
+.focusButton {
+  composes: btnGhostLg from "../../../styles/button.module.css";
+  color: var(--color-text-subtle);
+}
+
+.focusButton:hover {
+  color: var(--color-text);
+}
+
+.drawHint {
+  max-width: 26rem;
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.error {
+  width: 100%;
+  max-width: 26rem;
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-glass);
+  color: var(--color-danger-text);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}

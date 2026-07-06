@@ -1,18 +1,14 @@
 import type { Zone } from "@dominion-dynamics/shared";
 import { ZoneListSchema, ZoneSchema } from "@dominion-dynamics/shared";
-import { API_ORIGIN } from "../../config/env.js";
-import { parseAndValidate } from "../parseAndValidate.js";
-import { readApiError } from "../readApiError.js";
+import { apiFetch, apiMutate, jsonBodyInit } from "../httpClient.js";
 
 /** Load all persisted restricted zones from the API. */
 export async function fetchZones(): Promise<Zone[]> {
-  const response = await fetch(`${API_ORIGIN}/api/zones`);
-
-  if (!response.ok) {
-    throw new Error(await readApiError(response, "Failed to load zones"));
-  }
-
-  return parseAndValidate(ZoneListSchema, await response.json(), "zones response");
+  return apiFetch("/api/zones", {
+    schema: ZoneListSchema,
+    label: "zones response",
+    errorFallback: "Failed to load zones",
+  });
 }
 
 /** Persist a newly drawn restricted zone polygon. */
@@ -20,26 +16,19 @@ export async function createZone(input: {
   name: string;
   geojson: Zone["geojson"];
 }): Promise<Zone> {
-  const response = await fetch(`${API_ORIGIN}/api/zones`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+  return apiFetch("/api/zones", {
+    schema: ZoneSchema,
+    label: "zone response",
+    errorFallback: "Failed to save zone",
+    init: jsonBodyInit("POST", input),
   });
-
-  if (!response.ok) {
-    throw new Error(await readApiError(response, "Failed to save zone"));
-  }
-
-  return parseAndValidate(ZoneSchema, await response.json(), "zone response");
 }
 
 /** Delete a persisted restricted zone. */
 export async function deleteZone(zoneId: number): Promise<void> {
-  const response = await fetch(`${API_ORIGIN}/api/zones/${zoneId}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) {
-    throw new Error(await readApiError(response, "Failed to delete zone"));
-  }
+  await apiMutate(
+    `/api/zones/${zoneId}`,
+    { method: "DELETE" },
+    "Failed to delete zone",
+  );
 }

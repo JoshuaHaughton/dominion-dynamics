@@ -1,5 +1,5 @@
 import type { StyleSpecification } from "maplibre-gl";
-import { CUSTOM_MAP_PREFIX } from "../constants/mapConstants.js";
+import { CUSTOM_MAP_PREFIX } from "../../../lib/constants/mapConstants.js";
 
 function isCustomMapId(id: string): boolean {
   return id.startsWith(CUSTOM_MAP_PREFIX);

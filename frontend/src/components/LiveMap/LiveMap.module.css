@@ -1,7 +1,4 @@
 .wrapper {
-  --map-chrome-inset: 0.75rem;
-  --map-panel-width: min(20rem, calc(100% - 1.5rem));
-
   position: relative;
   width: 100%;
   height: 100%;
@@ -12,7 +9,7 @@
   height: 100%;
 }
 
-/* O1: Terra Draw runs programmatically; hide its default top-left control chrome */
+/* Terra Draw runs programmatically; hide its default top-left control chrome */
 .map :global(.maplibregl-ctrl-top-left) {
   display: none;
 }
@@ -23,117 +20,4 @@
 
 .map :global(.maplibregl-ctrl-bottom-left .maplibregl-ctrl) {
   margin: 0;
-}
-
-.toolbarPanel {
-  position: absolute;
-  top: var(--map-chrome-inset);
-  left: var(--map-chrome-inset);
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  width: fit-content;
-  max-width: calc(100% - 1.5rem);
-  padding: 0.5rem;
-  border: 1px solid #334155;
-  border-radius: 0.375rem;
-  background: rgb(15 23 42 / 0.94);
-}
-
-.toolbarRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.toolbarDivider {
-  width: 1px;
-  align-self: stretch;
-  min-height: 2rem;
-  background: #334155;
-}
-
-.focusGroup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.drawGroup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.drawButton {
-  min-height: 2.75rem;
-  margin: 0;
-  padding: 0.45rem 0.75rem;
-  border: 1px solid #334155;
-  border-radius: 0.375rem;
-  background: #0f172a;
-  color: #f8fafc;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.drawButton:hover {
-  background: #1e293b;
-}
-
-.drawButton:focus-visible {
-  outline: 2px solid #60a5fa;
-  outline-offset: 2px;
-}
-
-.drawButtonActive {
-  border-color: #60a5fa;
-  background: #172554;
-}
-
-.focusButton {
-  min-height: 2.75rem;
-  margin: 0;
-  padding: 0.45rem 0.75rem;
-  border: 1px solid #334155;
-  border-radius: 0.375rem;
-  background: #0f172a;
-  color: #cbd5e1;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.focusButton:hover {
-  background: #1e293b;
-  color: #f8fafc;
-}
-
-.focusButton:focus-visible {
-  outline: 2px solid #60a5fa;
-  outline-offset: 2px;
-}
-
-.drawHint {
-  max-width: 26rem;
-  margin: 0;
-  color: #cbd5e1;
-  font-size: 0.8125rem;
-  line-height: 1.35;
-}
-
-.error {
-  width: 100%;
-  max-width: 26rem;
-  margin: 0;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #7f1d1d;
-  border-radius: 0.375rem;
-  background: rgb(15 23 42 / 0.94);
-  color: #fecaca;
-  font-size: 0.8125rem;
-  line-height: 1.35;
 }

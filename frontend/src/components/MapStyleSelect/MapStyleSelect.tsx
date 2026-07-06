@@ -1,5 +1,6 @@
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
-import { listMapStyleOptions } from "../../lib/constants/mapStyleUtils.js";
+import { isMapStyleId } from "../../lib/constants/mapStyles.js";
+import { listMapStyleOptions } from "./mapStylePrefs.js";
 import styles from "./MapStyleSelect.module.css";
 
 type MapStyleSelectProps = {
@@ -16,7 +17,9 @@ export function MapStyleSelect({ value, onChange }: MapStyleSelectProps) {
         className={styles.select}
         value={value}
         onChange={(event) => {
-          onChange(event.target.value as MapStyleId);
+          if (isMapStyleId(event.target.value)) {
+            onChange(event.target.value);
+          }
         }}
       >
         {listMapStyleOptions().map((option) => (

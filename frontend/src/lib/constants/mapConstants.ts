@@ -1,16 +1,10 @@
 import type { SimBounds } from "@dominion-dynamics/shared";
-
-/** Ottawa-Gatineau demo AOI. Matches backend sim seed region defaults. */
-export const DEMO_SEED_REGION: SimBounds = {
-  minLat: 45.2,
-  maxLat: 45.6,
-  minLon: -76.1,
-  maxLon: -75.3,
-};
+import { mapPalette } from "../../design/theme.js";
 
 /**
  * Tighter map focus for the Ottawa dispatch demo (CYOW + CYRO with padding).
- * Used for initial center/fitBounds only; traffic still seeds across {@link DEMO_SEED_REGION}.
+ * Used for initial center/fitBounds only; traffic seeds across the wider
+ * shared `DEFAULT_SIM_SEED_REGION`.
  */
 export const DEMO_MAP_FOCUS_REGION: SimBounds = {
   minLat: 45.28,
@@ -39,12 +33,12 @@ export const MAP_LAYERS = {
   patrolPathLine: `${CUSTOM_MAP_PREFIX}patrol-path-line`,
 } as const;
 
-export const ZONE_FILL_COLOR = "#ef4444";
+export const ZONE_FILL_COLOR = mapPalette.zone;
 export const ZONE_FILL_OPACITY = 0.18;
-export const ZONE_OUTLINE_COLOR = "#ef4444";
+export const ZONE_OUTLINE_COLOR = mapPalette.zone;
 export const ZONE_OUTLINE_WIDTH = 2;
 
-export const PATROL_PATH_LINE_COLOR = "#38bdf8";
+export const PATROL_PATH_LINE_COLOR = mapPalette.patrolPath;
 export const PATROL_PATH_LINE_WIDTH = 3;
 
 export const ASSET_CIRCLE_RADIUS = 6;
@@ -54,25 +48,12 @@ export const PATROL_ASSET_CIRCLE_RADIUS = 7;
 /** Map and panel accent colors for patrol drone tasking mode. */
 export const ASSET_PATROL_MODE_COLORS = {
   patrol: PATROL_PATH_LINE_COLOR,
-  shadow: "#8b5cf6",
-  rejoin: "#818cf8",
+  shadow: mapPalette.droneShadow,
+  rejoin: mapPalette.droneRejoin,
 } as const;
 
-/** Dispatch drone body and phase stroke accent colors (S10.7). */
-export const ASSET_DISPATCH_BODY_COLOR = "#6366f1";
-export const ASSET_DISPATCH_STROKE_COLORS = {
-  enroute: "#c7d2fe",
-  intercepting: "#fbbf24",
-  trailing: "#4f46e5",
-  rtb: "#94a3b8",
-  at_base: "#64748b",
-} as const;
-
-export const ASSET_PATROL_STROKE_COLORS = {
-  patrol: "#64748b",
-  shadow: ASSET_PATROL_MODE_COLORS.shadow,
-  rejoin: ASSET_PATROL_MODE_COLORS.rejoin,
-} as const;
+/** Dispatch drone marker body color. */
+export const ASSET_DISPATCH_BODY_COLOR = mapPalette.dispatchBody;
 
 /** Ghost de-emphasis for non-matching assets when a specific status chip is active. */
 export const ASSET_GHOST_OPACITY = 0.65;
@@ -106,23 +87,25 @@ export const MAP_CAMERA_ANIMATION_MS = 400;
 /** Initial zoom before the first asset snapshot arrives. */
 export const INITIAL_MAP_ZOOM = 9;
 
-export const ASSET_SOURCE_COLORS = {
-  opensky: "#38bdf8",
-  synthetic: "#f97316",
-  stroke: "#f8fafc",
-} as const;
+/** Ring color around traffic circles. */
+export const TRAFFIC_RING_COLOR = mapPalette.trafficRing;
 
 /** Threat level colors for traffic assets on the map. */
 export const ASSET_THREAT_COLORS = {
-  normal: "#64748b",
-  warning: "#f59e0b",
-  critical: "#ef4444",
+  normal: mapPalette.threatNormal,
+  warning: mapPalette.threatWarning,
+  critical: mapPalette.threatCritical,
 } as const;
 
-export const ASSET_HISTORY_LINE_COLOR = "#94a3b8";
+/** Outcome-based ring colors for drone markers (see `symbologyRingKey`). */
+export const DRONE_RING_COLORS = {
+  criticalTarget: mapPalette.threatCritical,
+  returning: mapPalette.droneReturningRing,
+  default: mapPalette.threatNormal,
+} as const;
+
 export const ASSET_HISTORY_LINE_WIDTH = 3;
 export const ASSET_HISTORY_LINE_OPACITY = 0.55;
 
-export const ASSET_PREDICTION_LINE_COLOR = "#e2e8f0";
 export const ASSET_PREDICTION_LINE_WIDTH = 2;
 export const ASSET_PREDICTION_DASHARRAY: [number, number] = [2, 2];

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { readApiError } from "./readApiError.js";
 
-function jsonResponse(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
 describe("readApiError", () => {
+  function jsonResponse(status: number, body: unknown): Response {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   it("returns a custom validation message on 400", async () => {
     const message = await readApiError(
       jsonResponse(400, {

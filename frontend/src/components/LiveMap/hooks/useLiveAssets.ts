@@ -1,22 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { getLiveWebSocketUrl } from "../config/env.js";
+import { getLiveWebSocketUrl } from "../../../lib/config/env.js";
+import { useFeedStatusStore } from "../../../lib/stores/feedStatusStore.js";
 import {
-  AssetSchema,
   DEFAULT_TRACK_HISTORY_CAPACITY,
   LiveServerMessageSchema,
   type Asset,
   type AssetHistoryPoint,
   type AssetTrackDetail,
 } from "@dominion-dynamics/shared";
-import { z } from "zod";
 
 const RECONNECT_MS = 2_000;
-
-const SnapshotAssetsSchema = z.object({
-  type: z.literal("snapshot"),
-  ts: z.number().finite(),
-  assets: z.array(AssetSchema),
-});
 
 type LiveAssetsState = {
   assets: Asset[];
@@ -50,9 +43,7 @@ function appendHistoryPoint(
 
 /** Close without racing a socket that is still connecting (Strict Mode safe). */
 function closeLiveSocket(socket: WebSocket | undefined): void {
-  if (!socket) {
-    return;
-  }
+  if (!socket) return;
 
   if (socket.readyState === WebSocket.CONNECTING) {
     socket.addEventListener(
@@ -76,26 +67,21 @@ function closeLiveSocket(socket: WebSocket | undefined): void {
 /** Subscribe to the backend live WebSocket stream and track overlay pushes. */
 export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [connected, setConnected] = useState(false);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [trackDetail, setTrackDetail] = useState<AssetTrackDetail | null>(null);
+  // Feed health lives in a store so the App header can read it without
+  // subscribing to the 1 Hz asset stream.
+  const connected = useFeedStatusStore((state) => state.connected);
+  const lastUpdatedAt = useFeedStatusStore((state) => state.lastUpdatedAt);
   const wsRef = useRef<WebSocket | undefined>(undefined);
   const selectedAssetIdRef = useRef(selectedAssetId);
   const historyCapRef = useRef(DEFAULT_TRACK_HISTORY_CAPACITY);
-  selectedAssetIdRef.current = selectedAssetId;
 
   useEffect(() => {
-    if (selectedAssetId === null) {
-      setTrackDetail(null);
-    }
-  }, [selectedAssetId]);
+    selectedAssetIdRef.current = selectedAssetId;
 
-  useEffect(() => {
     const ws = wsRef.current;
 
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     sendSelection(ws, selectedAssetId);
   }, [selectedAssetId]);
@@ -115,7 +101,7 @@ export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
           return;
         }
 
-        setConnected(true);
+        useFeedStatusStore.getState().setConnected(true);
         sendSelection(ws!, selectedAssetIdRef.current);
       };
 
@@ -123,15 +109,20 @@ export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
         if (cancelled) return;
 
         try {
-          const body = JSON.parse(String(event.data));
-          const base = SnapshotAssetsSchema.safeParse(body);
+          const body: unknown = JSON.parse(String(event.data));
+          const parsed = LiveServerMessageSchema.safeParse(body);
 
-          if (!base.success) {
+          if (!parsed.success) {
+            if (import.meta.env.DEV) {
+              console.warn("Dropped invalid live message", parsed.error);
+            }
             return;
           }
 
-          setAssets(base.data.assets);
-          setLastUpdatedAt(base.data.ts);
+          const message = parsed.data;
+
+          setAssets(message.assets);
+          useFeedStatusStore.getState().setLastUpdatedAt(message.ts);
 
           const selectedId = selectedAssetIdRef.current;
 
@@ -139,14 +130,6 @@ export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
             setTrackDetail(null);
             return;
           }
-
-          const parsed = LiveServerMessageSchema.safeParse(body);
-
-          if (!parsed.success) {
-            return;
-          }
-
-          const message = parsed.data;
 
           if (message.selectedTrack?.assetId === selectedId) {
             historyCapRef.current = Math.max(
@@ -184,7 +167,7 @@ export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
       ws.onclose = () => {
         if (cancelled) return;
 
-        setConnected(false);
+        useFeedStatusStore.getState().setConnected(false);
         reconnectTimer = setTimeout(connect, RECONNECT_MS);
       };
 
@@ -200,8 +183,16 @@ export function useLiveAssets(selectedAssetId: string | null): LiveAssetsState {
       clearTimeout(reconnectTimer);
       closeLiveSocket(ws);
       wsRef.current = undefined;
+      useFeedStatusStore.getState().reset();
     };
   }, []);
 
-  return { assets, connected, lastUpdatedAt, trackDetail };
+  // Derived, not cleared in an effect: a stale track never renders for a
+  // different (or deselected) asset while the server catches up.
+  const visibleTrackDetail =
+    trackDetail !== null && trackDetail.assetId === selectedAssetId
+      ? trackDetail
+      : null;
+
+  return { assets, connected, lastUpdatedAt, trackDetail: visibleTrackDetail };
 }

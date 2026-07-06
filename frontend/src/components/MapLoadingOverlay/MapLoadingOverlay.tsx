@@ -6,9 +6,7 @@ type MapLoadingOverlayProps = {
 
 /** Covers the map until live assets and persisted geometry have loaded. */
 export function MapLoadingOverlay({ visible }: MapLoadingOverlayProps) {
-  if (!visible) {
-    return null;
-  }
+  if (!visible) return null;
 
   return (
     <div className={styles.overlay} aria-live="polite" aria-busy="true">

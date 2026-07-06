@@ -1,11 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useFeedStatusStore } from "../../../lib/stores/feedStatusStore.js";
 import { useLiveAssets } from "./useLiveAssets.js";
 
 describe("useLiveAssets", () => {
   function installMockWebSocket() {
-    let socket: MockWebSocket | undefined;
-    let instances = 0;
+    const sockets: MockWebSocket[] = [];
 
     class MockWebSocket {
       static OPEN = 1;
@@ -18,8 +18,7 @@ describe("useLiveAssets", () => {
       send = vi.fn();
 
       constructor(_url: string) {
-        instances += 1;
-        socket = this;
+        sockets.push(this);
       }
     }
 
@@ -27,10 +26,10 @@ describe("useLiveAssets", () => {
 
     return {
       get socket() {
-        return socket;
+        return sockets.at(-1);
       },
       get instances() {
-        return instances;
+        return sockets.length;
       },
     };
   }
@@ -38,6 +37,8 @@ describe("useLiveAssets", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.useRealTimers();
+    // Module-level store would otherwise leak feed state between tests.
+    useFeedStatusStore.getState().reset();
   });
 
   it("stores assets from a valid snapshot message", async () => {
@@ -62,7 +63,11 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
+            zone: {
+              threat: "normal",
+              zoneTteSeconds: null,
+              nearestBoundaryM: null,
+            },
           },
         ],
       }),
@@ -98,7 +103,11 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
+            zone: {
+              threat: "normal",
+              zoneTteSeconds: null,
+              nearestBoundaryM: null,
+            },
           },
         ],
         selectedTrack: {
@@ -136,7 +145,11 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
+            zone: {
+              threat: "normal",
+              zoneTteSeconds: null,
+              nearestBoundaryM: null,
+            },
           },
         ],
         selectedTrackDelta: {
@@ -195,7 +208,11 @@ describe("useLiveAssets", () => {
             callsign: null,
             originCountry: null,
             onGround: false,
-            zone: { threat: "normal", zoneTteSeconds: null, nearestBoundaryM: null },
+            zone: {
+              threat: "normal",
+              zoneTteSeconds: null,
+              nearestBoundaryM: null,
+            },
           },
         ],
         selectedTrack: {

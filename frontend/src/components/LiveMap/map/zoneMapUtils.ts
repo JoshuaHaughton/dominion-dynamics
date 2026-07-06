@@ -1,19 +1,23 @@
 import type {
   FillLayerSpecification,
-  GeoJSONSource,
   GeoJSONSourceSpecification,
   LineLayerSpecification,
   Map,
 } from "maplibre-gl";
 import type { FeatureCollection, Polygon } from "geojson";
 import {
+  syncGeoJsonLayers,
+  updateGeoJsonSource,
+  type GeoJsonLayerConfig,
+} from "./geoJsonLayerLifecycle.js";
+import {
   MAP_LAYERS,
   ZONE_FILL_COLOR,
   ZONE_FILL_OPACITY,
   ZONE_OUTLINE_COLOR,
   ZONE_OUTLINE_WIDTH,
-} from "../../lib/constants/mapConstants.js";
-import { isPendingZone, type ZoneView } from "../../lib/hooks/useZones.js";
+} from "../../../lib/constants/mapConstants.js";
+import { isPendingZone, type ZoneView } from "../hooks/useZones.js";
 
 function zoneFeatureId(zone: ZoneView): string | number {
   return isPendingZone(zone) ? zone.clientId : zone.id;
@@ -66,44 +70,26 @@ const zonesOutlineLayer: LineLayerSpecification = {
   },
 };
 
-function addZoneLayerStack(map: Map, zones: readonly ZoneView[]): void {
-  map.addSource(MAP_LAYERS.zonesSource, zonesSource(zones));
-  map.addLayer(zonesFillLayer);
-  map.addLayer(zonesOutlineLayer);
-}
-
-/** Attach zone layers below assets. No-op if the source already exists. */
-export function addZoneLayers(map: Map, zones: readonly ZoneView[]): void {
-  if (map.getSource(MAP_LAYERS.zonesSource)) {
-    updateZoneLayerData(map, zones);
-    return;
-  }
-
-  addZoneLayerStack(map, zones);
-}
+const zoneLayerConfig: GeoJsonLayerConfig<readonly ZoneView[]> = {
+  sourceId: MAP_LAYERS.zonesSource,
+  primaryLayerId: MAP_LAYERS.zonesFill,
+  toFeatureCollection: zonesToFeatureCollection,
+  addLayerStack: (map, zones) => {
+    map.addSource(MAP_LAYERS.zonesSource, zonesSource(zones));
+    map.addLayer(zonesFillLayer);
+    map.addLayer(zonesOutlineLayer);
+  },
+};
 
 /** Push the latest zone list into the existing GeoJSON source. */
 export function updateZoneLayerData(
   map: Map,
   zones: readonly ZoneView[],
 ): void {
-  const source = map.getSource(MAP_LAYERS.zonesSource) as
-    | GeoJSONSource
-    | undefined;
-
-  if (!source) {
-    return;
-  }
-
-  source.setData(zonesToFeatureCollection(zones));
+  updateGeoJsonSource(map, zoneLayerConfig, zones);
 }
 
 /** Re-attach zone layers after a basemap style swap clears custom layers. */
 export function syncZoneLayers(map: Map, zones: readonly ZoneView[]): void {
-  if (map.getLayer(MAP_LAYERS.zonesFill)) {
-    updateZoneLayerData(map, zones);
-    return;
-  }
-
-  addZoneLayerStack(map, zones);
+  syncGeoJsonLayers(map, zoneLayerConfig, zones);
 }

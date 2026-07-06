@@ -1,5 +1,6 @@
 import type {
   Asset,
+  AssetZoneState,
   DispatchPhase,
   DroneOrigin,
   PatrolMode,
@@ -7,6 +8,9 @@ import type {
 } from "@dominion-dynamics/shared";
 
 export const PATROL_ROUTE_BASE_LABEL = "Patrol route";
+
+/** Label for a zero boundary distance / critical TTE (the asset is in a zone now). */
+export const INSIDE_ZONE_LABEL = "Inside zone";
 
 /** Phases shown in the missions tab when the status chip is All. */
 export const DISPATCH_ACTIVE_PHASES = new Set<DispatchPhase>([
@@ -28,7 +32,7 @@ export type DispatchMissionRow = {
 };
 
 /** Shorten opaque asset ids when no callsign is available. */
-export function formatReadableAssetId(assetId: string): string {
+function formatReadableAssetId(assetId: string): string {
   if (assetId.length <= 16) {
     return assetId;
   }
@@ -111,7 +115,9 @@ export function formatThreatLabel(threat: ThreatLevel): string {
 }
 
 /** Seconds until intercept for dispatch drone detail panels. */
-export function formatInterceptEtaSeconds(seconds: number | null | undefined): string {
+export function formatInterceptEtaSeconds(
+  seconds: number | null | undefined,
+): string {
   if (seconds === null || seconds === undefined) {
     return "—";
   }
@@ -135,6 +141,24 @@ export function formatZoneTteSeconds(seconds: number | null): string {
   return remainder > 0 ? `${minutes}m ${remainder}s` : `${minutes}m`;
 }
 
+/** Zone time-to-entry with the critical case spelled out for detail panels. */
+export function formatAssetZoneTte(zone: AssetZoneState): string {
+  if (zone.threat === "critical") {
+    return INSIDE_ZONE_LABEL;
+  }
+
+  return formatZoneTteSeconds(zone.zoneTteSeconds);
+}
+
+/** Meters below 1 km, otherwise one-decimal kilometers. */
+export function formatMetersAsKmOrM(meters: number): string {
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(1)} km`;
+  }
+
+  return `${Math.round(meters)} m`;
+}
+
 /** Nearest restricted-zone boundary distance for operations rows. */
 export function formatNearestZoneDistance(distanceM: number | null): string {
   if (distanceM === null) {
@@ -142,14 +166,10 @@ export function formatNearestZoneDistance(distanceM: number | null): string {
   }
 
   if (distanceM === 0) {
-    return "Inside zone";
+    return INSIDE_ZONE_LABEL;
   }
 
-  if (distanceM >= 1000) {
-    return `${(distanceM / 1000).toFixed(1)} km`;
-  }
-
-  return `${Math.round(distanceM)} m`;
+  return formatMetersAsKmOrM(distanceM);
 }
 
 export function formatDispatchBaseLabel(

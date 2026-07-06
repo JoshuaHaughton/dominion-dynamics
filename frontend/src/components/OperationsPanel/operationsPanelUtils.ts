@@ -1,7 +1,7 @@
 import type { Asset, ZoneGeoJson } from "@dominion-dynamics/shared";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
-import type { ZoneView } from "../../lib/hooks/useZones.js";
-import { isPendingZone } from "../../lib/hooks/useZones.js";
+import type { ZoneView } from "../LiveMap/hooks/useZones.js";
+import { isPendingZone } from "../LiveMap/hooks/useZones.js";
 import {
   assetMatchesEntityTab,
   assetMatchesOperationsFilter,
@@ -16,9 +16,10 @@ import {
   formatPatrolModeLabel,
   formatThreatLabel,
   formatZoneTteSeconds,
+  PATROL_ROUTE_BASE_LABEL,
   resolveAssetLabel,
   type DispatchMissionRow,
-} from "./dispatchDisplayUtils.js";
+} from "../../lib/display/dispatchDisplayUtils.js";
 
 export type MissionRow = DispatchMissionRow;
 
@@ -75,7 +76,7 @@ function buildDroneRow(asset: Asset, assets: readonly Asset[]): DroneRow {
       mode === "shadow" && patrol?.shadowTargetId
         ? resolveAssetLabel(patrol.shadowTargetId, assets)
         : mode === "patrol"
-          ? "Patrol route"
+          ? PATROL_ROUTE_BASE_LABEL
           : "Return to route",
   };
 }
@@ -93,9 +94,7 @@ function buildTrafficRow(asset: Asset, assets: readonly Asset[]): TrafficRow {
 }
 
 /** The singleton patrol drone asset when present in the live snapshot. */
-export function findPatrolDroneAsset(
-  assets: readonly Asset[],
-): Asset | null {
+export function findPatrolDroneAsset(assets: readonly Asset[]): Asset | null {
   const patrol = assets.find((asset) => asset.id === PATROL_ASSET_ID);
 
   if (patrol?.role !== "drone") {
@@ -143,7 +142,8 @@ export function countAssetsForTab(
     return 0;
   }
 
-  return assets.filter((asset) => assetMatchesEntityTab(asset, entityTab)).length;
+  return assets.filter((asset) => assetMatchesEntityTab(asset, entityTab))
+    .length;
 }
 
 export function buildOperationsRows(
@@ -206,16 +206,4 @@ export function buildPinnedPatrolRow(
     assetId: patrol.id,
     row: buildDroneRow(patrol, assets),
   };
-}
-
-export function assetIdsMatchingFilter(
-  assets: readonly Asset[],
-  entityTab: OperationsEntityTab,
-  statusFilter: OperationsStatusFilter,
-): string[] {
-  return assets
-    .filter((asset) =>
-      assetMatchesOperationsFilter(asset, entityTab, statusFilter),
-    )
-    .map((asset) => asset.id);
 }

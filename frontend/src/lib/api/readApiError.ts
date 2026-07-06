@@ -1,6 +1,4 @@
-import {
-  ValidationErrorBodySchema,
-} from "@dominion-dynamics/shared";
+import { ValidationErrorBodySchema } from "@dominion-dynamics/shared";
 import { firstUserSafeValidationMessage } from "./validationMessages.js";
 
 /**

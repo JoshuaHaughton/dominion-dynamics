@@ -6,15 +6,20 @@
 }
 
 .label {
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 .select {
-  background: #1e293b;
-  color: #f8fafc;
-  border: 1px solid #334155;
-  border-radius: 0.375rem;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 0.25rem 0.5rem;
   font: inherit;
   cursor: pointer;
+}
+
+.select:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }

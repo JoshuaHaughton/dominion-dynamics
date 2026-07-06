@@ -1,47 +1,20 @@
-import maplibregl, { type LngLatBoundsLike, type Map } from "maplibre-gl";
+import type { LngLatBoundsLike, Map as MapLibreMap } from "maplibre-gl";
 import type {
   Asset,
   AssetTrackDetail,
   PathGeoJson,
-  ThreatLevel,
   ZoneGeoJson,
 } from "@dominion-dynamics/shared";
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import {
-  DEMO_MAP_FOCUS_REGION,
-  INITIAL_MAP_ZOOM,
-  MAP_CAMERA_ANIMATION_MS,
-  MAP_LAYERS,
-} from "../../lib/constants/mapConstants.js";
-import { getMapStyleUrl } from "../../lib/constants/mapStyles.js";
-import { transformCustomMapStyle } from "../../lib/utils/mapStyleTransform.js";
-import {
-  easeMapToPoint,
-  fitMapToBounds,
-} from "../../lib/utils/mapFocusUtils.js";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { MAP_CAMERA_ANIMATION_MS } from "../../lib/constants/mapConstants.js";
 import type { MapVisualFilter } from "../../lib/utils/assetSymbology.js";
-import type { ZoneView } from "../../lib/hooks/useZones.js";
-import { disableBasemapTerrain, getRegionCenter, toFitBounds } from "../../lib/utils/mapUtils.js";
-import { syncAssetLayers, ASSET_BODY_LAYER_IDS } from "./liveMapUtils.js";
-import { pushAssetsToMap } from "./pushAssetsToMap.js";
-import {
-  clearAssetTrackLayers,
-  syncAssetTrackLayers,
-  updateAssetTrackLayerData,
-} from "./assetTrackMapUtils.js";
-import {
-  attachDrawControl,
-  detachDrawControl,
-  startZoneDraw,
-} from "./drawControl.js";
-import { startPatrolDraw } from "./patrolDrawControl.js";
-import type { MaplibreTerradrawControl } from "@watergis/maplibre-gl-terradraw";
-import { syncZoneLayers, updateZoneLayerData } from "./zoneMapUtils.js";
-import {
-  syncPatrolPathLayers,
-  updatePatrolPathLayerData,
-} from "./patrolPathMapUtils.js";
+import type { ZoneView } from "./hooks/useZones.js";
+import type { MapContext } from "./mapContext.js";
+import { easeMapToPoint, fitMapToBounds } from "./map/mapFocusUtils.js";
+import { useMapInstance } from "./hooks/useMapInstance.js";
+import { useMapLayerSync } from "./hooks/useMapLayerSync.js";
+import { useMapDrawAndInteraction } from "./hooks/useMapDrawAndInteraction.js";
 
 export type MapFocusOptions = {
   animate?: boolean;
@@ -56,22 +29,7 @@ export type LiveMapInput = {
   selectedAssetId: string | null;
   isFollowingCamera: boolean;
   mapVisualFilter: MapVisualFilter;
-  onAssetSelect: (assetId: string | null) => void;
-  onFollowingChange: (isFollowing: boolean) => void;
-  onZoneDrawn: (geojson: ZoneGeoJson) => void;
-  onPatrolPathDrawn: (geojson: PathGeoJson) => void;
-  onZoneDrawError: (message: string) => void;
-  onPatrolDrawError: (message: string) => void;
-};
-
-type MapContext = {
-  assets: readonly Asset[];
-  zones: readonly ZoneView[];
-  patrolPath: PathGeoJson | null;
-  trackDetail: AssetTrackDetail | null;
-  isDrawingZone: boolean;
-  isDrawingPatrol: boolean;
-  onAssetSelect: (assetId: string | null) => void;
+  selectAsset: (assetId: string | null) => void;
   onFollowingChange: (isFollowing: boolean) => void;
   onZoneDrawn: (geojson: ZoneGeoJson) => void;
   onPatrolPathDrawn: (geojson: PathGeoJson) => void;
@@ -85,32 +43,22 @@ type UseLiveMapResult = {
   beginPatrolDraw: () => void;
   isDrawingZone: boolean;
   isDrawingPatrol: boolean;
+  /** Select in the store and center the camera (map clicks and panel rows). */
+  selectAndFocusAsset: (assetId: string | null) => void;
   /** Center on an asset; reused by follow and future header focus chips. */
   focusOnAsset: (assetId: string, options?: MapFocusOptions) => void;
   /** Fit the viewport to bounds; reused by patrol route and zone focus. */
   focusOnBounds: (bounds: LngLatBoundsLike, options?: MapFocusOptions) => void;
 };
 
-function getSelectedThreat(
-  assets: readonly Asset[],
-  selectedAssetId: string | null,
-): ThreatLevel {
-  if (selectedAssetId === null) {
-    return "normal";
-  }
-
-  return assets.find((asset) => asset.id === selectedAssetId)?.zone?.threat ?? "normal";
-}
-
-function isDrawing(context: MapContext): boolean {
-  return context.isDrawingZone || context.isDrawingPatrol;
-}
-
 function cameraDuration(options?: MapFocusOptions): number {
   return options?.animate === false ? 0 : MAP_CAMERA_ANIMATION_MS;
 }
 
-/** MapLibre lifecycle, layer sync, draw controls, and camera focus for the live map. */
+/**
+ * Orchestrates the live map: owns the shared refs, composes the lifecycle /
+ * layer-sync / draw hooks, and keeps camera focus + selection here.
+ */
 export function useLiveMap({
   assets,
   styleId,
@@ -120,7 +68,7 @@ export function useLiveMap({
   selectedAssetId,
   isFollowingCamera,
   mapVisualFilter,
-  onAssetSelect,
+  selectAsset,
   onFollowingChange,
   onZoneDrawn,
   onPatrolPathDrawn,
@@ -128,351 +76,102 @@ export function useLiveMap({
   onPatrolDrawError,
 }: LiveMapInput): UseLiveMapResult {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<Map | null>(null);
-  const drawControlRef = useRef<MaplibreTerradrawControl | undefined>(
-    undefined,
-  );
-  const hasFitBoundsRef = useRef(false);
-  const skipNextStyleSwapRef = useRef(true);
-  const clickHandlersAttachedRef = useRef(false);
-  const mapVisualFilterRef = useRef(mapVisualFilter);
-  /** Latest props/callbacks for map listeners without re-binding handlers each render. */
-  const mapContextRef = useRef<MapContext>({
-    assets,
-    zones,
-    patrolPath,
-    trackDetail,
-    isDrawingZone: false,
-    isDrawingPatrol: false,
-    onAssetSelect,
-    onFollowingChange,
-    onZoneDrawn,
-    onPatrolPathDrawn,
-    onZoneDrawError,
-    onPatrolDrawError,
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const assetsRef = useRef(assets);
+
+  useEffect(() => {
+    assetsRef.current = assets;
   });
-
-  const [isDrawingZone, setIsDrawingZone] = useState(false);
-  const [isDrawingPatrol, setIsDrawingPatrol] = useState(false);
-
-  mapContextRef.current = {
-    assets,
-    zones,
-    patrolPath,
-    trackDetail,
-    isDrawingZone,
-    isDrawingPatrol,
-    onAssetSelect,
-    onFollowingChange,
-    onZoneDrawn,
-    onPatrolPathDrawn,
-    onZoneDrawError,
-    onPatrolDrawError,
-  };
-  mapVisualFilterRef.current = mapVisualFilter;
-
-  const resetDrawMode = useCallback(() => {
-    drawControlRef.current?.resetActiveMode();
-    setIsDrawingZone(false);
-    setIsDrawingPatrol(false);
-  }, []);
-
-  const beginZoneDraw = useCallback(() => {
-    if (isDrawingZone) {
-      resetDrawMode();
-      return;
-    }
-
-    if (isDrawingPatrol) {
-      resetDrawMode();
-    }
-
-    startZoneDraw(drawControlRef.current, false);
-  }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
-
-  const beginPatrolDraw = useCallback(() => {
-    if (isDrawingPatrol) {
-      resetDrawMode();
-      return;
-    }
-
-    if (isDrawingZone) {
-      resetDrawMode();
-    }
-
-    startPatrolDraw(drawControlRef.current, false);
-  }, [isDrawingPatrol, isDrawingZone, resetDrawMode]);
-
-  const focusOnBounds = useCallback(
-    (bounds: LngLatBoundsLike, options?: MapFocusOptions) => {
-      const map = mapRef.current;
-
-      if (!map) {
-        return;
-      }
-
-      fitMapToBounds(map, bounds, cameraDuration(options));
-    },
-    [],
-  );
 
   const focusOnAsset = useCallback(
     (assetId: string, options?: MapFocusOptions) => {
       const map = mapRef.current;
-      const asset = mapContextRef.current.assets.find(
+      const asset = assetsRef.current.find(
         (candidate) => candidate.id === assetId,
       );
 
-      if (!map || !asset) {
-        return;
-      }
+      if (!map || !asset) return;
 
       easeMapToPoint(map, asset.lon, asset.lat, cameraDuration(options));
     },
     [],
   );
 
-  function setupDrawControl(map: Map): void {
-    detachDrawControl(map, drawControlRef.current);
-    drawControlRef.current = attachDrawControl(map, {
-      onZoneComplete: (geojson) => {
-        mapContextRef.current.onZoneDrawn(geojson);
-      },
-      onPatrolPathComplete: (geojson) => {
-        mapContextRef.current.onPatrolPathDrawn(geojson);
-      },
-      onZoneDrawingChange: setIsDrawingZone,
-      onPatrolDrawingChange: setIsDrawingPatrol,
-      onDrawError: (message) => {
-        const context = mapContextRef.current;
+  const focusOnBounds = useCallback(
+    (bounds: LngLatBoundsLike, options?: MapFocusOptions) => {
+      const map = mapRef.current;
 
-        if (context.isDrawingPatrol) {
-          context.onPatrolDrawError(message);
-          return;
-        }
+      if (!map) return;
 
-        context.onZoneDrawError(message);
-      },
-    });
-  }
+      fitMapToBounds(map, bounds, cameraDuration(options));
+    },
+    [],
+  );
 
-  function syncMapContent(map: Map): void {
-    const context = mapContextRef.current;
-    const selectedThreat = getSelectedThreat(context.assets, selectedAssetId);
+  const selectAndFocusAsset = useCallback(
+    (assetId: string | null) => {
+      selectAsset(assetId);
 
-    disableBasemapTerrain(map);
-    syncZoneLayers(map, context.zones);
-    syncPatrolPathLayers(map, context.patrolPath);
-    void syncAssetLayers(map, context.assets, mapVisualFilterRef.current).then(() => {
-      syncAssetTrackLayers(map, context.trackDetail, selectedThreat);
-    });
-    setupDrawControl(map);
-    attachAssetClickHandlers(map);
-    attachUserCameraHandlers(map);
-  }
-
-  function attachUserCameraHandlers(map: Map): void {
-    /** Panning looks elsewhere; zoom keeps the operator close to the followed asset. */
-    const stopFollowingOnPan = (event: maplibregl.MapLibreEvent) => {
-      if (!event.originalEvent) {
-        return;
+      if (assetId !== null) {
+        focusOnAsset(assetId);
       }
+    },
+    [focusOnAsset, selectAsset],
+  );
 
-      mapContextRef.current.onFollowingChange(false);
-    };
+  /** Rebuilt each render; consumer hooks keep their own latest-value refs. */
+  const mapContext: MapContext = {
+    assets,
+    zones,
+    patrolPath,
+    trackDetail,
+    selectedAssetId,
+    onAssetSelect: selectAndFocusAsset,
+    onFollowingChange,
+    onZoneDrawn,
+    onPatrolPathDrawn,
+    onZoneDrawError,
+    onPatrolDrawError,
+  };
 
-    map.on("dragstart", stopFollowingOnPan);
-  }
+  const {
+    isDrawingZone,
+    isDrawingPatrol,
+    beginZoneDraw,
+    beginPatrolDraw,
+    setupDrawControl,
+    attachInteractionHandlers,
+    teardownDraw,
+  } = useMapDrawAndInteraction(mapContext);
 
-  function attachAssetClickHandlers(map: Map): void {
-    if (clickHandlersAttachedRef.current) {
-      return;
-    }
+  const { syncAllLayers, resetLayerSync } = useMapLayerSync({
+    mapRef,
+    assets,
+    zones,
+    patrolPath,
+    trackDetail,
+    selectedAssetId,
+    mapVisualFilter,
+  });
 
-    clickHandlersAttachedRef.current = true;
-
-    for (const layerId of ASSET_BODY_LAYER_IDS) {
-      map.on("click", layerId, (event) => {
-        const context = mapContextRef.current;
-
-        if (isDrawing(context)) {
-          return;
-        }
-
-        const feature = event.features?.[0];
-        const assetId = feature?.properties?.id;
-
-        if (typeof assetId === "string" && assetId.length > 0) {
-          context.onAssetSelect(assetId);
-        }
-      });
-
-      map.on("mouseenter", layerId, () => {
-        if (!isDrawing(mapContextRef.current)) {
-          map.getCanvas().style.cursor = "pointer";
-        }
-      });
-
-      map.on("mouseleave", layerId, () => {
-        map.getCanvas().style.cursor = "";
-      });
-    }
-
-    map.on("click", (event) => {
-      const context = mapContextRef.current;
-
-      if (isDrawing(context)) {
-        return;
-      }
-
-      const hits = map.queryRenderedFeatures(event.point, {
-        layers: [...ASSET_BODY_LAYER_IDS],
-      });
-
-      if (hits.length === 0) {
-        context.onAssetSelect(null);
-      }
-    });
-  }
-
-  /** Create the map once, attach controls, and tear down on unmount. */
-  useEffect(() => {
-    if (!containerRef.current || mapRef.current) {
-      return;
-    }
-
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: getMapStyleUrl(styleId),
-      center: getRegionCenter(DEMO_MAP_FOCUS_REGION),
-      zoom: INITIAL_MAP_ZOOM,
-      // Private demo build; no on-map tile attribution chrome.
-      attributionControl: false,
-    });
-
-    map.addControl(new maplibregl.NavigationControl(), "bottom-left");
-
-    map.on("load", () => {
-      syncMapContent(map);
-    });
-
-    mapRef.current = map;
-
-    return () => {
-      detachDrawControl(map, drawControlRef.current);
-      drawControlRef.current = undefined;
-      map.remove();
-      mapRef.current = null;
-      hasFitBoundsRef.current = false;
-      clickHandlersAttachedRef.current = false;
-      setIsDrawingZone(false);
-      setIsDrawingPatrol(false);
-    };
-  }, []);
-
-  /** Swap the basemap style and re-sync custom layers after style.load. */
-  useEffect(() => {
-    const map = mapRef.current;
-
-    if (!map) return;
-
-    if (skipNextStyleSwapRef.current) {
-      skipNextStyleSwapRef.current = false;
-      return;
-    }
-
-    map.setStyle(getMapStyleUrl(styleId), {
-      diff: false,
-      transformStyle: transformCustomMapStyle,
-    });
-
-    const onStyleLoad = () => {
-      const context = mapContextRef.current;
-      const selectedThreat = getSelectedThreat(context.assets, selectedAssetId);
-
-      disableBasemapTerrain(map);
-      void syncAssetLayers(map, context.assets, mapVisualFilterRef.current);
-      updateZoneLayerData(map, context.zones);
-      updatePatrolPathLayerData(map, context.patrolPath);
-      updateAssetTrackLayerData(map, context.trackDetail, selectedThreat);
+  const syncMapContent = useCallback(
+    (map: MapLibreMap) => {
+      syncAllLayers(map);
       setupDrawControl(map);
-    };
+      attachInteractionHandlers(map);
+    },
+    [attachInteractionHandlers, setupDrawControl, syncAllLayers],
+  );
 
-    map.once("style.load", onStyleLoad);
+  const onTeardown = useCallback(
+    (map: MapLibreMap) => {
+      teardownDraw(map);
+      resetLayerSync();
+    },
+    [resetLayerSync, teardownDraw],
+  );
 
-    return () => {
-      map.off("style.load", onStyleLoad);
-    };
-  }, [styleId]);
-
-  /** Push the latest zone list into the GeoJSON source. */
-  useEffect(() => {
-    const map = mapRef.current;
-
-    if (!map?.isStyleLoaded()) {
-      return;
-    }
-
-    updateZoneLayerData(map, zones);
-  }, [zones]);
-
-  /** Push the latest patrol route into the GeoJSON source. */
-  useEffect(() => {
-    const map = mapRef.current;
-
-    if (!map?.isStyleLoaded()) {
-      return;
-    }
-
-    updatePatrolPathLayerData(map, patrolPath);
-  }, [patrolPath]);
-
-  /** Push track overlays when selection detail changes. */
-  useEffect(() => {
-    const map = mapRef.current;
-
-    if (!map?.isStyleLoaded()) {
-      return;
-    }
-
-    const selectedThreat = getSelectedThreat(assets, selectedAssetId);
-
-    if (
-      selectedAssetId === null ||
-      trackDetail === null ||
-      trackDetail.assetId !== selectedAssetId
-    ) {
-      if (map.getSource(MAP_LAYERS.assetHistorySource)) {
-        clearAssetTrackLayers(map);
-      }
-      return;
-    }
-
-    if (map.getSource(MAP_LAYERS.assetHistorySource)) {
-      updateAssetTrackLayerData(map, trackDetail, selectedThreat);
-      return;
-    }
-
-    syncAssetTrackLayers(map, trackDetail, selectedThreat);
-  }, [assets, selectedAssetId, trackDetail]);
-
-  /** Push the latest asset snapshot into the map; initial demo fit runs once on first data. */
-  useEffect(() => {
-    const map = mapRef.current;
-
-    if (!map) {
-      return;
-    }
-
-    pushAssetsToMap({ map, assets, visualFilter: mapVisualFilter });
-
-    if (hasFitBoundsRef.current || assets.length === 0 || !map.isStyleLoaded()) {
-      return;
-    }
-
-    fitMapToBounds(map, toFitBounds(DEMO_MAP_FOCUS_REGION), 0);
-    hasFitBoundsRef.current = true;
-  }, [assets, mapVisualFilter]);
+  useMapInstance({ containerRef, mapRef, styleId, syncMapContent, onTeardown });
 
   /** Re-center on the selected asset each tick while camera follow is enabled. */
   useEffect(() => {
@@ -489,6 +188,7 @@ export function useLiveMap({
     beginPatrolDraw,
     isDrawingZone,
     isDrawingPatrol,
+    selectAndFocusAsset,
     focusOnAsset,
     focusOnBounds,
   };

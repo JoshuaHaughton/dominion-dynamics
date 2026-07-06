@@ -1,0 +1,84 @@
+/* Composable button primitives; feature modules compose + position them. */
+
+.btn {
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.focusRing:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+/* Quiet secondary button (small padding, secondary text). */
+.btnGhostSm {
+  composes: btn;
+  composes: focusRing;
+  padding: 0.2rem 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.btnGhostSm:hover {
+  background: var(--color-surface-muted);
+}
+
+/* Toolbar-height button. */
+.btnGhostLg {
+  composes: btn;
+  composes: focusRing;
+  min-height: var(--control-height-lg);
+  padding: 0.45rem 0.75rem;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.btnGhostLg:hover {
+  background: var(--color-surface-muted);
+}
+
+.btnPill {
+  composes: btn;
+  composes: focusRing;
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.45rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.btnPill:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+}
+
+.btnDanger {
+  composes: btn;
+  composes: focusRing;
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.btnDanger:hover {
+  background: var(--color-danger-border);
+}
+
+/* Active state: blue accent border + deep accent fill. */
+.btnActive {
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+/* Active state (sky variant used by Follow). */
+.btnActiveSky {
+  border-color: var(--color-accent-sky);
+  background: var(--color-accent-bg-sky);
+  color: var(--color-accent-text-sky);
+}

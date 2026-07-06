@@ -1,0 +1,7 @@
+/* Glass chrome panel shared by the map toolbar and both side panels. */
+.chromePanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-glass);
+  color: var(--color-text);
+}

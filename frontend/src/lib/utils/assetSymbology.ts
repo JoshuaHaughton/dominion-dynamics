@@ -10,7 +10,7 @@ import {
   formatOperationsStatusLabel,
   formatPatrolModeLabel,
   formatThreatLabel,
-} from "../../components/LiveMap/dispatchDisplayUtils.js";
+} from "../display/dispatchDisplayUtils.js";
 import {
   ASSET_GHOST_OPACITY,
   ASSET_GHOST_RADIUS_SCALE,
@@ -34,9 +34,7 @@ export type DroneStatusFilter =
 export type MissionStatusFilter = DroneStatusFilter;
 
 export type OperationsStatusFilter =
-  | TrafficStatusFilter
-  | DroneStatusFilter
-  | MissionStatusFilter;
+  TrafficStatusFilter | DroneStatusFilter | MissionStatusFilter;
 
 export type AssetSymbology =
   | { kind: "traffic"; threat: ThreatLevel }
@@ -98,18 +96,6 @@ export function symbologyBodyKey(symbology: AssetSymbology): string {
   }
 }
 
-/** Stroke/halo color key for patrol mode or dispatch phase accents (legacy phase keys). */
-export function symbologyStrokeKey(symbology: AssetSymbology): string {
-  switch (symbology.kind) {
-    case "traffic":
-      return "traffic-stroke";
-    case "patrol":
-      return `patrol-stroke:${symbology.mode}`;
-    case "dispatch":
-      return `dispatch-stroke:${symbology.phase}`;
-  }
-}
-
 function resolveDroneTargetId(asset: Asset): string | null {
   return (
     asset.drone?.dispatch?.targetId ??
@@ -152,10 +138,7 @@ function isActivelyTrackingCritical(
   const dispatch = asset.drone?.dispatch;
 
   if (dispatch !== undefined) {
-    if (
-      dispatch.phase !== "intercepting" &&
-      dispatch.phase !== "trailing"
-    ) {
+    if (dispatch.phase !== "intercepting" && dispatch.phase !== "trailing") {
       return false;
     }
 
@@ -273,6 +256,23 @@ export function assetMatchesEntityTab(
   }
 }
 
+function isTrafficStatusFilter(
+  statusFilter: OperationsStatusFilter,
+): statusFilter is TrafficStatusFilter {
+  return (
+    statusFilter === "all" ||
+    statusFilter === "normal" ||
+    statusFilter === "warning" ||
+    statusFilter === "critical"
+  );
+}
+
+function isDroneStatusFilter(
+  statusFilter: OperationsStatusFilter,
+): statusFilter is DroneStatusFilter {
+  return !isTrafficStatusFilter(statusFilter) || statusFilter === "all";
+}
+
 /** Whether an asset matches the contextual status chip within its tab. */
 export function assetMatchesStatusFilter(
   asset: Asset,
@@ -281,16 +281,24 @@ export function assetMatchesStatusFilter(
 ): boolean {
   const symbology = deriveAssetSymbology(asset);
 
+  // The store resets statusFilter to "all" on tab change, so a chip from
+  // another tab's set never reaches its mismatched branch; guards keep that
+  // invariant checked at runtime instead of assumed via casts.
   switch (entityTab) {
     case "traffic":
-      return matchesTrafficFilter(symbology, statusFilter as TrafficStatusFilter);
+      return (
+        isTrafficStatusFilter(statusFilter) &&
+        matchesTrafficFilter(symbology, statusFilter)
+      );
     case "drones":
-      return matchesDroneFilter(asset, symbology, statusFilter as DroneStatusFilter);
+      return (
+        isDroneStatusFilter(statusFilter) &&
+        matchesDroneFilter(asset, symbology, statusFilter)
+      );
     case "missions":
-      return matchesMissionFilter(
-        asset,
-        symbology,
-        statusFilter as MissionStatusFilter,
+      return (
+        isDroneStatusFilter(statusFilter) &&
+        matchesMissionFilter(asset, symbology, statusFilter)
       );
     case "zones":
       return false;
@@ -377,7 +385,10 @@ export function statusFiltersForTab(
         { id: "shadow", label: formatPatrolModeLabel("shadow") },
         { id: "rejoin", label: formatPatrolModeLabel("rejoin") },
         { id: "enroute", label: formatOperationsStatusLabel("enroute") },
-        { id: "intercepting", label: formatOperationsStatusLabel("intercepting") },
+        {
+          id: "intercepting",
+          label: formatOperationsStatusLabel("intercepting"),
+        },
         { id: "trailing", label: formatOperationsStatusLabel("trailing") },
         { id: "rtb", label: formatOperationsStatusLabel("rtb") },
       ];

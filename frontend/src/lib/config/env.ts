@@ -1,5 +1,12 @@
-export const API_ORIGIN =
-  import.meta.env.VITE_API_ORIGIN ?? "http://localhost:8000";
+import { z } from "zod";
+
+const EnvSchema = z.object({
+  VITE_API_ORIGIN: z.string().url().optional(),
+});
+
+const env = EnvSchema.parse(import.meta.env);
+
+export const API_ORIGIN = env.VITE_API_ORIGIN ?? "http://localhost:8000";
 
 export const WS_LIVE_PATH = "/ws/live";
 

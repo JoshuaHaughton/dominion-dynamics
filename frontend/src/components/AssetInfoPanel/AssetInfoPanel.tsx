@@ -1,20 +1,23 @@
-import type { Asset, AssetZoneState } from "@dominion-dynamics/shared";
+import { useEffect, useRef } from "react";
+import type { Asset } from "@dominion-dynamics/shared";
 import { icaoCategoryLabel } from "@dominion-dynamics/shared";
 import {
   ASSET_PATROL_MODE_COLORS,
   ASSET_THREAT_COLORS,
 } from "../../lib/constants/mapConstants.js";
 import {
+  formatAssetZoneTte,
   formatDispatchBaseLabel,
   formatDispatchFocusField,
   formatDispatchFocusValue,
   formatDispatchPhase,
   formatInterceptEtaSeconds,
+  formatMetersAsKmOrM,
   formatNearestZoneDistance,
   formatPatrolModeLabel,
   formatThreatLabel,
   resolveAssetLabel,
-} from "./dispatchDisplayUtils.js";
+} from "../../lib/display/dispatchDisplayUtils.js";
 import styles from "./AssetInfoPanel.module.css";
 
 type AssetInfoPanelProps = {
@@ -44,39 +47,12 @@ function formatShadowTarget(
   return resolveAssetLabel(shadowTargetId, assets);
 }
 
-function formatTte(zone: AssetZoneState): string {
-  if (zone.threat === "critical") {
-    return "Inside zone";
-  }
-
-  if (zone.zoneTteSeconds === null) {
-    return "None";
-  }
-
-  if (zone.zoneTteSeconds < 60) {
-    return `${Math.round(zone.zoneTteSeconds)}s`;
-  }
-
-  const minutes = Math.floor(zone.zoneTteSeconds / 60);
-  const seconds = Math.round(zone.zoneTteSeconds % 60);
-
-  return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
-}
-
 function formatSpeed(speed: number): string {
   return `${Math.round(speed)} m/s`;
 }
 
 function formatHeading(heading: number): string {
   return `${Math.round(heading)}°`;
-}
-
-function formatAltitude(altM: number): string {
-  if (altM >= 1000) {
-    return `${(altM / 1000).toFixed(1)} km`;
-  }
-
-  return `${Math.round(altM)} m`;
 }
 
 /** Selected asset summary; zone fields follow the live WS stream. */
@@ -87,11 +63,29 @@ export function AssetInfoPanel({
   onFollowingChange,
   onClose,
 }: AssetInfoPanelProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  /** Move focus into the panel on open; hand it back on close. */
+  useEffect(() => {
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    closeButtonRef.current?.focus();
+
+    return () => {
+      previouslyFocused?.focus();
+    };
+  }, []);
+
   const zone = asset.zone;
   const drone = asset.drone;
   const route = drone?.patrol;
   const threatColor =
-    zone !== null ? ASSET_THREAT_COLORS[zone.threat] : ASSET_THREAT_COLORS.normal;
+    zone !== null
+      ? ASSET_THREAT_COLORS[zone.threat]
+      : ASSET_THREAT_COLORS.normal;
   const patrolModeColor =
     route !== undefined
       ? ASSET_PATROL_MODE_COLORS[route.mode]
@@ -118,7 +112,12 @@ export function AssetInfoPanel({
           >
             Follow
           </button>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+          >
             Close
           </button>
         </div>
@@ -144,7 +143,7 @@ export function AssetInfoPanel({
         </div>
         <div className={styles.row}>
           <dt>Altitude</dt>
-          <dd>{formatAltitude(asset.alt)}</dd>
+          <dd>{formatMetersAsKmOrM(asset.alt)}</dd>
         </div>
         {asset.originCountry !== null ? (
           <div className={styles.row}>
@@ -201,7 +200,9 @@ export function AssetInfoPanel({
               <div className={styles.row}>
                 <dt>Intercept time</dt>
                 <dd>
-                  {formatInterceptEtaSeconds(drone.dispatch.interceptEtaSeconds)}
+                  {formatInterceptEtaSeconds(
+                    drone.dispatch.interceptEtaSeconds,
+                  )}
                 </dd>
               </div>
             ) : null}
@@ -220,11 +221,13 @@ export function AssetInfoPanel({
           <>
             <div className={styles.row}>
               <dt>Threat</dt>
-              <dd style={{ color: threatColor }}>{formatThreatLabel(zone.threat)}</dd>
+              <dd style={{ color: threatColor }}>
+                {formatThreatLabel(zone.threat)}
+              </dd>
             </div>
             <div className={styles.row}>
               <dt>Zone TTE</dt>
-              <dd style={{ color: threatColor }}>{formatTte(zone)}</dd>
+              <dd style={{ color: threatColor }}>{formatAssetZoneTte(zone)}</dd>
             </div>
             <div className={styles.row}>
               <dt>Nearest zone</dt>

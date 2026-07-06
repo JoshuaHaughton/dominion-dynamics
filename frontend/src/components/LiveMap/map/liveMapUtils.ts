@@ -1,34 +1,33 @@
 import type {
   CircleLayerSpecification,
   DataDrivenPropertyValueSpecification,
-  GeoJSONSource,
   GeoJSONSourceSpecification,
   Map as MapLibreMap,
   SymbolLayerSpecification,
 } from "maplibre-gl";
 import type { FeatureCollection, Point } from "geojson";
 import type { Asset } from "@dominion-dynamics/shared";
+import { setGeoJsonData } from "./geoJsonLayerLifecycle.js";
 import {
   ASSET_CIRCLE_RADIUS,
   ASSET_DISPATCH_BODY_COLOR,
-  ASSET_DISPATCH_STROKE_COLORS,
   ASSET_HEADING_GAP_PX,
   ASSET_HEADING_ICON_SIZE,
   ASSET_PATROL_MODE_COLORS,
-  ASSET_PATROL_STROKE_COLORS,
   ASSET_SELECTED_RADIUS_SCALE,
-  ASSET_SOURCE_COLORS,
   ASSET_THREAT_COLORS,
   DRONE_HEADING_OFFSET_Y,
   DRONE_MARKER_DIAMETER_PX,
   DRONE_MARKER_ICON_SIZE,
   DRONE_MARKER_SDF_LOGICAL_PX,
   DRONE_MARKER_SDF_PIXEL_RATIO,
+  DRONE_RING_COLORS,
   HEADING_ICON_LOGICAL_PX,
   HEADING_ICON_PIXEL_RATIO,
   MAP_LAYERS,
   TRAFFIC_HEADING_OFFSET_Y,
-} from "../../lib/constants/mapConstants.js";
+  TRAFFIC_RING_COLOR,
+} from "../../../lib/constants/mapConstants.js";
 import {
   deriveAssetSymbology,
   mapEmphasisForAsset,
@@ -36,7 +35,7 @@ import {
   symbologyMarkerShape,
   symbologyRingKey,
   type MapVisualFilter,
-} from "../../lib/utils/assetSymbology.js";
+} from "../../../lib/utils/assetSymbology.js";
 
 const ASSET_HEADING_ICON_ID = "asset-heading-chevron";
 const ASSET_MARKER_ICON_SQUARE = "asset-marker-square";
@@ -74,7 +73,7 @@ function drawSquareSdf(
 }
 
 /** Register a high-res square SDF for drone bodies (heading-style canvas density). */
-export async function ensureDroneMarkerIcon(map: MapLibreMap): Promise<void> {
+async function ensureDroneMarkerIcon(map: MapLibreMap): Promise<void> {
   if (map.hasImage(ASSET_MARKER_ICON_SQUARE)) {
     map.removeImage(ASSET_MARKER_ICON_SQUARE);
   }
@@ -85,10 +84,7 @@ export async function ensureDroneMarkerIcon(map: MapLibreMap): Promise<void> {
   canvas.height = canvasPx;
 
   const context = canvas.getContext("2d");
-
-  if (!context) {
-    return;
-  }
+  if (!context) return;
 
   drawSquareSdf(context, canvasPx);
 
@@ -104,7 +100,7 @@ export async function ensureDroneMarkerIcon(map: MapLibreMap): Promise<void> {
  * The icon is drawn on an offscreen canvas, then registered via map.addImage as an
  * SDF so MapLibre can tint it per feature.
  */
-export async function ensureAssetHeadingIcon(map: MapLibreMap): Promise<void> {
+async function ensureAssetHeadingIcon(map: MapLibreMap): Promise<void> {
   if (map.hasImage(ASSET_HEADING_ICON_ID)) {
     map.removeImage(ASSET_HEADING_ICON_ID);
   }
@@ -118,14 +114,12 @@ export async function ensureAssetHeadingIcon(map: MapLibreMap): Promise<void> {
   canvas.height = height;
 
   const context = canvas.getContext("2d");
-
-  if (!context) {
-    return;
-  }
+  if (!context) return;
 
   const centerX = width / 2;
   const wingInsetFromBottom =
-    ((ASSET_CIRCLE_RADIUS + ASSET_HEADING_GAP_PX) * scale) / ASSET_HEADING_ICON_SIZE;
+    ((ASSET_CIRCLE_RADIUS + ASSET_HEADING_GAP_PX) * scale) /
+    ASSET_HEADING_ICON_SIZE;
   const wingY = height - wingInsetFromBottom;
   const wingSpread = 6.5 * scale;
   const tipY = wingY - 8 * scale;
@@ -247,14 +241,14 @@ const symbologyRingColor: DataDrivenPropertyValueSpecification<string> = [
   "match",
   ["get", "symbologyRingKey"],
   "traffic-stroke",
-  ASSET_SOURCE_COLORS.stroke,
+  TRAFFIC_RING_COLOR,
   "drone-ring:critical-target",
-  ASSET_THREAT_COLORS.critical,
+  DRONE_RING_COLORS.criticalTarget,
   "drone-ring:returning",
-  ASSET_DISPATCH_STROKE_COLORS.rtb,
+  DRONE_RING_COLORS.returning,
   "drone-ring:default",
-  ASSET_PATROL_STROKE_COLORS.patrol,
-  ASSET_PATROL_STROKE_COLORS.patrol,
+  DRONE_RING_COLORS.default,
+  DRONE_RING_COLORS.default,
 ];
 
 const markerRingColor: DataDrivenPropertyValueSpecification<string> = [
@@ -341,23 +335,24 @@ const assetsDroneMarkerLayer: SymbolLayerSpecification = {
 };
 
 /** icon-offset components are multiplied by icon-size, so values stay in chevron units. */
-const headingIconOffset: DataDrivenPropertyValueSpecification<[number, number]> =
+const headingIconOffset: DataDrivenPropertyValueSpecification<
+  [number, number]
+> = [
+  "case",
+  ["==", ["get", "role"], "drone"],
   [
     "case",
-    ["==", ["get", "role"], "drone"],
-    [
-      "case",
-      ["get", "isSelected"],
-      ["literal", [0, DRONE_HEADING_OFFSET_Y * ASSET_SELECTED_RADIUS_SCALE]],
-      ["literal", [0, DRONE_HEADING_OFFSET_Y]],
-    ],
-    [
-      "case",
-      ["get", "isSelected"],
-      ["literal", [0, TRAFFIC_HEADING_OFFSET_Y * ASSET_SELECTED_RADIUS_SCALE]],
-      ["literal", [0, TRAFFIC_HEADING_OFFSET_Y]],
-    ],
-  ];
+    ["get", "isSelected"],
+    ["literal", [0, DRONE_HEADING_OFFSET_Y * ASSET_SELECTED_RADIUS_SCALE]],
+    ["literal", [0, DRONE_HEADING_OFFSET_Y]],
+  ],
+  [
+    "case",
+    ["get", "isSelected"],
+    ["literal", [0, TRAFFIC_HEADING_OFFSET_Y * ASSET_SELECTED_RADIUS_SCALE]],
+    ["literal", [0, TRAFFIC_HEADING_OFFSET_Y]],
+  ],
+];
 
 const assetsHeadingLayer: SymbolLayerSpecification = {
   id: MAP_LAYERS.assetsHeading,
@@ -398,37 +393,17 @@ function hasAssetBodyLayers(map: MapLibreMap): boolean {
   );
 }
 
-/** Attach asset layers on first map load. No-op if the source already exists. */
-export async function addAssetLayers(
-  map: MapLibreMap,
-  assets: readonly Asset[],
-  visualFilter: MapVisualFilter = DEFAULT_VISUAL_FILTER,
-): Promise<void> {
-  await ensureAssetIcons(map);
-
-  if (!map.getSource(MAP_LAYERS.assetsSource)) {
-    addAssetLayerStack(map, assets, visualFilter);
-    return;
-  }
-
-  updateAssetLayerData(map, assets, visualFilter);
-}
-
 /** Push the latest asset snapshot into the existing GeoJSON source. */
 export function updateAssetLayerData(
   map: MapLibreMap,
   assets: readonly Asset[],
   visualFilter: MapVisualFilter = DEFAULT_VISUAL_FILTER,
 ): void {
-  const source = map.getSource(MAP_LAYERS.assetsSource) as
-    | GeoJSONSource
-    | undefined;
-
-  if (!source) {
-    return;
-  }
-
-  source.setData(assetsToFeatureCollection(assets, visualFilter));
+  setGeoJsonData(
+    map,
+    MAP_LAYERS.assetsSource,
+    assetsToFeatureCollection(assets, visualFilter),
+  );
 }
 
 /** Re-attach asset layers after a basemap style swap clears custom layers. */

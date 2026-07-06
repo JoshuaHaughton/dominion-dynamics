@@ -1,11 +1,11 @@
 import type {
-  GeoJSONSource,
   GeoJSONSourceSpecification,
   LineLayerSpecification,
   Map,
 } from "maplibre-gl";
 import type { AssetTrackDetail, ThreatLevel } from "@dominion-dynamics/shared";
 import type { FeatureCollection, LineString } from "geojson";
+import { setGeoJsonData } from "./geoJsonLayerLifecycle.js";
 import {
   ASSET_HISTORY_LINE_OPACITY,
   ASSET_HISTORY_LINE_WIDTH,
@@ -13,7 +13,7 @@ import {
   ASSET_PREDICTION_LINE_WIDTH,
   ASSET_THREAT_COLORS,
   MAP_LAYERS,
-} from "../../lib/constants/mapConstants.js";
+} from "../../../lib/constants/mapConstants.js";
 
 function emptyLineCollection(): FeatureCollection<LineString> {
   return { type: "FeatureCollection", features: [] };
@@ -145,9 +145,7 @@ function trackLayerBeforeId(map: Map): string | undefined {
 function ensureTrackLayersBelowAssets(map: Map): void {
   const beforeId = trackLayerBeforeId(map);
 
-  if (!beforeId) {
-    return;
-  }
+  if (!beforeId) return;
 
   for (const layerId of [
     MAP_LAYERS.assetHistoryLine,
@@ -167,7 +165,10 @@ function addTrackLayerStack(
   const beforeId = trackLayerBeforeId(map);
 
   map.addSource(MAP_LAYERS.assetHistorySource, historySource(detail));
-  map.addSource(MAP_LAYERS.assetPredictionSource, predictionSource(detail, threat));
+  map.addSource(
+    MAP_LAYERS.assetPredictionSource,
+    predictionSource(detail, threat),
+  );
 
   if (beforeId) {
     map.addLayer(historyLineLayer, beforeId);
@@ -192,6 +193,9 @@ export function syncAssetTrackLayers(
   }
 
   updateAssetTrackLayerData(map, detail, threat);
+  // Re-assert draw order here (not on every data tick) — sync* runs on layer
+  // creation and style swaps, the only times ordering can drift.
+  ensureTrackLayersBelowAssets(map);
 }
 
 /** Push latest track detail into existing GeoJSON sources. */
@@ -200,18 +204,16 @@ export function updateAssetTrackLayerData(
   detail: AssetTrackDetail | null,
   threat: ThreatLevel = "normal",
 ): void {
-  const history = map.getSource(MAP_LAYERS.assetHistorySource) as
-    | GeoJSONSource
-    | undefined;
-  const prediction = map.getSource(MAP_LAYERS.assetPredictionSource) as
-    | GeoJSONSource
-    | undefined;
-
-  history?.setData(detail ? historyCollection(detail) : emptyLineCollection());
-  prediction?.setData(
+  setGeoJsonData(
+    map,
+    MAP_LAYERS.assetHistorySource,
+    detail ? historyCollection(detail) : emptyLineCollection(),
+  );
+  setGeoJsonData(
+    map,
+    MAP_LAYERS.assetPredictionSource,
     detail ? predictionCollection(detail, threat) : emptyLineCollection(),
   );
-  ensureTrackLayersBelowAssets(map);
 }
 
 /** Remove track overlay layers (deselect). */

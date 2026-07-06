@@ -1,0 +1,30 @@
+.feedStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+}
+
+.statusDotConnected {
+  background: var(--color-success);
+}
+
+.statusMuted {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  /* Fixed-width digits so the ticking clock doesn't reflow the header. */
+  font-variant-numeric: tabular-nums;
+}

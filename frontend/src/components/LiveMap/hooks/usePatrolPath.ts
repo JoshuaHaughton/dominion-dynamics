@@ -1,11 +1,23 @@
 import type { PathGeoJson } from "@dominion-dynamics/shared";
 import { SavePatrolPathRequestSchema } from "@dominion-dynamics/shared";
 import { useCallback, useEffect, useState } from "react";
-import { fetchPatrolPath, savePatrolPath } from "../api/clients/patrolPathApi.js";
-import { firstZodValidationMessage } from "../api/validationMessages.js";
+import {
+  fetchPatrolPath,
+  savePatrolPath,
+} from "../../../lib/api/clients/patrolPathApi.js";
+import { firstZodValidationMessage } from "../../../lib/api/validationMessages.js";
+
+export type UsePatrolPathResult = {
+  patrolPath: PathGeoJson | null;
+  isSaving: boolean;
+  isLoaded: boolean;
+  error: string | null;
+  addPatrolPathFromDraw: (geojson: PathGeoJson) => void;
+  reportDrawError: (message: string) => void;
+};
 
 /** Load the saved patrol route and persist newly drawn linestrings. */
-export function usePatrolPath() {
+export function usePatrolPath(): UsePatrolPathResult {
   const [patrolPath, setPatrolPath] = useState<PathGeoJson | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -66,8 +78,7 @@ export function usePatrolPath() {
 
       if (!validation.success) {
         setError(
-          firstZodValidationMessage(validation.error) ??
-            "Invalid patrol path",
+          firstZodValidationMessage(validation.error) ?? "Invalid patrol path",
         );
         return;
       }
@@ -82,10 +93,6 @@ export function usePatrolPath() {
     [persistPatrolPath],
   );
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
   return {
     patrolPath,
     isSaving,
@@ -93,6 +100,5 @@ export function usePatrolPath() {
     error,
     addPatrolPathFromDraw,
     reportDrawError,
-    clearError,
   };
 }

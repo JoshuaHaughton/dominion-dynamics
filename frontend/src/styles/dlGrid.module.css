@@ -1,0 +1,35 @@
+/*
+ * Label/value grid shared by both panels; set --dl-label-width to size the
+ * first column. AssetInfoPanel uses real <dl><dt><dd> (static content);
+ * OperationsPanel rows live inside <button>s, so they use spans with
+ * .dlLabel/.dlValue instead of nesting a definition list in a control.
+ * (Direct children are blockified grid items either way.)
+ */
+.dlGrid {
+  display: grid;
+  grid-template-columns: var(--dl-label-width, 5rem) 1fr;
+  gap: 0.2rem 0.45rem;
+  font-size: 0.8125rem;
+}
+
+.dlGrid dt {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.dlGrid dd {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.dlLabel {
+  display: block;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.dlValue {
+  display: block;
+  margin: 0;
+  color: var(--color-text);
+}

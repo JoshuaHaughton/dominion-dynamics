@@ -1,13 +1,14 @@
 .overlay {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: var(--z-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(15 23 42 / 0.72);
-  color: #f8fafc;
-  pointer-events: none;
+  background: var(--color-overlay);
+  color: var(--color-text);
+  /* Block interaction with the half-initialized map underneath. */
+  pointer-events: auto;
 }
 
 .message {

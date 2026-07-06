@@ -20,13 +20,12 @@ type DrawControlCallbacks = {
 
 function closePolygonCoordinates(coordinates: Position[][]): Position[][] {
   const ring = coordinates[0];
+  const first = ring?.[0];
+  const last = ring?.[ring.length - 1];
 
-  if (!ring || ring.length < 3) {
+  if (!ring || ring.length < 3 || !first || !last) {
     return coordinates;
   }
-
-  const first = ring[0];
-  const last = ring[ring.length - 1];
 
   if (first[0] === last[0] && first[1] === last[1]) {
     return coordinates;
@@ -76,6 +75,19 @@ export function attachDrawControl(
 
   map.addControl(control, "top-left");
 
+  /** Remove the sketch feature, exit draw mode, and hand the result to persistence. */
+  const finishDraw = (
+    terraDraw: NonNullable<ReturnType<typeof control.getTerraDrawInstance>>,
+    id: DrawFeatureId,
+    deliver: () => void,
+  ): void => {
+    terraDraw.removeFeatures([id]);
+    control.resetActiveMode();
+    callbacks.onZoneDrawingChange(false);
+    callbacks.onPatrolDrawingChange(false);
+    deliver();
+  };
+
   const handleFinish = (id: DrawFeatureId): void => {
     const terraDraw = control.getTerraDrawInstance();
 
@@ -100,15 +112,15 @@ export function attachDrawControl(
         );
 
         if (!geojson) {
-          callbacks.onDrawError("Closed patrol path needs at least two waypoints");
+          callbacks.onDrawError(
+            "Closed patrol path needs at least two waypoints",
+          );
           return;
         }
 
-        terraDraw.removeFeatures([id]);
-        control.resetActiveMode();
-        callbacks.onZoneDrawingChange(false);
-        callbacks.onPatrolDrawingChange(false);
-        callbacks.onPatrolPathComplete(geojson);
+        finishDraw(terraDraw, id, () =>
+          callbacks.onPatrolPathComplete(geojson),
+        );
         return;
       }
 
@@ -121,11 +133,7 @@ export function attachDrawControl(
         },
       };
 
-      terraDraw.removeFeatures([id]);
-      control.resetActiveMode();
-      callbacks.onZoneDrawingChange(false);
-      callbacks.onPatrolDrawingChange(false);
-      callbacks.onZoneComplete(geojson);
+      finishDraw(terraDraw, id, () => callbacks.onZoneComplete(geojson));
       return;
     }
 
@@ -139,11 +147,7 @@ export function attachDrawControl(
         },
       };
 
-      terraDraw.removeFeatures([id]);
-      control.resetActiveMode();
-      callbacks.onZoneDrawingChange(false);
-      callbacks.onPatrolDrawingChange(false);
-      callbacks.onPatrolPathComplete(geojson);
+      finishDraw(terraDraw, id, () => callbacks.onPatrolPathComplete(geojson));
       return;
     }
 
@@ -173,14 +177,13 @@ export function attachDrawControl(
   return control;
 }
 
-/** Activate Terra Draw in polygon mode so the operator can outline a zone. */
-export function startZoneDraw(
+/** Activate Terra Draw: polygon sketches a zone, polyline sketches a patrol route. */
+export function startDraw(
   control: MaplibreTerradrawControl | undefined,
+  mode: "polygon" | "polyline",
   isDrawing = false,
 ): void {
-  if (!control) {
-    return;
-  }
+  if (!control) return;
 
   if (isDrawing) {
     control.resetActiveMode();
@@ -189,7 +192,7 @@ export function startZoneDraw(
 
   control.isExpanded = true;
   control.activate();
-  control.getTerraDrawInstance()?.setMode("polygon");
+  control.getTerraDrawInstance()?.setMode(mode);
 }
 
 /** Remove Terra Draw before a basemap style swap or map teardown. */
