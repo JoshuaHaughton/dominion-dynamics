@@ -10,23 +10,18 @@ dist/
 .env
 .env.*
 !.env.example
+*.local
 
 # SQLite
 data/
 *.db
 *.sqlite3
 
-# Build
-dist/
-*.log
-*.tsbuildinfo
+# Test output
+coverage/
 
 # IDE / OS
 .DS_Store
 .idea/
 .vscode/
 *.swp
-
-# Python (removed; keep ignore if stray files)
-.venv/
-__pycache__/

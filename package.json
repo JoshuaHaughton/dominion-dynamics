@@ -1,9 +1,32 @@
 {
   "name": "dominion-dynamics",
   "private": true,
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "backend",
     "frontend",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"yarn workspace @dominion-dynamics/backend dev\" \"yarn workspace @dominion-dynamics/frontend dev\"",
+    "build": "yarn workspace @dominion-dynamics/backend build && yarn workspace @dominion-dynamics/frontend build",
+    "typecheck": "yarn workspaces run typecheck",
+    "test:run": "yarn workspaces run test:run",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.3",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.4",
+    "typescript-eslint": "^8.62.1"
+  }
 }
