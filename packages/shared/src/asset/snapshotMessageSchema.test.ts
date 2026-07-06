@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import { SnapshotMessageSchema } from "./schema.js";
 
 describe("SnapshotMessageSchema", () => {
   const baseAsset = {
-    id: "syn-1",
+    id: "a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
     lat: 45.4,
     lon: -75.7,
     alt: 1000,
@@ -22,7 +23,7 @@ describe("SnapshotMessageSchema", () => {
   };
 
   const selectedTrack = {
-    assetId: "syn-1",
+    assetId: "a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
     history: [{ lat: 45.4, lon: -75.7, ts: 1000 }],
     predictedPath: {
       type: "LineString" as const,
@@ -50,7 +51,7 @@ describe("SnapshotMessageSchema", () => {
       assets: [
         {
           ...baseAsset,
-          id: "patrol-drone",
+          id: PATROL_ASSET_ID,
           role: "drone" as const,
           zone: null,
           drone: {
@@ -78,7 +79,7 @@ describe("SnapshotMessageSchema", () => {
           drone: {
             origin: "dispatch" as const,
             dispatch: {
-              targetId: "syn-critical-1",
+              targetId: "b2eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
               phase: "trailing" as const,
               homeAirportIdent: "CYOW",
               homeAirportName: "Ottawa Macdonald-Cartier International Airport",
@@ -99,7 +100,7 @@ describe("SnapshotMessageSchema", () => {
       ts: 123,
       assets: [baseAsset],
       selectedTrackDelta: {
-        assetId: "syn-1",
+        assetId: "a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
         point: { lat: 45.41, lon: -75.7, ts: 2000 },
         predictedPath: selectedTrack.predictedPath,
       },

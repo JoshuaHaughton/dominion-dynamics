@@ -8,6 +8,3 @@ export type DispatchPhase =
   | "trailing"
   | "rtb"
   | "at_base";
-
-/** Legacy prefix; dispatch drone ids are opaque UUIDs with monotonic Dispatch-N callsigns. */
-export const DISPATCH_DRONE_ID_PREFIX = "dispatch-drone";

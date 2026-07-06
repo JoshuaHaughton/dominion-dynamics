@@ -80,13 +80,12 @@ export type { ValidationErrorBody } from "./api/validationError.js";
 export { ValidationErrorBodySchema } from "./api/validationError.js";
 
 export type { PatrolMode } from "./patrol/constants.js";
-export { PATROL_ASSET_ID } from "./patrol/constants.js";
+export { PATROL_ASSET_ID, PATROL_CALLSIGN } from "./patrol/constants.js";
 
 export type { Airport } from "./airport/schema.js";
 export { AirportSchema } from "./airport/schema.js";
 
 export type { DispatchPhase, DroneOrigin } from "./dispatch/constants.js";
-export { DISPATCH_DRONE_ID_PREFIX } from "./dispatch/constants.js";
 
 export type { IcaoEmitterCategory } from "./icao/emitterCategory.js";
 export {
