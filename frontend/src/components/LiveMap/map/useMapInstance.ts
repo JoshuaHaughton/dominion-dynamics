@@ -64,7 +64,7 @@ export function useMapInstance({
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [containerRef, mapRef]);
 
   /** Swap the basemap style and re-sync custom layers after style.load. */
   useEffect(() => {
@@ -91,5 +91,5 @@ export function useMapInstance({
     return () => {
       map.off("style.load", onStyleLoad);
     };
-  }, [styleId]);
+  }, [mapRef, styleId]);
 }

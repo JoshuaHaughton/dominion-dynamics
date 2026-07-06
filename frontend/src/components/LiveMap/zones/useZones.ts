@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Zone, ZoneGeoJson } from "@dominion-dynamics/shared";
 import { ZoneGeoJsonSchema } from "@dominion-dynamics/shared";
 import {
@@ -44,11 +44,8 @@ export type UseZonesResult = {
  */
 export function useZones(): UseZonesResult {
   const [zones, setZones] = useState<ZoneView[]>([]);
-  const zonesRef = useRef(zones);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-
-  zonesRef.current = zones;
 
   useEffect(() => {
     let cancelled = false;
@@ -112,7 +109,7 @@ export function useZones(): UseZonesResult {
 
     const pendingZone: PendingZone = {
       clientId: crypto.randomUUID(),
-      name: nextZoneName(zonesRef.current.length),
+      name: nextZoneName(zones.length),
       geojson,
       pending: true,
     };
@@ -124,7 +121,7 @@ export function useZones(): UseZonesResult {
   function removeZone(zoneId: number) {
     setError(null);
 
-    const snapshot = zonesRef.current;
+    const snapshot = zones;
     const exists = snapshot.some(
       (zone) => !isPendingZone(zone) && zone.id === zoneId,
     );

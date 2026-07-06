@@ -4,7 +4,7 @@ import type {
   AssetTrackDetail,
   PathGeoJson,
 } from "@dominion-dynamics/shared";
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { MAP_LAYERS, DEMO_MAP_FOCUS_REGION } from "../../../lib/constants/mapConstants.js";
 import type { MapVisualFilter } from "../../../lib/utils/assetSymbology.js";
 import type { ZoneView } from "../zones/useZones.js";
@@ -71,14 +71,16 @@ export function useMapLayerSync({
     mapVisualFilter,
   });
 
-  latestRef.current = {
-    assets,
-    zones,
-    patrolPath,
-    trackDetail,
-    selectedAssetId,
-    mapVisualFilter,
-  };
+  useLayoutEffect(() => {
+    latestRef.current = {
+      assets,
+      zones,
+      patrolPath,
+      trackDetail,
+      selectedAssetId,
+      mapVisualFilter,
+    };
+  });
 
   const selectedThreat = getSelectedThreat(assets, selectedAssetId);
 
@@ -108,7 +110,7 @@ export function useMapLayerSync({
     } else if (map.isStyleLoaded()) {
       syncZoneLayers(map, zones);
     }
-  }, [zones]);
+  }, [mapRef, zones]);
 
   /** Push the latest patrol route into the GeoJSON source. */
   useEffect(() => {
@@ -121,7 +123,7 @@ export function useMapLayerSync({
     } else if (map.isStyleLoaded()) {
       syncPatrolPathLayers(map, patrolPath);
     }
-  }, [patrolPath]);
+  }, [mapRef, patrolPath]);
 
   /** Push track overlays when selection detail (or its threat tint) changes. */
   useEffect(() => {
@@ -146,7 +148,7 @@ export function useMapLayerSync({
     }
 
     syncAssetTrackLayers(map, trackDetail, selectedThreat);
-  }, [selectedAssetId, selectedThreat, trackDetail]);
+  }, [mapRef, selectedAssetId, selectedThreat, trackDetail]);
 
   /** Push the latest asset snapshot into the map; initial demo fit runs once on first data. */
   useEffect(() => {
@@ -169,7 +171,7 @@ export function useMapLayerSync({
 
     fitMapToBounds(map, toFitBounds(DEMO_MAP_FOCUS_REGION), 0);
     hasFitBoundsRef.current = true;
-  }, [assets, mapVisualFilter]);
+  }, [mapRef, assets, mapVisualFilter]);
 
   function resetLayerSync() {
     hasFitBoundsRef.current = false;
