@@ -28,4 +28,15 @@ describe("airport registry", () => {
   it("returns EGLL for a point near Heathrow", () => {
     expect(findNearestAirport(51.47, -0.4543).ident).toBe("EGLL");
   });
+
+  it("excludes private strips from the bundled registry", () => {
+    expect(getAirportByIdent("CA-1254")).toBeUndefined();
+  });
+
+  it("returns an ICAO airport east of Ottawa instead of a private strip", () => {
+    const nearest = findNearestAirport(45.37, -75.41);
+
+    expect(nearest.ident).toMatch(/^[A-Z]{4}$/);
+    expect(nearest.ident).not.toBe("CA-1254");
+  });
 });

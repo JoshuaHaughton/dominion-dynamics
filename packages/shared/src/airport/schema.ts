@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** One airfield from the OurAirports registry (large / medium / small; no heliports). */
+/** One airfield from the OurAirports registry (large / medium / small ICAO airports). */
 export const AirportSchema = z.object({
   ident: z.string().min(1),
   name: z.string().min(1),
