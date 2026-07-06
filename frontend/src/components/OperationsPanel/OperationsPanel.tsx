@@ -1,10 +1,12 @@
 import { useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Asset, ZoneGeoJson } from "@dominion-dynamics/shared";
 import type { ZoneView } from "../LiveMap/zones/useZones.js";
 import type {
   OperationsEntityTab,
   OperationsStatusFilter,
 } from "../../lib/utils/assetSymbology.js";
+import { useFadeMotionProps } from "../../lib/motion/useFadeMotion.js";
 import {
   buildOperationsRows,
   buildPinnedPatrolRow,
@@ -106,6 +108,8 @@ export function OperationsPanel({
   onSelectZone,
   onDeleteZone,
 }: OperationsPanelProps) {
+  const fadeMotion = useFadeMotionProps();
+
   const rows = useMemo(
     () => buildOperationsRows(assets, entityTab, statusFilter),
     [assets, entityTab, statusFilter],
@@ -133,51 +137,53 @@ export function OperationsPanel({
         onStatusFilterChange={onStatusFilterChange}
       />
       <div className={styles.body}>
-        {entityTab === "zones" ? (
-          zoneRows.length === 0 ? (
-            <p className={styles.empty}>{emptyMessage("zones")}</p>
+        <AnimatePresence initial={false} mode="wait">
+          {entityTab === "zones" ? (
+            <motion.div key="zones" {...fadeMotion}>
+              {zoneRows.length === 0 ? (
+                <p className={styles.empty}>{emptyMessage("zones")}</p>
+              ) : (
+                <ZoneRowList
+                  zoneRows={zoneRows}
+                  onSelectZone={onSelectZone}
+                  onDeleteZone={onDeleteZone}
+                />
+              )}
+            </motion.div>
           ) : (
-            <ZoneRowList
-              zoneRows={zoneRows}
-              onSelectZone={onSelectZone}
-              onDeleteZone={onDeleteZone}
-            />
-          )
-        ) : (
-          <>
-            {pinnedPatrol !== null ? (
-              <div className={styles.pinnedSection}>
-                <p className={styles.pinnedLabel}>Patrol drone</p>
-                <ul className={styles.list}>
-                  <OperationsAssetRow
-                    assetId={pinnedPatrol.assetId}
-                    fields={droneRowFields(pinnedPatrol.row)}
-                    isSelected={selectedAssetId === pinnedPatrol.assetId}
-                    isPinned
-                    onSelect={onSelectAsset}
-                  />
-                </ul>
-              </div>
-            ) : null}
-            {listRows.length === 0 ? (
-              pinnedPatrol === null ? (
+            <motion.div key={entityTab} {...fadeMotion}>
+              {pinnedPatrol !== null ? (
+                <div className={styles.pinnedSection}>
+                  <p className={styles.pinnedLabel}>Patrol drone</p>
+                  <ul className={styles.list}>
+                    <OperationsAssetRow
+                      assetId={pinnedPatrol.assetId}
+                      fields={droneRowFields(pinnedPatrol.row)}
+                      isSelected={selectedAssetId === pinnedPatrol.assetId}
+                      isPinned
+                      onSelect={onSelectAsset}
+                    />
+                  </ul>
+                </div>
+              ) : null}
+              {listRows.length === 0 && pinnedPatrol === null ? (
                 <p className={styles.empty}>{emptyMessage(entityTab)}</p>
-              ) : null
-            ) : (
-              <ul className={styles.list}>
-                {listRows.map((entry) => (
-                  <OperationsAssetRow
-                    key={entry.assetId}
-                    assetId={entry.assetId}
-                    fields={rowFields(entry)}
-                    isSelected={selectedAssetId === entry.assetId}
-                    onSelect={onSelectAsset}
-                  />
-                ))}
-              </ul>
-            )}
-          </>
-        )}
+              ) : listRows.length > 0 ? (
+                <ul className={styles.list}>
+                  {listRows.map((entry) => (
+                    <OperationsAssetRow
+                      key={entry.assetId}
+                      assetId={entry.assetId}
+                      fields={rowFields(entry)}
+                      isSelected={selectedAssetId === entry.assetId}
+                      onSelect={onSelectAsset}
+                    />
+                  ))}
+                </ul>
+              ) : null}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </aside>
   );

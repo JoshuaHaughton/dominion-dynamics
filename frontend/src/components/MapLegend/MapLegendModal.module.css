@@ -1,0 +1,143 @@
+.toggle {
+  composes: btnGhostSm from "../../styles/button.module.css";
+  min-width: 2rem;
+  padding-inline: 0.55rem;
+  font-weight: 600;
+}
+
+.dialog {
+  composes: chromePanel from "../../styles/surface.module.css";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: calc(var(--z-overlay) + 2);
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-overlay) + 1);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: var(--color-overlay);
+  cursor: pointer;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.closeButton {
+  composes: btnGhostSm from "../../styles/button.module.css";
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.85rem;
+  overflow-y: auto;
+}
+
+.sectionTitle {
+  margin: 0 0 0.45rem;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--color-text);
+  border-radius: 999px;
+}
+
+.square {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 2px;
+}
+
+.squareRing {
+  box-shadow: 0 0 0 2px var(--ring-color);
+}
+
+.lineSwatch {
+  width: 1.25rem;
+  height: 0;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+
+.lineSwatchDashed {
+  border-top-style: dashed;
+}
+
+.zoneSwatch {
+  width: 1.25rem;
+  height: 0.85rem;
+  border: 2px solid var(--zone-color);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--zone-color) 18%, transparent);
+}
+
+.label {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.labelStrong {
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}

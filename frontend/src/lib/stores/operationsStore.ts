@@ -19,7 +19,7 @@ type OperationsState = {
 export const useOperationsStore = create<OperationsState>((set) => ({
   selectedAssetId: null,
   isFollowingCamera: false,
-  entityTab: "missions",
+  entityTab: "traffic",
   statusFilter: "all",
   selectAsset: (selectedAssetId) => set({ selectedAssetId }),
   setFollowingCamera: (isFollowingCamera) => set({ isFollowingCamera }),

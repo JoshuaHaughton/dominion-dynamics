@@ -1,9 +1,11 @@
+import { AnimatePresence, motion } from "framer-motion";
 import type { Asset } from "@dominion-dynamics/shared";
 import {
   statusFiltersForTab,
   type OperationsEntityTab,
   type OperationsStatusFilter,
 } from "../../lib/utils/assetSymbology.js";
+import { useFadeMotionProps } from "../../lib/motion/useFadeMotion.js";
 import { countAssetsForTab } from "./operationsPanelUtils.js";
 import styles from "./OperationsPanel.module.css";
 
@@ -20,9 +22,9 @@ const ENTITY_TABS: readonly {
   id: OperationsEntityTab;
   label: string;
 }[] = [
-  { id: "missions", label: "Missions" },
-  { id: "drones", label: "Drones" },
   { id: "traffic", label: "Traffic" },
+  { id: "drones", label: "Drones" },
+  { id: "missions", label: "Missions" },
   { id: "zones", label: "Zones" },
 ];
 
@@ -35,6 +37,7 @@ export function OperationsPanelHeader({
   onEntityTabChange,
   onStatusFilterChange,
 }: OperationsPanelHeaderProps) {
+  const fadeMotion = useFadeMotionProps();
   const statusChips = statusFiltersForTab(entityTab);
   const trafficCount = countAssetsForTab(assets, "traffic");
   const droneCount = countAssetsForTab(assets, "drones");
@@ -70,31 +73,35 @@ export function OperationsPanelHeader({
           );
         })}
       </div>
-      {entityTab !== "zones" ? (
-        <div
-          className={styles.statusChips}
-          role="group"
-          aria-label="Status filter"
-        >
-          {statusChips.map((chip) => {
-            const isActive = statusFilter === chip.id;
+      <AnimatePresence initial={false}>
+        {entityTab !== "zones" ? (
+          <motion.div
+            key="status-chips"
+            className={styles.statusChips}
+            role="group"
+            aria-label="Status filter"
+            {...fadeMotion}
+          >
+            {statusChips.map((chip) => {
+              const isActive = statusFilter === chip.id;
 
-            return (
-              <button
-                key={chip.id}
-                type="button"
-                aria-pressed={isActive}
-                className={`${styles.statusChip} ${isActive ? styles.statusChipActive : ""}`}
-                onClick={() => {
-                  onStatusFilterChange(chip.id);
-                }}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+              return (
+                <button
+                  key={chip.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  className={`${styles.statusChip} ${isActive ? styles.statusChipActive : ""}`}
+                  onClick={() => {
+                    onStatusFilterChange(chip.id);
+                  }}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

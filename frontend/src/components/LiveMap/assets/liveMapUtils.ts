@@ -52,7 +52,7 @@ const DRONE_ROLE_FILTER: SymbolLayerSpecification["filter"] = [
 ];
 
 const DEFAULT_VISUAL_FILTER: MapVisualFilter = {
-  entityTab: "missions",
+  entityTab: "traffic",
   statusFilter: "all",
   selectedAssetId: null,
 };
