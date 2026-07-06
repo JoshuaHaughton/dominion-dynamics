@@ -61,7 +61,35 @@ describe("assetsToFeatureCollection", () => {
     });
   });
 
-  it("maps dispatch drones with square shape and patrol diversion ring", () => {
+  it("inverts selected assets to white fill with symbology-colored ring", () => {
+    const patrolAsset: Asset = {
+      ...syntheticAsset,
+      id: "patrol-1",
+      role: "drone",
+      zone: null,
+      drone: {
+        origin: "patrol",
+        patrol: { mode: "patrol", shadowTargetId: null, pathId: 3 },
+      },
+    };
+
+    const collection = assetsToFeatureCollection([patrolAsset], {
+      entityTab: "drones",
+      statusFilter: "all",
+      selectedAssetId: "patrol-1",
+    });
+
+    expect(collection.features[0]?.properties).toMatchObject({
+      isSelected: true,
+      isPatrolOrigin: true,
+      symbologyBodyKey: "patrol:patrol",
+    });
+    expect(collection.features[0]?.properties).not.toHaveProperty(
+      "divertedFromPatrol",
+    );
+  });
+
+  it("maps dispatch drones with square shape keys", () => {
     const dispatchAsset: Asset = {
       ...syntheticAsset,
       id: "dispatch-1",
@@ -83,7 +111,6 @@ describe("assetsToFeatureCollection", () => {
       markerShape: "square",
       symbologyBodyKey: "dispatch:trailing",
       symbologyStrokeKey: "dispatch-stroke:trailing",
-      divertedFromPatrol: true,
       isPatrolOrigin: true,
     });
   });

@@ -73,15 +73,11 @@ export const ASSET_PATROL_STROKE_COLORS = {
   rejoin: ASSET_PATROL_MODE_COLORS.rejoin,
 } as const;
 
-export const ASSET_SELECTION_STROKE_COLOR = "#38bdf8";
-export const ASSET_DIVERTED_STROKE_COLOR = PATROL_PATH_LINE_COLOR;
 /** Ghost de-emphasis for non-matching assets when a specific status chip is active. */
 export const ASSET_GHOST_OPACITY = 0.65;
 export const ASSET_GHOST_RADIUS_SCALE = 0.85;
 export const ASSET_SELECTED_RADIUS_SCALE = 1.15;
 export const ASSET_SELECTED_STROKE_WIDTH = 3.5;
-
-/** On-screen square drone body size (px). */
 export const DRONE_MARKER_DIAMETER_PX = PATROL_ASSET_CIRCLE_RADIUS * 2;
 /** High-res SDF canvas for drone squares (same approach as heading chevrons). */
 export const DRONE_MARKER_SDF_LOGICAL_PX = 32;

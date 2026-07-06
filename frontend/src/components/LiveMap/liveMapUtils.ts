@@ -12,12 +12,10 @@ import {
   ASSET_CIRCLE_RADIUS,
   ASSET_DISPATCH_BODY_COLOR,
   ASSET_DISPATCH_STROKE_COLORS,
-  ASSET_DIVERTED_STROKE_COLOR,
   ASSET_HEADING_GAP_PX,
   ASSET_HEADING_ICON_SIZE,
   ASSET_PATROL_MODE_COLORS,
   ASSET_PATROL_STROKE_COLORS,
-  ASSET_SELECTION_STROKE_COLOR,
   ASSET_SOURCE_COLORS,
   ASSET_THREAT_COLORS,
   DRONE_HEADING_OFFSET_Y,
@@ -176,8 +174,6 @@ export function assetsToFeatureCollection(
           markerShape: symbologyMarkerShape(symbology),
           symbologyBodyKey: symbologyBodyKey(symbology),
           symbologyStrokeKey: symbologyStrokeKey(symbology),
-          divertedFromPatrol:
-            symbology.kind === "dispatch" && symbology.divertedFromPatrol,
           isPatrolOrigin: asset.drone?.origin === "patrol",
           isSelected: visualFilter.selectedAssetId === asset.id,
           mapOpacity: emphasis.opacity,
@@ -227,42 +223,49 @@ const symbologyBodyColor: DataDrivenPropertyValueSpecification<string> = [
 ];
 
 /** Patrol-slot drones stay cyan even while running a dispatch mission. */
-const markerBodyColor: DataDrivenPropertyValueSpecification<string> = [
+const normalFillColor: DataDrivenPropertyValueSpecification<string> = [
   "case",
   ["get", "isPatrolOrigin"],
   ASSET_PATROL_MODE_COLORS.patrol,
   symbologyBodyColor,
 ];
 
-const symbologyStrokeColor: DataDrivenPropertyValueSpecification<string> = [
+const markerBodyColor: DataDrivenPropertyValueSpecification<string> = [
   "case",
   ["get", "isSelected"],
-  ASSET_SELECTION_STROKE_COLOR,
-  ["get", "divertedFromPatrol"],
-  ASSET_DIVERTED_STROKE_COLOR,
-  [
-    "match",
-    ["get", "symbologyStrokeKey"],
-    "traffic-stroke",
-    ASSET_SOURCE_COLORS.stroke,
-    "patrol-stroke:patrol",
-    ASSET_PATROL_STROKE_COLORS.patrol,
-    "patrol-stroke:shadow",
-    ASSET_PATROL_STROKE_COLORS.shadow,
-    "patrol-stroke:rejoin",
-    ASSET_PATROL_STROKE_COLORS.rejoin,
-    "dispatch-stroke:enroute",
-    ASSET_DISPATCH_STROKE_COLORS.enroute,
-    "dispatch-stroke:intercepting",
-    ASSET_DISPATCH_STROKE_COLORS.intercepting,
-    "dispatch-stroke:trailing",
-    ASSET_DISPATCH_STROKE_COLORS.trailing,
-    "dispatch-stroke:rtb",
-    ASSET_DISPATCH_STROKE_COLORS.rtb,
-    "dispatch-stroke:at_base",
-    ASSET_DISPATCH_STROKE_COLORS.at_base,
-    ASSET_SOURCE_COLORS.stroke,
-  ],
+  "#ffffff",
+  normalFillColor,
+];
+
+const symbologyStrokeColor: DataDrivenPropertyValueSpecification<string> = [
+  "match",
+  ["get", "symbologyStrokeKey"],
+  "traffic-stroke",
+  ASSET_SOURCE_COLORS.stroke,
+  "patrol-stroke:patrol",
+  ASSET_PATROL_STROKE_COLORS.patrol,
+  "patrol-stroke:shadow",
+  ASSET_PATROL_STROKE_COLORS.shadow,
+  "patrol-stroke:rejoin",
+  ASSET_PATROL_STROKE_COLORS.rejoin,
+  "dispatch-stroke:enroute",
+  ASSET_DISPATCH_STROKE_COLORS.enroute,
+  "dispatch-stroke:intercepting",
+  ASSET_DISPATCH_STROKE_COLORS.intercepting,
+  "dispatch-stroke:trailing",
+  ASSET_DISPATCH_STROKE_COLORS.trailing,
+  "dispatch-stroke:rtb",
+  ASSET_DISPATCH_STROKE_COLORS.rtb,
+  "dispatch-stroke:at_base",
+  ASSET_DISPATCH_STROKE_COLORS.at_base,
+  ASSET_SOURCE_COLORS.stroke,
+];
+
+const markerRingColor: DataDrivenPropertyValueSpecification<string> = [
+  "case",
+  ["get", "isSelected"],
+  normalFillColor,
+  symbologyStrokeColor,
 ];
 
 const trafficCircleRadius: DataDrivenPropertyValueSpecification<number> = [
@@ -280,7 +283,7 @@ const assetsCircleLayer: CircleLayerSpecification = {
     "circle-radius": trafficCircleRadius,
     "circle-color": markerBodyColor,
     "circle-opacity": ["get", "mapOpacity"],
-    "circle-stroke-color": symbologyStrokeColor,
+    "circle-stroke-color": markerRingColor,
     "circle-stroke-width": ["get", "mapStrokeWidth"],
   },
 };
@@ -305,7 +308,7 @@ const assetsDroneMarkerLayer: SymbolLayerSpecification = {
   paint: {
     "icon-color": markerBodyColor,
     "icon-opacity": ["get", "mapOpacity"],
-    "icon-halo-color": symbologyStrokeColor,
+    "icon-halo-color": markerRingColor,
     "icon-halo-width": ["get", "mapStrokeWidth"],
   },
 };
