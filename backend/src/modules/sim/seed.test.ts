@@ -8,7 +8,7 @@ function mockRespawnRandom(
   edgeRandom: number,
   edgePositionRandom = 0.5,
   headingJitterRandom = 0,
-  categoryRandom = 0.99,
+  categoryRandom = 0.995,
   speedRandom = 0,
 ): void {
   vi.spyOn(Math, "random")

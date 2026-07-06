@@ -10,18 +10,18 @@ export const SYNTHETIC_SPAWNABLE_CATEGORIES = [
 export type SyntheticSpawnableCategory = (typeof SYNTHETIC_SPAWNABLE_CATEGORIES)[number];
 
 export const SYNTHETIC_CATEGORY_WEIGHTS: Record<SyntheticSpawnableCategory, number> = {
-  2: 0.12,
+  2: 0.16,
   3: 0.12,
-  4: 0.18,
-  5: 0.05,
+  4: 0.2,
+  5: 0.06,
   6: 0.1,
-  7: 0.05,
-  8: 0.12,
-  9: 0.03,
-  10: 0.02,
-  11: 0.01,
-  12: 0.02,
-  14: 0.18,
+  7: 0.04,
+  8: 0.06,
+  9: 0.06,
+  10: 0.04,
+  11: 0.03,
+  12: 0.04,
+  14: 0.09,
 };
 
 export const SPEED_RANGE_BY_CATEGORY: Record<SyntheticSpawnableCategory, SpeedRange> = {

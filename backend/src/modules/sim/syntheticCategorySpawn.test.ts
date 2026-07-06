@@ -25,7 +25,7 @@ describe("pickSyntheticCategory", () => {
   });
 
   it("returns unmanned aerial vehicle for high-end draws", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    vi.spyOn(Math, "random").mockReturnValue(0.995);
 
     expect(pickSyntheticCategory()).toBe(14);
   });
@@ -59,7 +59,7 @@ describe("sampleSyntheticMotion", () => {
 
   it("samples from the category selected by the weight draw", () => {
     vi.spyOn(Math, "random")
-      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.995)
       .mockReturnValueOnce(0);
 
     expect(sampleSyntheticMotion()).toEqual({
@@ -77,5 +77,21 @@ describe("SYNTHETIC_CATEGORY_WEIGHTS", () => {
     );
 
     expect(total).toBeCloseTo(1);
+  });
+
+  it("targets roughly 52% fast aircraft (max speed at least 120 m/s)", () => {
+    const fastWeight = (
+      Object.entries(SYNTHETIC_CATEGORY_WEIGHTS) as Array<
+        [keyof typeof SYNTHETIC_CATEGORY_WEIGHTS, number]
+      >
+    ).reduce((sum, [category, weight]) => {
+      if (SPEED_RANGE_BY_CATEGORY[category].maxMps >= 120) {
+        return sum + weight;
+      }
+
+      return sum;
+    }, 0);
+
+    expect(fastWeight).toBeCloseTo(0.52, 2);
   });
 });
