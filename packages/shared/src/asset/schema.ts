@@ -7,11 +7,25 @@ export const AssetZoneStateSchema = z.object({
   nearestBoundaryM: z.number().finite().min(0).nullable(),
 });
 
-export const AssetPatrolStateSchema = z.object({
+/** Route-following state for drones with {@link AssetDroneStateSchema.shape.origin} `"patrol"`. */
+export const DroneRouteStateSchema = z.object({
   mode: z.enum(["patrol", "shadow", "rejoin"]),
   shadowTargetId: z.string().nullable(),
   /** Set when the route is persisted; omitted until the user saves a patrol path. */
   pathId: z.number().int().positive().optional(),
+});
+
+/** Airport scramble mission state while auto-dispatching on critical traffic. */
+export const DroneDispatchStateSchema = z.object({
+  targetId: z.string(),
+  phase: z.enum(["enroute", "intercepting", "trailing", "rtb", "at_base"]),
+  homeAirportIdent: z.string(),
+});
+
+export const AssetDroneStateSchema = z.object({
+  origin: z.enum(["patrol", "dispatch"]),
+  patrol: DroneRouteStateSchema.optional(),
+  dispatch: DroneDispatchStateSchema.optional(),
 });
 
 export const AssetSchema = z.object({
@@ -21,15 +35,15 @@ export const AssetSchema = z.object({
   alt: z.number().finite(),
   heading: z.number().finite(),
   speed: z.number().finite(),
-  role: z.enum(["traffic", "patrol"]),
+  role: z.enum(["traffic", "drone"]),
   category: z.number().int().min(0).max(20),
   callsign: z.string().nullable(),
   originCountry: z.string().nullable(),
   onGround: z.boolean(),
-  /** Zone threat state for traffic; null when {@link AssetSchema.shape.role} is `"patrol"`. */
+  /** Zone threat state for traffic; null when {@link AssetSchema.shape.role} is `"drone"`. */
   zone: AssetZoneStateSchema.nullable(),
-  /** Present when {@link AssetSchema.shape.role} is `"patrol"`. */
-  patrol: AssetPatrolStateSchema.optional(),
+  /** Present when {@link AssetSchema.shape.role} is `"drone"`. */
+  drone: AssetDroneStateSchema.optional(),
 });
 
 /** WebSocket live snapshot message. */
@@ -44,7 +58,9 @@ export const SnapshotMessageSchema = z.object({
 });
 
 export type AssetZoneState = z.infer<typeof AssetZoneStateSchema>;
-export type AssetPatrolState = z.infer<typeof AssetPatrolStateSchema>;
+export type DroneRouteState = z.infer<typeof DroneRouteStateSchema>;
+export type DroneDispatchState = z.infer<typeof DroneDispatchStateSchema>;
+export type AssetDroneState = z.infer<typeof AssetDroneStateSchema>;
 export type Asset = z.infer<typeof AssetSchema>;
 export type SnapshotMessage = z.infer<typeof SnapshotMessageSchema>;
 export type LiveServerMessage = SnapshotMessage;

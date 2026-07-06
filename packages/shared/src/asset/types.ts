@@ -1,5 +1,5 @@
 /** Operational role of a live map asset. */
-export type AssetRole = "traffic" | "patrol";
+export type AssetRole = "traffic" | "drone";
 
 export type ThreatLevel = "normal" | "warning" | "critical";
 

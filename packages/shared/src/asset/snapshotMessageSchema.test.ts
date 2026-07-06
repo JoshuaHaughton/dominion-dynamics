@@ -43,7 +43,7 @@ describe("SnapshotMessageSchema", () => {
     expect(message).toEqual({ type: "snapshot", ts: 123, assets: [baseAsset] });
   });
 
-  it("accepts patrol assets with null zone state", () => {
+  it("accepts route drones with null zone state", () => {
     const message = SnapshotMessageSchema.parse({
       type: "snapshot",
       ts: 123,
@@ -51,14 +51,44 @@ describe("SnapshotMessageSchema", () => {
         {
           ...baseAsset,
           id: "patrol-drone",
-          role: "patrol" as const,
+          role: "drone" as const,
           zone: null,
-          patrol: { mode: "patrol" as const, shadowTargetId: null },
+          drone: {
+            origin: "patrol" as const,
+            patrol: { mode: "patrol" as const, shadowTargetId: null },
+          },
         },
       ],
     });
 
     expect(message.assets[0]?.zone).toBeNull();
+    expect(message.assets[0]?.drone?.origin).toBe("patrol");
+  });
+
+  it("accepts dispatch drones with dispatch mission state", () => {
+    const message = SnapshotMessageSchema.parse({
+      type: "snapshot",
+      ts: 123,
+      assets: [
+        {
+          ...baseAsset,
+          id: "dispatch-drone-1",
+          role: "drone" as const,
+          zone: null,
+          drone: {
+            origin: "dispatch" as const,
+            dispatch: {
+              targetId: "syn-critical-1",
+              phase: "trailing" as const,
+              homeAirportIdent: "CYOW",
+            },
+          },
+        },
+      ],
+    });
+
+    expect(message.assets[0]?.drone?.origin).toBe("dispatch");
+    expect(message.assets[0]?.drone?.dispatch?.homeAirportIdent).toBe("CYOW");
   });
 
   it("accepts snapshots with selectedTrackDelta for synced clients", () => {

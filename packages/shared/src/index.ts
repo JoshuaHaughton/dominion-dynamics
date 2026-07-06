@@ -2,15 +2,19 @@ export type { AssetRole, SimBounds, ThreatLevel } from "./asset/types.js";
 
 export type {
   Asset,
-  AssetPatrolState,
+  AssetDroneState,
   AssetZoneState,
+  DroneDispatchState,
+  DroneRouteState,
   LiveServerMessage,
   SnapshotMessage,
 } from "./asset/schema.js";
 export {
-  AssetPatrolStateSchema,
+  AssetDroneStateSchema,
   AssetSchema,
   AssetZoneStateSchema,
+  DroneDispatchStateSchema,
+  DroneRouteStateSchema,
   LiveServerMessageSchema,
   SnapshotMessageSchema,
 } from "./asset/schema.js";
@@ -77,6 +81,12 @@ export { ValidationErrorBodySchema } from "./api/validationError.js";
 
 export type { PatrolMode } from "./patrol/constants.js";
 export { PATROL_ASSET_ID } from "./patrol/constants.js";
+
+export type { Airport } from "./airport/schema.js";
+export { AirportSchema } from "./airport/schema.js";
+
+export type { DispatchPhase, DroneOrigin } from "./dispatch/constants.js";
+export { DISPATCH_DRONE_ID_PREFIX } from "./dispatch/constants.js";
 
 export type { IcaoEmitterCategory } from "./icao/emitterCategory.js";
 export {
