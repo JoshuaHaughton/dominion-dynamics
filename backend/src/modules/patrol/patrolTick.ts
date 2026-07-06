@@ -4,6 +4,7 @@ import { db } from "../../db/index.js";
 import type { AppDatabase } from "../../db/types.js";
 import { resolvePatrolPath } from "../../services/patrol/patrolPathService.js";
 import { createInitialPatrolDroneState } from "./createInitialPatrolDroneState.js";
+import { realignPatrolDroneToPath } from "./realignPatrolDroneToPath.js";
 import {
   deletePatrolDroneState,
   getPatrolDroneState,
@@ -21,9 +22,14 @@ export function initializePatrolDrone(database: AppDatabase = db): void {
     return;
   }
 
+  const existing = getPatrolDroneState(PATROL_ASSET_ID);
+
+  // Keep position on route replace; only spawn at vertex zero on first save.
   setPatrolDroneState(
     PATROL_ASSET_ID,
-    createInitialPatrolDroneState(resolved.geojson, resolved.id),
+    existing
+      ? realignPatrolDroneToPath(existing, resolved.geojson, resolved.id)
+      : createInitialPatrolDroneState(resolved.geojson, resolved.id),
   );
 }
 

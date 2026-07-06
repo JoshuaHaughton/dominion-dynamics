@@ -2,23 +2,41 @@ import type {
   AssetTrackDetail,
   SelectedTrackDelta,
 } from "@dominion-dynamics/shared";
+import { getPatrolDroneState } from "../patrol/droneStore.js";
+import { resolveChaseSteerPoint } from "../patrol/shadowChase.js";
 import { getAssetTrackHistory } from "../sim/assetTrackHistory.js";
 import { getAssetById } from "../sim/store.js";
 import { predictAssetPath } from "../threat/predictPath.js";
 
 function loadTrackContext(assetId: string) {
   const asset = getAssetById(assetId);
-
-  if (!asset) {
-    return null;
-  }
+  if (!asset) return null;
 
   const history = getAssetTrackHistory(assetId);
+
+  const shadowTargetId = asset.patrol?.shadowTargetId;
+  const shadowTarget =
+    shadowTargetId !== undefined && shadowTargetId !== null
+      ? getAssetById(shadowTargetId)
+      : null;
+
+  const droneState = getPatrolDroneState(assetId);
+
+  // Shadow: line to steer point (where the drone aims). Rejoin: line to path snap.
+  const shadowLineEnd = shadowTarget
+    ? resolveChaseSteerPoint(asset, shadowTarget)
+    : null;
+  const lineEnd =
+    shadowLineEnd ??
+    (asset.patrol?.mode === "rejoin" ? droneState?.rejoinTarget : null) ??
+    undefined;
 
   return {
     asset,
     history,
-    predictedPath: predictAssetPath(asset, history),
+    predictedPath: predictAssetPath(asset, history, {
+      lineEnd,
+    }),
   };
 }
 

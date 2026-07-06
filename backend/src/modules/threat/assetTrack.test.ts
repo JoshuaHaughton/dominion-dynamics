@@ -81,5 +81,70 @@ describe("asset track helpers", () => {
         [-75.7, 45.35],
       ]);
     });
+
+    it("uses instantaneous heading and speed for patrol assets", () => {
+      const patrolAsset = testAsset({
+        id: "patrol-1",
+        role: "patrol",
+        lat: 45.35,
+        lon: -75.7,
+        alt: 500,
+        heading: 180,
+        speed: 80,
+      });
+      const history: AssetHistoryPoint[] = [
+        { lat: 45.35, lon: -75.75, ts: 0 },
+        { lat: 45.35, lon: -75.7, ts: 60_000 },
+      ];
+
+      const path = predictAssetPath(patrolAsset, history);
+
+      expect(path.coordinates[0]).toEqual([-75.7, 45.35]);
+      expect(path.coordinates[1]?.[1]).toBeLessThan(45.35);
+      expect(path.coordinates[1]?.[0]).toBeCloseTo(-75.7, 4);
+    });
+
+    it("draws the prediction line to the chased asset while shadowing", () => {
+      const patrolAsset = testAsset({
+        id: "patrol-1",
+        role: "patrol",
+        lat: 45.35,
+        lon: -75.7,
+        alt: 500,
+        heading: 90,
+        speed: 80,
+      });
+
+      const path = predictAssetPath(patrolAsset, [], {
+        lineEnd: { lat: 45.35, lon: -75.5 },
+      });
+
+      expect(path.coordinates).toEqual([
+        [-75.7, 45.35],
+        [-75.5, 45.35],
+      ]);
+    });
+
+    it("draws the prediction line to the rejoin snap point while rejoining", () => {
+      const patrolAsset = testAsset({
+        id: "patrol-1",
+        role: "patrol",
+        lat: 45.35,
+        lon: -75.7,
+        alt: 500,
+        heading: 90,
+        speed: 300,
+        patrol: { mode: "rejoin", shadowTargetId: null },
+      });
+
+      const path = predictAssetPath(patrolAsset, [], {
+        lineEnd: { lat: 45.36, lon: -75.65 },
+      });
+
+      expect(path.coordinates).toEqual([
+        [-75.7, 45.35],
+        [-75.65, 45.36],
+      ]);
+    });
   });
 });

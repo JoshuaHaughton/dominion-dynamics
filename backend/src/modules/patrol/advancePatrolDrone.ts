@@ -2,10 +2,65 @@ import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
 import { isPatrolAsset } from "../sim/store.js";
 import { stepAsset } from "../sim/movement.js";
 import { distanceM, headingToward } from "../../lib/geo/distanceAndHeading.js";
-import { PATROL_WAYPOINT_ARRIVAL_M } from "./constants.js";
+import {
+  PATROL_DRONE_ALT_M,
+  PATROL_DRONE_SPEED_MPS,
+  PATROL_APPROACH_DECEL_M,
+  PATROL_MAX_INTERCEPT_MPS,
+  PATROL_WAYPOINT_ARRIVAL_M,
+} from "./constants.js";
 import { isClosedPatrolPath } from "./pathGeometry.js";
 import { projectOntoPatrolPath } from "./pathProjection.js";
+import {
+  deleteShadowAssignment,
+  getShadowDroneId,
+  setShadowAssignment,
+} from "./shadowAssignmentStore.js";
+import {
+  capSpeedForRemainingDistance,
+  resolveChaseSpeed,
+  resolveChaseSteerPoint,
+} from "./shadowChase.js";
 import type { PatrolDroneState, PatrolPathDirection } from "./types.js";
+
+/**
+ * Ramp speed down near waypoints and rejoin snap points.
+ * At max intercept speed one tick can travel farther than the arrival radius,
+ * so without braking the drone overshoots and oscillates.
+ */
+function resolveApproachSpeed(
+  distanceM: number,
+  cruiseSpeed: number,
+  maxSpeed: number,
+  deltaSeconds: number,
+): number {
+  if (distanceM <= PATROL_WAYPOINT_ARRIVAL_M) {
+    return Math.min(cruiseSpeed, distanceM / deltaSeconds);
+  }
+
+  if (distanceM >= PATROL_APPROACH_DECEL_M) {
+    return maxSpeed;
+  }
+
+  const blend =
+    (distanceM - PATROL_WAYPOINT_ARRIVAL_M) /
+    (PATROL_APPROACH_DECEL_M - PATROL_WAYPOINT_ARRIVAL_M);
+
+  // Linear interpolation: blend from cruise (close) to max (far) across the decel band.
+  return lerp(cruiseSpeed, maxSpeed, clamp(blend, 0, 1));
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function isCriticalTrafficAsset(asset: Asset): boolean {
+  return !isPatrolAsset(asset) && asset.zone?.threat === "critical";
+}
 
 function stepTowardTarget(
   state: PatrolDroneState,
@@ -13,6 +68,17 @@ function stepTowardTarget(
   targetLat: number,
   deltaSeconds: number,
 ): Asset {
+  const distanceToTargetM = distanceM(
+    state.asset.lon,
+    state.asset.lat,
+    targetLon,
+    targetLat,
+  );
+
+  if (distanceToTargetM <= 0.5) {
+    return { ...state.asset, speed: 0 };
+  }
+
   const heading = headingToward(
     state.asset.lon,
     state.asset.lat,
@@ -91,7 +157,28 @@ function afterWaypointArrival(
   };
 }
 
+function withPatrolCruiseKinematics(asset: Asset): Asset {
+  return {
+    ...asset,
+    speed: PATROL_DRONE_SPEED_MPS,
+    alt: PATROL_DRONE_ALT_M,
+  };
+}
+
+/** Fly back to the route at max intercept speed after shadow ends. */
+function withRejoinKinematics(asset: Asset): Asset {
+  return {
+    ...asset,
+    speed: PATROL_MAX_INTERCEPT_MPS,
+    alt: PATROL_DRONE_ALT_M,
+  };
+}
+
 function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneState {
+  if (state.shadowTargetId) {
+    deleteShadowAssignment(state.shadowTargetId);
+  }
+
   const projection = projectOntoPatrolPath(state.asset, path);
 
   if (projection.distanceM <= PATROL_WAYPOINT_ARRIVAL_M) {
@@ -101,6 +188,7 @@ function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneSta
       shadowTargetId: null,
       rejoinTarget: null,
       targetWaypointIndex: projection.targetWaypointIndex,
+      asset: withPatrolCruiseKinematics(state.asset),
     };
   }
 
@@ -110,6 +198,7 @@ function beginRejoin(state: PatrolDroneState, path: PathGeoJson): PatrolDroneSta
     shadowTargetId: null,
     rejoinTarget: { lon: projection.lon, lat: projection.lat },
     targetWaypointIndex: projection.targetWaypointIndex,
+    asset: withRejoinKinematics(state.asset),
   };
 }
 
@@ -121,12 +210,36 @@ function advancePatrolAlongPath(
   const coordinates = path.geometry.coordinates;
   const target = coordinates[state.targetWaypointIndex]!;
   const [targetLon, targetLat] = target;
-
-  const moved = stepTowardTarget(state, targetLon, targetLat, deltaSeconds);
-
-  const arrivalDistanceM = distanceM(
+  const distanceToWaypointM = distanceM(
     state.asset.lon,
     state.asset.lat,
+    targetLon,
+    targetLat,
+  );
+  const approachSpeed = resolveApproachSpeed(
+    distanceToWaypointM,
+    PATROL_DRONE_SPEED_MPS,
+    PATROL_DRONE_SPEED_MPS,
+    deltaSeconds,
+  );
+  const cruising = {
+    ...state,
+    asset: {
+      ...withPatrolCruiseKinematics(state.asset),
+      speed: capSpeedForRemainingDistance(
+        approachSpeed,
+        distanceToWaypointM,
+        deltaSeconds,
+        0,
+      ),
+    },
+  };
+
+  const moved = stepTowardTarget(cruising, targetLon, targetLat, deltaSeconds);
+
+  const arrivalDistanceM = distanceM(
+    moved.lon,
+    moved.lat,
     targetLon,
     targetLat,
   );
@@ -160,10 +273,34 @@ function advanceRejoinTowardPath(
     return advancePatrolAlongPath(state, path, deltaSeconds);
   }
 
-  const moved = stepTowardTarget(state, target.lon, target.lat, deltaSeconds);
-  const arrivalDistanceM = distanceM(
+  const distanceToSnapM = distanceM(
     state.asset.lon,
     state.asset.lat,
+    target.lon,
+    target.lat,
+  );
+  const approachSpeed = resolveApproachSpeed(
+    distanceToSnapM,
+    PATROL_DRONE_SPEED_MPS,
+    PATROL_MAX_INTERCEPT_MPS,
+    deltaSeconds,
+  );
+  const rejoining = {
+    ...state,
+    asset: {
+      ...withRejoinKinematics(state.asset),
+      speed: capSpeedForRemainingDistance(
+        approachSpeed,
+        distanceToSnapM,
+        deltaSeconds,
+        0,
+      ),
+    },
+  };
+  const moved = stepTowardTarget(rejoining, target.lon, target.lat, deltaSeconds);
+  const arrivalDistanceM = distanceM(
+    moved.lon,
+    moved.lat,
     target.lon,
     target.lat,
   );
@@ -188,12 +325,34 @@ function advanceRejoinTowardPath(
   };
 }
 
+/** Chase critical traffic — lead when far, trail slot when close. */
 function advanceShadowingTarget(
   state: PatrolDroneState,
   target: Asset,
   deltaSeconds: number,
 ): PatrolDroneState {
-  const moved = stepTowardTarget(state, target.lon, target.lat, deltaSeconds);
+  setShadowAssignment(target.id, state.asset.id);
+
+  const steerPoint = resolveChaseSteerPoint(state.asset, target);
+  const chaseSpeed = resolveChaseSpeed(
+    state.asset,
+    target,
+    steerPoint,
+    deltaSeconds,
+  );
+  const shadowing = {
+    ...state,
+    asset: {
+      ...state.asset,
+      ...chaseSpeed,
+    },
+  };
+  const moved = stepTowardTarget(
+    shadowing,
+    steerPoint.lon,
+    steerPoint.lat,
+    deltaSeconds,
+  );
 
   return {
     ...state,
@@ -202,6 +361,56 @@ function advanceShadowingTarget(
     rejoinTarget: null,
     asset: moved,
   };
+}
+
+/**
+ * Pick a shadow target: keep the current assignment when still critical,
+ * otherwise claim the nearest unassigned critical asset.
+ */
+export function resolveShadowTarget(
+  state: PatrolDroneState,
+  liveAssets: readonly Asset[],
+): Asset | null {
+  if (state.shadowTargetId) {
+    const current = liveAssets.find((asset) => asset.id === state.shadowTargetId);
+
+    if (current && isCriticalTrafficAsset(current)) {
+      const owner = getShadowDroneId(state.shadowTargetId);
+
+      if (owner === undefined || owner === state.asset.id) {
+        return current;
+      }
+    }
+  }
+
+  let nearest: Asset | null = null;
+  let nearestM = Infinity;
+
+  for (const asset of liveAssets) {
+    if (!isCriticalTrafficAsset(asset)) {
+      continue;
+    }
+
+    const owner = getShadowDroneId(asset.id);
+
+    if (owner !== undefined && owner !== state.asset.id) {
+      continue;
+    }
+
+    const assetDistanceM = distanceM(
+      state.asset.lon,
+      state.asset.lat,
+      asset.lon,
+      asset.lat,
+    );
+
+    if (assetDistanceM < nearestM) {
+      nearestM = assetDistanceM;
+      nearest = asset;
+    }
+  }
+
+  return nearest;
 }
 
 /**
@@ -219,7 +428,7 @@ export function advancePatrolDrone({
   liveAssets: readonly Asset[];
   deltaSeconds: number;
 }): PatrolDroneState {
-  const shadowTarget = findNearestCriticalAsset(state.asset, liveAssets);
+  const shadowTarget = resolveShadowTarget(state, liveAssets);
 
   if (shadowTarget) {
     // Critical traffic nearby — chase takes priority over the route.

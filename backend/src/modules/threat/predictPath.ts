@@ -9,14 +9,35 @@ import type {
 } from "@dominion-dynamics/shared";
 import { WARNING_WINDOW_SECONDS } from "./constants.js";
 
+type PredictPathOptions = {
+  /** Draw a line to this point instead of forward projection (shadow target or rejoin snap). */
+  lineEnd?: Pick<Asset, "lon" | "lat">;
+};
+
 type MotionVector = Pick<Asset, "heading" | "speed">;
+
+function lineToPoint(
+  from: Pick<Asset, "lon" | "lat">,
+  to: Pick<Asset, "lon" | "lat">,
+): PredictedPathLine {
+  return {
+    type: "LineString",
+    coordinates: [
+      [from.lon, from.lat],
+      [to.lon, to.lat],
+    ],
+  };
+}
 
 /** Derive heading and speed from up to five minutes of history, else the live asset. */
 function deriveMotion(
   asset: Asset,
   history: readonly AssetHistoryPoint[],
 ): MotionVector {
-  if (history.length < 2 || asset.speed <= 0) {
+  const useInstantaneousMotion =
+    asset.role === "patrol" || history.length < 2 || asset.speed <= 0;
+
+  if (useInstantaneousMotion) {
     return { heading: asset.heading, speed: asset.speed };
   }
 
@@ -47,20 +68,24 @@ function deriveMotion(
 export function predictAssetPath(
   asset: Asset,
   history: readonly AssetHistoryPoint[],
+  options: PredictPathOptions = {},
 ): PredictedPathLine {
+  const lineEnd = options.lineEnd;
+
+  // Shadow and rejoin both draw a line to a fixed endpoint instead of projecting forward.
+  if (lineEnd) {
+    return lineToPoint(asset, lineEnd);
+  }
+
   const { heading, speed } = deriveMotion(asset, history);
   const origin = point([asset.lon, asset.lat]);
 
   if (speed <= 0) {
-    return {
-      type: "LineString",
-      coordinates: [
-        [asset.lon, asset.lat],
-        [asset.lon, asset.lat],
-      ],
-    };
+    return lineToPoint(asset, asset);
   }
 
+  // Default: project straight ahead for the five-minute warning window using
+  // history-derived motion for traffic, or instantaneous speed/heading for patrol.
   const distanceKm = (speed * WARNING_WINDOW_SECONDS) / 1000;
   const end = destination(origin, distanceKm, heading, { units: "kilometers" });
   const [endLon, endLat] = end.geometry.coordinates;

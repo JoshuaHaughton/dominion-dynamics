@@ -92,4 +92,41 @@ describe("patrolTick", () => {
     expect(first?.patrol?.mode).toBe("patrol");
     expect(second?.lat).not.toBe(first?.lat);
   });
+
+  it("realigns onto a replaced route without teleporting to the start", () => {
+    const { database, sqlite: testSqlite } = createTestDb();
+    sqlite = testSqlite;
+
+    savePatrolPath({ geojson: customLine }, database);
+    initializePatrolDrone(database);
+
+    tickPatrolDrone({ liveAssets: [], deltaSeconds: 60, database });
+    tickPatrolDrone({ liveAssets: [], deltaSeconds: 60, database });
+
+    const beforeReplace = getPatrolDroneState(PATROL_ASSET_ID);
+    expect(beforeReplace).toBeDefined();
+
+    const replacementLine = {
+      type: "Feature" as const,
+      properties: {},
+      geometry: {
+        type: "LineString" as const,
+        coordinates: [
+          [-76.0, 45.1],
+          [-75.9, 45.15],
+          [-75.8, 45.2],
+        ],
+      },
+    };
+
+    savePatrolPath({ geojson: replacementLine }, database);
+    initializePatrolDrone(database);
+
+    const afterReplace = getPatrolDroneState(PATROL_ASSET_ID);
+
+    expect(afterReplace?.asset.lat).toBeCloseTo(beforeReplace!.asset.lat, 5);
+    expect(afterReplace?.asset.lon).toBeCloseTo(beforeReplace!.asset.lon, 5);
+    expect(afterReplace?.asset.lat).not.toBeCloseTo(45.1, 3);
+    expect(afterReplace?.asset.lon).not.toBeCloseTo(-76.0, 3);
+  });
 });
