@@ -5,9 +5,20 @@ import { getTrafficAssets } from "./store.js";
 import { publishLiveSnapshot } from "../realtime/publishLiveSnapshot.js";
 import { enrichTrafficWithZoneThreat } from "../threat/enrichTrafficWithZoneThreat.js";
 import { getCachedZones } from "../threat/zoneGeometryCache.js";
-import { tickAllDrones } from "../patrol/patrolTick.js";
+import { tickPatrolDrone } from "../patrol/patrolTick.js";
+import { tickDispatchDrones } from "../dispatch/dispatchTick.js";
 import { syncDispatchAllocator } from "../dispatch/syncDispatchAllocator.js";
+// The ticker is the sim entry point: it resolves persisted state once per tick
+// and injects it so the patrol/dispatch modules never touch the DB directly.
+import { resolvePatrolPath } from "../../services/patrol/patrolPathService.js";
 import type { Asset, SimBounds } from "@dominion-dynamics/shared";
+
+function mergeDronesForSnapshot(
+  dispatchDrones: readonly Asset[],
+  patrolDrone: Asset | null,
+): Asset[] {
+  return patrolDrone ? [...dispatchDrones, patrolDrone] : [...dispatchDrones];
+}
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -52,17 +63,24 @@ export function runSimTick({
     seedRegion,
   });
   const enrichedTraffic = enrichTrafficWithZoneThreat(moved, getCachedZones());
+  const patrolPath = resolvePatrolPath();
 
   syncDispatchAllocator(enrichedTraffic, nowMs);
 
-  const drones = tickAllDrones({
+  const dispatchDrones = tickDispatchDrones({
     liveAssets: enrichedTraffic,
     deltaSeconds,
+    patrolPath,
+  });
+  const patrolDrone = tickPatrolDrone({
+    liveAssets: enrichedTraffic,
+    deltaSeconds,
+    patrolPath,
   });
 
   return publishLiveSnapshot({
     traffic: enrichedTraffic,
-    drones,
+    drones: mergeDronesForSnapshot(dispatchDrones, patrolDrone),
   });
 }
 

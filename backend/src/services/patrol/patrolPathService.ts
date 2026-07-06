@@ -1,58 +1,84 @@
 import type {
-  PatrolPath,
   PathGeoJson,
   SavePatrolPathRequest,
 } from "@dominion-dynamics/shared";
 import { db } from "../../db/index.js";
 import type { AppDatabase } from "../../db/types.js";
 import {
-  getPatrolPath as getStoredPatrolPath,
+  findPatrolPathRecord,
   savePatrolPath as persistPatrolPath,
 } from "../../repositories/pathRepository.js";
+import type { ResolvedPatrolPath } from "../../modules/patrol/types.js";
 import { DEFAULT_PATROL_PATH_GEOJSON } from "./defaultPatrolPath.js";
 
-export type ResolvedPatrolPath = {
-  id: number;
-  geojson: PathGeoJson;
-};
+export type { ResolvedPatrolPath };
 
-/** Saved user patrol route, if any. */
-export function getPatrolPath(database: AppDatabase = db): PatrolPath | null {
-  const stored = getStoredPatrolPath(database);
+/** `undefined` = cache cold; `null` = no saved route. */
+let cachedPatrolPath: ResolvedPatrolPath | null | undefined;
 
-  if (!stored) return null;
+function loadPatrolPathFromDatabase(
+  database: AppDatabase,
+): ResolvedPatrolPath | null {
+  const stored = findPatrolPathRecord(database);
 
-  return { geojson: stored.geojson };
+  if (!stored) {
+    return null;
+  }
+
+  return { id: stored.id, geojson: stored.geojson };
+}
+
+/** Drop the in-memory patrol route cache (tests / after external DB writes). */
+export function clearPatrolPathCache(): void {
+  cachedPatrolPath = undefined;
 }
 
 /** Persist a new patrol route (replaces any previous patrol path). */
 export function savePatrolPath(
   input: SavePatrolPathRequest,
-  database: AppDatabase = db,
-): PatrolPath {
-  const saved = persistPatrolPath(input.geojson, database);
+): ResolvedPatrolPath {
+  const saved = persistPatrolPath(input.geojson, db);
+  const resolved = { id: saved.id, geojson: saved.geojson };
 
-  return { geojson: saved.geojson };
+  cachedPatrolPath = resolved;
+
+  return resolved;
 }
 
 /** Seed the Ottawa demo oval when SQLite has no patrol route yet. */
-export function ensureDefaultPatrolPath(database: AppDatabase = db): boolean {
-  if (getStoredPatrolPath(database) !== null) {
+export function ensureDefaultPatrolPath(): boolean {
+  if (findPatrolPathRecord(db) !== null) {
     return false;
   }
 
-  persistPatrolPath(DEFAULT_PATROL_PATH_GEOJSON, database);
+  persistPatrolPath(DEFAULT_PATROL_PATH_GEOJSON, db);
+  cachedPatrolPath = undefined;
 
   return true;
 }
 
-/** Read the saved patrol path row once for sim modules. */
-export function resolvePatrolPath(
-  database: AppDatabase = db,
+/** The saved patrol route (row id + geometry), or null when none exists. */
+export function resolvePatrolPath(): ResolvedPatrolPath | null {
+  if (cachedPatrolPath === undefined) {
+    cachedPatrolPath = loadPatrolPathFromDatabase(db);
+  }
+
+  return cachedPatrolPath;
+}
+
+/** Test helper: load a patrol route from an isolated database. */
+export function resolvePatrolPathFromDatabase(
+  database: AppDatabase,
 ): ResolvedPatrolPath | null {
-  const stored = getStoredPatrolPath(database);
+  return loadPatrolPathFromDatabase(database);
+}
 
-  if (!stored) return null;
+/** Test helper: persist a patrol route to an isolated database. */
+export function savePatrolPathToDatabase(
+  geojson: PathGeoJson,
+  database: AppDatabase,
+): ResolvedPatrolPath {
+  const saved = persistPatrolPath(geojson, database);
 
-  return { id: stored.id, geojson: stored.geojson };
+  return { id: saved.id, geojson: saved.geojson };
 }

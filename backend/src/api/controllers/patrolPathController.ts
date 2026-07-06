@@ -3,24 +3,26 @@ import type { SavePatrolPathRequest } from "@dominion-dynamics/shared";
 import { republishLiveSnapshot } from "../../modules/realtime/publishLiveSnapshot.js";
 import { initializePatrolDrone } from "../../modules/patrol/patrolTick.js";
 import {
-  getPatrolPath,
+  resolvePatrolPath,
   savePatrolPath,
 } from "../../services/patrol/patrolPathService.js";
 
 /** GET /api/patrol-path */
 export function getPatrolPathHandler(_req: Request, res: Response): void {
-  const patrolPath = getPatrolPath();
+  const patrolPath = resolvePatrolPath();
 
   res.json({ geojson: patrolPath?.geojson ?? null });
 }
 
 /** PUT /api/patrol-path */
-export function savePatrolPathHandler(req: Request, res: Response): void {
-  const body = req.body as SavePatrolPathRequest;
-  const patrolPath = savePatrolPath(body);
+export function savePatrolPathHandler(
+  req: Request<Record<string, string>, unknown, SavePatrolPathRequest>,
+  res: Response,
+): void {
+  const patrolPath = savePatrolPath(req.body);
 
-  initializePatrolDrone();
+  initializePatrolDrone(patrolPath);
   republishLiveSnapshot();
 
-  res.json(patrolPath);
+  res.json({ geojson: patrolPath.geojson });
 }

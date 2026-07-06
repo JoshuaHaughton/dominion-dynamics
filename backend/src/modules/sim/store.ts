@@ -3,9 +3,15 @@ import type { Asset } from "@dominion-dynamics/shared";
 /** In-memory Map of assets keyed by id. */
 const assets = new Map<string, Asset>();
 
-/** Replace the full asset snapshot after seed or tick. */
-export function setAssets(next: Asset[]): void {
-  assets.clear();
+/** Upsert the latest live snapshot; drop ids that are no longer present. */
+export function setAssets(next: readonly Asset[]): void {
+  const nextIds = new Set(next.map((asset) => asset.id));
+
+  for (const id of assets.keys()) {
+    if (!nextIds.has(id)) {
+      assets.delete(id);
+    }
+  }
 
   for (const asset of next) {
     assets.set(asset.id, asset);
@@ -22,14 +28,17 @@ export function isDrone(asset: Asset): boolean {
   return asset.role === "drone";
 }
 
-/** Drones currently in the sim store. */
-export function getDrones(): Asset[] {
-  return getAssetList().filter(isDrone);
-}
-
 /** Traffic assets from the sim store (excludes drones). */
 export function getTrafficAssets(): Asset[] {
-  return getAssetList().filter((asset) => !isDrone(asset));
+  const traffic: Asset[] = [];
+
+  for (const asset of assets.values()) {
+    if (!isDrone(asset)) {
+      traffic.push(asset);
+    }
+  }
+
+  return traffic;
 }
 
 /** Lookup one asset by id (undefined when missing or respawned). */

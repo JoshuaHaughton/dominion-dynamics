@@ -1,24 +1,29 @@
-import type { PathGeoJson, PathKind, PathRecord } from "@dominion-dynamics/shared";
-import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
+import type { PathGeoJson, PathRecord } from "@dominion-dynamics/shared";
+import {
+  PATROL_ASSET_ID,
+  PathGeoJsonSchema,
+  PathKindSchema,
+} from "@dominion-dynamics/shared";
 import { eq } from "drizzle-orm";
-import { db } from "../db/index.js";
-import { paths } from "../db/schema.js";
 import type { AppDatabase } from "../db/types.js";
+import { paths } from "../db/schema.js";
 
 function rowToPathRecord(row: typeof paths.$inferSelect): PathRecord {
   return {
     id: row.id,
-    kind: row.kind as PathKind,
+    kind: PathKindSchema.parse(row.kind),
     label: row.label,
-    geojson: JSON.parse(row.geojson) as PathGeoJson,
+    geojson: PathGeoJsonSchema.parse(JSON.parse(row.geojson)),
     assignedDroneId: row.assignedDroneId,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
 
-/** Read the persisted user patrol path, if any. */
-export function getPatrolPath(database: AppDatabase = db): PathRecord | null {
+/** Read the persisted user patrol path row, if any. */
+export function findPatrolPathRecord(
+  database: AppDatabase,
+): PathRecord | null {
   const row = database
     .select()
     .from(paths)
@@ -31,9 +36,9 @@ export function getPatrolPath(database: AppDatabase = db): PathRecord | null {
 /** Replace the singleton user patrol path row. */
 export function savePatrolPath(
   geojson: PathGeoJson,
-  database: AppDatabase = db,
+  database: AppDatabase,
 ): PathRecord {
-  const existing = getPatrolPath(database);
+  const existing = findPatrolPathRecord(database);
 
   if (existing) {
     database
@@ -45,7 +50,11 @@ export function savePatrolPath(
       .where(eq(paths.id, existing.id))
       .run();
 
-    return getPatrolPath(database)!;
+    return {
+      ...existing,
+      geojson,
+      updatedAt: new Date().toISOString(),
+    };
   }
 
   const inserted = database
@@ -60,26 +69,4 @@ export function savePatrolPath(
     .get();
 
   return rowToPathRecord(inserted);
-}
-
-/** Read one path row by primary key. */
-export function getPathById(
-  id: number,
-  database: AppDatabase = db,
-): PathRecord | null {
-  const row = database.select().from(paths).where(eq(paths.id, id)).get();
-
-  return row ? rowToPathRecord(row) : null;
-}
-
-/** List persisted paths, optionally filtered by kind. */
-export function listPaths(
-  database: AppDatabase = db,
-  kind?: PathKind,
-): PathRecord[] {
-  const rows = kind
-    ? database.select().from(paths).where(eq(paths.kind, kind)).all()
-    : database.select().from(paths).all();
-
-  return rows.map(rowToPathRecord);
 }
