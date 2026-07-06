@@ -1,5 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import type { ZodType } from "zod";
+import { formatValidationError } from "./formatValidationError.js";
 
 type RequestPart = "body" | "params" | "query";
 
@@ -18,7 +19,7 @@ export function validateRequest(schemas: ValidateRequestSchemas): RequestHandler
       const result = schema.safeParse(req[part]);
 
       if (!result.success) {
-        res.status(400).json({ error: result.error.flatten() });
+        res.status(400).json(formatValidationError(result.error));
         return;
       }
 
