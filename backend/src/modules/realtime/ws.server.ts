@@ -6,7 +6,7 @@ import {
   buildSelectedTrackDelta,
   getAssetTrackDetail,
 } from "../track/buildAssetTrack.js";
-import { getAssetSnapshot } from "../sim/store.js";
+import { getAssetSnapshot } from "../sim/store/store.js";
 import { getConnectionState, type ConnectionState } from "./connectionState.js";
 import { buildSnapshotMessage } from "./messages.js";
 

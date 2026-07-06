@@ -3,7 +3,7 @@ import { findAirportByIdent } from "../airport/registry.js";
 import {
   isTrailingTarget,
   resolveChaseSteerPoint,
-} from "../patrol/shadowChase.js";
+} from "../patrol/shadow/shadowChase.js";
 
 const DISPATCH_CHASE_PHASES = new Set<DispatchPhase>([
   "enroute",

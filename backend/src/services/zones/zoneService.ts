@@ -9,7 +9,7 @@ import {
   appendZoneToCache,
   primeZoneGeometryCache,
   removeZoneFromCache,
-} from "../../modules/threat/zoneGeometryCache.js";
+} from "../../modules/threat/zone/zoneGeometryCache.js";
 
 /** Read all restricted zones for API and threat cache bootstrap. */
 export function listZones(): Zone[] {

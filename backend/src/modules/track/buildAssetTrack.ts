@@ -2,10 +2,10 @@ import type {
   AssetTrackDetail,
   SelectedTrackDelta,
 } from "@dominion-dynamics/shared";
-import { getPatrolDroneState } from "../patrol/droneStore.js";
-import { getAssetTrackHistory } from "../sim/assetTrackHistory.js";
-import { getAssetById } from "../sim/store.js";
-import { predictAssetPath } from "../threat/predictPath.js";
+import { getPatrolDroneState } from "../patrol/store/droneStore.js";
+import { getAssetTrackHistory } from "../sim/store/assetTrackHistory.js";
+import { getAssetById } from "../sim/store/store.js";
+import { predictAssetPath } from "../threat/track/predictPath.js";
 import { resolvePredictionLineEnd } from "./resolvePredictionLineEnd.js";
 import { shouldShowPredictionLine } from "./shouldShowPredictionLine.js";
 

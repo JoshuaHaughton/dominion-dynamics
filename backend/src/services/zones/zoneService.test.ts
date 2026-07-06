@@ -6,7 +6,7 @@ import {
   getCachedZones,
   appendZoneToCache,
   removeZoneFromCache,
-} from "../../modules/threat/zoneGeometryCache.js";
+} from "../../modules/threat/zone/zoneGeometryCache.js";
 import { createTestDb } from "../../testFixtures/db.js";
 import {
   deleteZoneById,

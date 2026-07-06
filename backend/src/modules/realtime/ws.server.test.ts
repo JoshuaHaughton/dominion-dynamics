@@ -6,8 +6,8 @@ import { testAsset } from "@dominion-dynamics/shared/testing";
 import {
   clearAssetTrackHistory,
   recordAssetTrackHistory,
-} from "../sim/assetTrackHistory.js";
-import { getAssetSnapshot, setAssets } from "../sim/store.js";
+} from "../sim/store/assetTrackHistory.js";
+import { getAssetSnapshot, setAssets } from "../sim/store/store.js";
 import {
   attachWebSocket,
   broadcastSnapshot,

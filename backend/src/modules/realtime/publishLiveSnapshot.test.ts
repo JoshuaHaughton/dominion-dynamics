@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { PATROL_ASSET_ID } from "@dominion-dynamics/shared";
 import { testAsset } from "@dominion-dynamics/shared/testing";
-import { clearAssetTrackHistory } from "../sim/assetTrackHistory.js";
-import { getAssetSnapshot, setAssets } from "../sim/store.js";
+import { clearAssetTrackHistory } from "../sim/store/assetTrackHistory.js";
+import { getAssetSnapshot, setAssets } from "../sim/store/store.js";
 import { publishLiveSnapshot } from "./publishLiveSnapshot.js";
 
 describe("publishLiveSnapshot", () => {

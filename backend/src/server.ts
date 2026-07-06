@@ -6,14 +6,14 @@ import {
   closeWebSocketServer,
   WS_LIVE_PATH,
 } from "./modules/realtime/ws.server.js";
-import { startSim, stopSim } from "./modules/sim/simControl.js";
-import { getAssetSnapshot } from "./modules/sim/store.js";
+import { startSim, stopSim } from "./modules/sim/tick/simControl.js";
+import { getAssetSnapshot } from "./modules/sim/store/store.js";
 import {
   ensureDefaultPatrolPath,
   resolvePatrolPath,
 } from "./services/patrol/patrolPathService.js";
 import { hydrateZoneGeometryCache } from "./services/zones/zoneService.js";
-import { initializePatrolDrone } from "./modules/patrol/patrolTick.js";
+import { initializePatrolDrone } from "./modules/patrol/tick/patrolTick.js";
 
 const port = Number(process.env.PORT) || 8000;
 

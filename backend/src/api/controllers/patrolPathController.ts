@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { SavePatrolPathRequest } from "@dominion-dynamics/shared";
 import { republishLiveSnapshot } from "../../modules/realtime/publishLiveSnapshot.js";
-import { initializePatrolDrone } from "../../modules/patrol/patrolTick.js";
+import { initializePatrolDrone } from "../../modules/patrol/tick/patrolTick.js";
 import {
   resolvePatrolPath,
   savePatrolPath,
