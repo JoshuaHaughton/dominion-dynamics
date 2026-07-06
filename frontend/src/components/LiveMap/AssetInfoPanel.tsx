@@ -1,15 +1,56 @@
-import type { Asset, AssetZoneState, ThreatLevel } from "@dominion-dynamics/shared";
+import type { Asset, AssetZoneState, PatrolMode, ThreatLevel } from "@dominion-dynamics/shared";
 import { icaoCategoryLabel } from "@dominion-dynamics/shared";
-import { ASSET_THREAT_COLORS } from "../../lib/constants/mapConstants.js";
+import {
+  ASSET_PATROL_MODE_COLORS,
+  ASSET_THREAT_COLORS,
+} from "../../lib/constants/mapConstants.js";
 import styles from "./AssetInfoPanel.module.css";
 
 type AssetInfoPanelProps = {
   asset: Asset;
+  assets: readonly Asset[];
   onClose: () => void;
 };
 
 function formatThreat(threat: ThreatLevel): string {
   return threat.charAt(0).toUpperCase() + threat.slice(1);
+}
+
+function formatPatrolMode(mode: PatrolMode): string {
+  if (mode === "shadow") {
+    return "Shadow";
+  }
+
+  if (mode === "rejoin") {
+    return "Rejoin";
+  }
+
+  return "Patrol";
+}
+
+function formatPatrolRoute(pathId: number | undefined): string {
+  if (pathId === undefined) {
+    return "Not assigned";
+  }
+
+  return `Saved (#${pathId})`;
+}
+
+function formatShadowTarget(
+  shadowTargetId: string | null,
+  assets: readonly Asset[],
+): string {
+  if (shadowTargetId === null) {
+    return "None";
+  }
+
+  const target = assets.find((candidate) => candidate.id === shadowTargetId);
+
+  if (target?.callsign !== null && target?.callsign !== undefined) {
+    return target.callsign;
+  }
+
+  return shadowTargetId;
 }
 
 function formatTte(zone: AssetZoneState): string {
@@ -64,15 +105,27 @@ function formatAltitude(altM: number): string {
 }
 
 /** Selected asset summary; zone fields follow the live WS stream. */
-export function AssetInfoPanel({ asset, onClose }: AssetInfoPanelProps) {
+export function AssetInfoPanel({ asset, assets, onClose }: AssetInfoPanelProps) {
   const zone = asset.zone;
+  const drone = asset.drone;
+  const route = drone?.patrol;
   const threatColor =
     zone !== null ? ASSET_THREAT_COLORS[zone.threat] : ASSET_THREAT_COLORS.normal;
+  const patrolModeColor =
+    route !== undefined
+      ? ASSET_PATROL_MODE_COLORS[route.mode]
+      : ASSET_PATROL_MODE_COLORS.patrol;
+  const entityLabel =
+    asset.role === "drone"
+      ? drone?.origin === "dispatch"
+        ? "Dispatch drone"
+        : "Patrol drone"
+      : "Traffic";
 
   return (
     <aside className={styles.panel} aria-label="Asset details">
       <div className={styles.header}>
-        <h2 className={styles.title}>Asset</h2>
+        <h2 className={styles.title}>{entityLabel}</h2>
         <button className={styles.closeButton} onClick={onClose}>
           Close
         </button>
@@ -84,7 +137,7 @@ export function AssetInfoPanel({ asset, onClose }: AssetInfoPanelProps) {
         </div>
         <div className={styles.row}>
           <dt>Role</dt>
-          <dd>{asset.role === "patrol" ? "Patrol" : "Traffic"}</dd>
+          <dd>{entityLabel}</dd>
         </div>
         {asset.callsign !== null ? (
           <div className={styles.row}>
@@ -114,6 +167,40 @@ export function AssetInfoPanel({ asset, onClose }: AssetInfoPanelProps) {
           <dt>Heading</dt>
           <dd>{formatHeading(asset.heading)}</dd>
         </div>
+        {route !== undefined ? (
+          <>
+            <div className={styles.row}>
+              <dt>Mode</dt>
+              <dd style={{ color: patrolModeColor }}>
+                {formatPatrolMode(route.mode)}
+              </dd>
+            </div>
+            <div className={styles.row}>
+              <dt>Shadow target</dt>
+              <dd>{formatShadowTarget(route.shadowTargetId, assets)}</dd>
+            </div>
+            <div className={styles.row}>
+              <dt>Route</dt>
+              <dd>{formatPatrolRoute(route.pathId)}</dd>
+            </div>
+          </>
+        ) : null}
+        {drone?.dispatch !== undefined ? (
+          <>
+            <div className={styles.row}>
+              <dt>Dispatch target</dt>
+              <dd>{formatShadowTarget(drone.dispatch.targetId, assets)}</dd>
+            </div>
+            <div className={styles.row}>
+              <dt>Dispatch phase</dt>
+              <dd>{drone.dispatch.phase}</dd>
+            </div>
+            <div className={styles.row}>
+              <dt>Home airport</dt>
+              <dd>{drone.dispatch.homeAirportIdent}</dd>
+            </div>
+          </>
+        ) : null}
         {zone !== null ? (
           <>
             <div className={styles.row}>

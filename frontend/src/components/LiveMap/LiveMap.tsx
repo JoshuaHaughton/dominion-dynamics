@@ -128,6 +128,7 @@ export function LiveMap({
       {selectedAsset !== null && (
         <AssetInfoPanel
           asset={selectedAsset}
+          assets={assets}
           onClose={() => {
             onAssetSelect(null);
           }}

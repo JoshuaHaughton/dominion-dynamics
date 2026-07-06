@@ -35,6 +35,15 @@ export const PATROL_PATH_LINE_COLOR = "#38bdf8";
 export const PATROL_PATH_LINE_WIDTH = 3;
 
 export const ASSET_CIRCLE_RADIUS = 6;
+/** Slightly larger dot so the friendly patrol drone reads apart from traffic. */
+export const PATROL_ASSET_CIRCLE_RADIUS = 7;
+
+/** Map and panel accent colors for patrol drone tasking mode. */
+export const ASSET_PATROL_MODE_COLORS = {
+  patrol: PATROL_PATH_LINE_COLOR,
+  shadow: "#f59e0b",
+  rejoin: "#818cf8",
+} as const;
 export const ASSET_HEADING_ICON_SIZE = 0.55;
 /** Screen pixels between the circle edge and the chevron wing base. */
 export const ASSET_HEADING_GAP_PX = 2;

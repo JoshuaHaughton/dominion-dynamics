@@ -1,5 +1,6 @@
 import type {
   CircleLayerSpecification,
+  DataDrivenPropertyValueSpecification,
   GeoJSONSource,
   GeoJSONSourceSpecification,
   Map,
@@ -11,9 +12,11 @@ import {
   ASSET_CIRCLE_RADIUS,
   ASSET_HEADING_GAP_PX,
   ASSET_HEADING_ICON_SIZE,
+  ASSET_PATROL_MODE_COLORS,
   ASSET_SOURCE_COLORS,
   ASSET_THREAT_COLORS,
   MAP_LAYERS,
+  PATROL_ASSET_CIRCLE_RADIUS,
 } from "../../lib/constants/mapConstants.js";
 
 const ASSET_HEADING_ICON_ID = "asset-heading-chevron";
@@ -39,6 +42,8 @@ export function assetsToFeatureCollection(
         role: asset.role,
         heading: asset.heading,
         threat: asset.zone?.threat ?? "normal",
+        patrolMode: asset.drone?.patrol?.mode ?? "patrol",
+        droneOrigin: asset.drone?.origin ?? "patrol",
       },
     })),
   };
@@ -110,23 +115,43 @@ const assetsSource = (
   promoteId: "id",
 });
 
-/** Position dot colored by server-computed threat level. */
+/** Role-first symbology: patrol modes use friendly/tasking colors; traffic uses zone threat. */
+const assetMarkerColor: DataDrivenPropertyValueSpecification<string> = [
+  "case",
+  ["==", ["get", "role"], "drone"],
+  [
+    "match",
+    ["get", "patrolMode"],
+    "shadow",
+    ASSET_PATROL_MODE_COLORS.shadow,
+    "rejoin",
+    ASSET_PATROL_MODE_COLORS.rejoin,
+    ASSET_PATROL_MODE_COLORS.patrol,
+  ],
+  [
+    "match",
+    ["get", "threat"],
+    "critical",
+    ASSET_THREAT_COLORS.critical,
+    "warning",
+    ASSET_THREAT_COLORS.warning,
+    ASSET_THREAT_COLORS.normal,
+  ],
+];
+
+/** Position dot colored by patrol mode or traffic threat level. */
 const assetsCircleLayer: CircleLayerSpecification = {
   id: MAP_LAYERS.assetsCircles,
   type: "circle",
   source: MAP_LAYERS.assetsSource,
   paint: {
-    "circle-radius": ASSET_CIRCLE_RADIUS,
-    // match: threat === "critical" ? red : "warning" ? amber : slate (last value is default)
-    "circle-color": [
-      "match",
-      ["get", "threat"],
-      "critical",
-      ASSET_THREAT_COLORS.critical,
-      "warning",
-      ASSET_THREAT_COLORS.warning,
-      ASSET_THREAT_COLORS.normal,
+    "circle-radius": [
+      "case",
+      ["==", ["get", "role"], "drone"],
+      PATROL_ASSET_CIRCLE_RADIUS,
+      ASSET_CIRCLE_RADIUS,
     ],
+    "circle-color": assetMarkerColor,
     "circle-stroke-width": 1,
     "circle-stroke-color": ASSET_SOURCE_COLORS.stroke,
   },
@@ -147,16 +172,7 @@ const assetsHeadingLayer: SymbolLayerSpecification = {
     "icon-ignore-placement": true,
   },
   paint: {
-    // Same threat palette as the position dot.
-    "icon-color": [
-      "match",
-      ["get", "threat"],
-      "critical",
-      ASSET_THREAT_COLORS.critical,
-      "warning",
-      ASSET_THREAT_COLORS.warning,
-      ASSET_THREAT_COLORS.normal,
-    ],
+    "icon-color": assetMarkerColor,
   },
 };
 
