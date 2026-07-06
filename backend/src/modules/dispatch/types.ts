@@ -1,4 +1,5 @@
-import type { DroneOrigin } from "@dominion-dynamics/shared";
+import type { DispatchPhase, DroneOrigin } from "@dominion-dynamics/shared";
+import type { Asset } from "@dominion-dynamics/shared";
 
 export type DispatchAssignmentSource = "spawn" | "reuse" | "patrol";
 
@@ -65,3 +66,19 @@ export type DispatchSyncResult = {
   }>;
   nextDispatchDroneIndex: number;
 };
+
+/** Runtime sim state for a drone executing a dispatch mission. */
+export type DispatchDroneState = {
+  phase: DispatchPhase;
+  targetId: string | null;
+  assignmentSource: DispatchAssignmentSource;
+  /** ICAO airport for dispatch RTB; null when a diverted patrol drone rejoins its route. */
+  homeAirportIdent: string | null;
+  origin: DroneOrigin;
+  asset: Asset;
+};
+
+export type AdvanceDispatchDroneResult =
+  | { kind: "continue"; state: DispatchDroneState }
+  | { kind: "despawn" }
+  | { kind: "release_to_patrol"; asset: Asset };

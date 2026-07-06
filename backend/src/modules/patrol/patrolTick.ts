@@ -12,6 +12,8 @@ import {
 } from "./droneStore.js";
 import { advancePatrolDrone } from "./advancePatrolDrone.js";
 import { patrolAssetFromState } from "./toWireAsset.js";
+import { isPatrolOnDispatchMission } from "../dispatch/dispatchDroneStore.js";
+import { tickDispatchDrones } from "../dispatch/dispatchTick.js";
 
 /** Place the patrol drone at the start of the saved route, or clear it when none exists. */
 export function initializePatrolDrone(database: AppDatabase = db): void {
@@ -45,6 +47,10 @@ export function tickPatrolDrone({
   deltaSeconds,
   database = db,
 }: TickPatrolDroneParams): Asset | null {
+  if (isPatrolOnDispatchMission(PATROL_ASSET_ID)) {
+    return null;
+  }
+
   const resolved = resolvePatrolPath(database);
 
   if (!resolved) {
@@ -69,7 +75,8 @@ export function tickPatrolDrone({
 
 /** Advance every drone sim slot; returns wire assets for the live snapshot. */
 export function tickAllDrones(params: TickPatrolDroneParams): Asset[] {
+  const dispatch = tickDispatchDrones(params);
   const patrol = tickPatrolDrone(params);
 
-  return patrol ? [patrol] : [];
+  return patrol ? [...dispatch, patrol] : dispatch;
 }
