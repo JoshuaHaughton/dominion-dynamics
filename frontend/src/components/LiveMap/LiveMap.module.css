@@ -14,6 +14,11 @@
   display: none;
 }
 
+/* Keep attribution compact and off the bottom-right asset panel. */
+.map :global(.maplibregl-ctrl-bottom-left) {
+  margin: 0 0 0.75rem 0.75rem;
+}
+
 .toolbar {
   position: absolute;
   top: 0.75rem;

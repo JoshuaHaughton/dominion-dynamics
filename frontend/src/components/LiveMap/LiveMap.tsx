@@ -8,6 +8,7 @@ import type {
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
 import type { ZoneView } from "../../lib/hooks/useZones.js";
 import { AssetInfoPanel } from "./AssetInfoPanel.js";
+import { InterceptPanel } from "./InterceptPanel.js";
 import { useLiveMap } from "./useLiveMap.js";
 import styles from "./LiveMap.module.css";
 
@@ -125,6 +126,11 @@ export function LiveMap({
           </span>
         )}
       </div>
+      <InterceptPanel
+        assets={assets}
+        selectedAssetId={selectedAssetId}
+        onSelectDrone={onAssetSelect}
+      />
       {selectedAsset !== null && (
         <AssetInfoPanel
           asset={selectedAsset}

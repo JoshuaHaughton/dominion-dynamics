@@ -9,7 +9,7 @@ import type {
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import {
-  DEMO_SEED_REGION,
+  DEMO_MAP_FOCUS_REGION,
   INITIAL_MAP_ZOOM,
   MAP_FIT_PADDING,
   MAP_LAYERS,
@@ -261,11 +261,12 @@ export function useLiveMap({
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: getMapStyleUrl(styleId),
-      center: getRegionCenter(DEMO_SEED_REGION),
+      center: getRegionCenter(DEMO_MAP_FOCUS_REGION),
       zoom: INITIAL_MAP_ZOOM,
+      attributionControl: false,
     });
 
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
+    map.addControl(new maplibregl.NavigationControl(), "bottom-left");
 
     map.on("load", () => {
       syncMapContent(map);
@@ -379,13 +380,13 @@ export function useLiveMap({
     fitDemoRegionIfNeeded(map, assets.length);
   }, [assets]);
 
-  /** Fit to the demo AOI once, when the first snapshot has at least one asset. */
+  /** Fit to the Ottawa airport demo focus once, when the first snapshot has at least one asset. */
   function fitDemoRegionIfNeeded(map: Map, assetCount: number): void {
     if (hasFitBoundsRef.current || assetCount === 0) {
       return;
     }
 
-    map.fitBounds(toFitBounds(DEMO_SEED_REGION), {
+    map.fitBounds(toFitBounds(DEMO_MAP_FOCUS_REGION), {
       padding: MAP_FIT_PADDING,
       duration: 0,
     });

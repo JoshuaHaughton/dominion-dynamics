@@ -8,6 +8,17 @@ export const DEMO_SEED_REGION: SimBounds = {
   maxLon: -75.3,
 };
 
+/**
+ * Tighter map focus for the Ottawa dispatch demo (CYOW + CYRO with padding).
+ * Used for initial center/fitBounds only; traffic still seeds across {@link DEMO_SEED_REGION}.
+ */
+export const DEMO_MAP_FOCUS_REGION: SimBounds = {
+  minLat: 45.28,
+  maxLat: 45.46,
+  minLon: -75.78,
+  maxLon: -75.62,
+};
+
 /** Prefix for custom MapLibre sources and layers preserved across basemap swaps. */
 export const CUSTOM_MAP_PREFIX = "dd-";
 

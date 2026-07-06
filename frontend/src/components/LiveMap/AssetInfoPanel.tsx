@@ -197,7 +197,11 @@ export function AssetInfoPanel({ asset, assets, onClose }: AssetInfoPanelProps) 
             </div>
             <div className={styles.row}>
               <dt>Home airport</dt>
-              <dd>{drone.dispatch.homeAirportIdent}</dd>
+              <dd>
+                {drone.dispatch.homeAirportName !== undefined
+                  ? `${drone.dispatch.homeAirportName} (${drone.dispatch.homeAirportIdent})`
+                  : drone.dispatch.homeAirportIdent}
+              </dd>
             </div>
           </>
         ) : null}
