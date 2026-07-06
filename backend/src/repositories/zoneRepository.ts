@@ -1,4 +1,5 @@
 import type { CreateZoneRequest, Zone } from "@dominion-dynamics/shared";
+import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import type { AppDatabase } from "../db/types.js";
 import { zones } from "../db/schema.js";
@@ -33,4 +34,14 @@ export function insertZone(
     name: inserted.name,
     geojson: JSON.parse(inserted.geojson) as Zone["geojson"],
   };
+}
+
+/** Delete a restricted zone row by primary key. Returns false when missing. */
+export function deleteZoneById(
+  id: number,
+  database: AppDatabase = db,
+): boolean {
+  const result = database.delete(zones).where(eq(zones.id, id)).run();
+
+  return result.changes > 0;
 }

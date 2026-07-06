@@ -1,8 +1,15 @@
 import type { CreateZoneRequest, Zone } from "@dominion-dynamics/shared";
 import { db } from "../../db/index.js";
 import type { AppDatabase } from "../../db/types.js";
-import { findAllZones, insertZone } from "../../repositories/zoneRepository.js";
-import { appendZoneToCache } from "../../modules/threat/zoneGeometryCache.js";
+import {
+  deleteZoneById,
+  findAllZones,
+  insertZone,
+} from "../../repositories/zoneRepository.js";
+import {
+  appendZoneToCache,
+  removeZoneFromCache,
+} from "../../modules/threat/zoneGeometryCache.js";
 
 /** Read all restricted zones for API and threat cache bootstrap. */
 export function listZones(database: AppDatabase = db): Zone[] {
@@ -19,4 +26,20 @@ export function createZone(
   appendZoneToCache(zone);
 
   return zone;
+}
+
+/** Delete a zone from SQLite and drop it from the geometry cache. */
+export function deleteZone(
+  id: number,
+  database: AppDatabase = db,
+): boolean {
+  const deleted = deleteZoneById(id, database);
+
+  if (!deleted) {
+    return false;
+  }
+
+  removeZoneFromCache(id);
+
+  return true;
 }

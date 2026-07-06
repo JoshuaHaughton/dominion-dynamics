@@ -13,6 +13,8 @@ import {
 } from "./modules/realtime/ws.server.js";
 import { loadZoneGeometryCache } from "./modules/threat/zoneGeometryCache.js";
 import { getAssets, startSim, stopSim } from "./modules/sim/simControl.js";
+import { ensureDefaultPatrolPath } from "./services/patrol/patrolPathService.js";
+import { initializePatrolDrone } from "./modules/patrol/patrolTick.js";
 
 const port = Number(process.env.PORT ?? 8000);
 
@@ -33,6 +35,8 @@ app.use("/api/zones", zonesRouter);
 app.use("/api/patrol-path", patrolPathRouter);
 
 loadZoneGeometryCache();
+ensureDefaultPatrolPath();
+initializePatrolDrone();
 
 const server = http.createServer(app);
 

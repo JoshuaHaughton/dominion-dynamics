@@ -9,6 +9,7 @@ import {
   getPatrolPath as getStoredPatrolPath,
   savePatrolPath as persistPatrolPath,
 } from "../../repositories/pathRepository.js";
+import { DEFAULT_PATROL_PATH_GEOJSON } from "./defaultPatrolPath.js";
 
 export type ResolvedPatrolPath = {
   id: number;
@@ -32,6 +33,17 @@ export function savePatrolPath(
   const saved = persistPatrolPath(input.geojson, database);
 
   return { geojson: saved.geojson };
+}
+
+/** Seed the Ottawa demo oval when SQLite has no patrol route yet. */
+export function ensureDefaultPatrolPath(database: AppDatabase = db): boolean {
+  if (getStoredPatrolPath(database) !== null) {
+    return false;
+  }
+
+  persistPatrolPath(DEFAULT_PATROL_PATH_GEOJSON, database);
+
+  return true;
 }
 
 /** Read the saved patrol path row once for sim modules. */

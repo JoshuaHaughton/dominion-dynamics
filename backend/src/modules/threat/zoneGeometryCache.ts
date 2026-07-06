@@ -62,6 +62,11 @@ export function appendZoneToCache(zone: Zone): void {
   cachedZones.push(toCachedZone(zone));
 }
 
+/** Drop one zone after DELETE /api/zones/:id succeeds. */
+export function removeZoneFromCache(zoneId: number): void {
+  cachedZones = cachedZones.filter((zone) => zone.id !== zoneId);
+}
+
 /** Read-only view of parsed zone geometry for threat evaluation. */
 export function getCachedZones(): readonly CachedZone[] {
   return cachedZones;
