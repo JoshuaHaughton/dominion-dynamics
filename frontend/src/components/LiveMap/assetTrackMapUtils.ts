@@ -133,8 +133,12 @@ const predictionLineLayer: LineLayerSpecification = {
 };
 
 function trackLayerBeforeId(map: Map): string | undefined {
-  return map.getLayer(MAP_LAYERS.assetsCircles)
-    ? MAP_LAYERS.assetsCircles
+  if (map.getLayer(MAP_LAYERS.assetsCircles)) {
+    return MAP_LAYERS.assetsCircles;
+  }
+
+  return map.getLayer(MAP_LAYERS.assetsMarkers)
+    ? MAP_LAYERS.assetsMarkers
     : undefined;
 }
 

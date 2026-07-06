@@ -31,7 +31,7 @@ describe("assetsToFeatureCollection", () => {
     });
   });
 
-  it("maps route drones with mode for role-first map symbology", () => {
+  it("maps patrol drones with shape and stroke keys", () => {
     const patrolAsset: Asset = {
       ...syntheticAsset,
       id: "patrol-1",
@@ -43,15 +43,48 @@ describe("assetsToFeatureCollection", () => {
       },
     };
 
-    const collection = assetsToFeatureCollection([patrolAsset]);
+    const collection = assetsToFeatureCollection([patrolAsset], {
+      entityTab: "drones",
+      statusFilter: "all",
+      selectedAssetId: null,
+    });
 
-    expect(collection.features[0]?.properties).toEqual({
+    expect(collection.features[0]?.properties).toMatchObject({
       id: "patrol-1",
       role: "drone",
       heading: 90,
-      threat: "normal",
-      patrolMode: "shadow",
-      droneOrigin: "patrol",
+      markerShape: "square",
+      symbologyBodyKey: "patrol:shadow",
+      symbologyStrokeKey: "patrol-stroke:shadow",
+      mapOpacity: 1,
+      mapRadiusScale: 1,
+    });
+  });
+
+  it("maps dispatch drones with square shape and patrol diversion ring", () => {
+    const dispatchAsset: Asset = {
+      ...syntheticAsset,
+      id: "dispatch-1",
+      role: "drone",
+      zone: null,
+      drone: {
+        origin: "patrol",
+        dispatch: {
+          targetId: "syn-test",
+          phase: "trailing",
+          homeAirportIdent: "CYOW",
+        },
+      },
+    };
+
+    const collection = assetsToFeatureCollection([dispatchAsset]);
+
+    expect(collection.features[0]?.properties).toMatchObject({
+      markerShape: "square",
+      symbologyBodyKey: "dispatch:trailing",
+      symbologyStrokeKey: "dispatch-stroke:trailing",
+      divertedFromPatrol: true,
+      isPatrolOrigin: true,
     });
   });
 
@@ -60,15 +93,26 @@ describe("assetsToFeatureCollection", () => {
 
     expect(collection.features).toHaveLength(2);
     expect(collection.features[0]?.geometry.coordinates).toEqual([-75.7, 45.4]);
-    expect(collection.features[0]?.properties).toEqual({
+    expect(collection.features[0]?.properties).toMatchObject({
       id: "syn-test",
       role: "traffic",
-      heading: 90,
-      threat: "normal",
-      patrolMode: "patrol",
-      droneOrigin: "patrol",
+      markerShape: "circle",
+      symbologyBodyKey: "traffic:normal",
     });
-    expect(collection.features[1]?.id).toBe("warn-test");
-    expect(collection.features[1]?.properties?.threat).toBe("warning");
+    expect(collection.features[1]?.properties?.symbologyBodyKey).toBe(
+      "traffic:warning",
+    );
+  });
+
+  it("ghosts non-matching assets when a specific chip is active", () => {
+    const collection = assetsToFeatureCollection([syntheticAsset, warningAsset], {
+      entityTab: "traffic",
+      statusFilter: "warning",
+      selectedAssetId: null,
+    });
+
+    expect(collection.features[0]?.properties?.mapOpacity).toBe(0.65);
+    expect(collection.features[0]?.properties?.mapRadiusScale).toBe(0.85);
+    expect(collection.features[1]?.properties?.mapOpacity).toBe(1);
   });
 });

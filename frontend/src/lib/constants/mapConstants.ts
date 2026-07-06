@@ -25,6 +25,7 @@ export const CUSTOM_MAP_PREFIX = "dd-";
 export const MAP_LAYERS = {
   assetsSource: `${CUSTOM_MAP_PREFIX}assets`,
   assetsCircles: `${CUSTOM_MAP_PREFIX}assets-circles`,
+  assetsMarkers: `${CUSTOM_MAP_PREFIX}assets-markers`,
   assetsHeading: `${CUSTOM_MAP_PREFIX}assets-heading`,
   zonesSource: `${CUSTOM_MAP_PREFIX}zones`,
   zonesFill: `${CUSTOM_MAP_PREFIX}zones-fill`,
@@ -46,18 +47,58 @@ export const PATROL_PATH_LINE_COLOR = "#38bdf8";
 export const PATROL_PATH_LINE_WIDTH = 3;
 
 export const ASSET_CIRCLE_RADIUS = 6;
-/** Slightly larger dot so the friendly patrol drone reads apart from traffic. */
+/** Slightly larger marker so friendly drones read apart from traffic. */
 export const PATROL_ASSET_CIRCLE_RADIUS = 7;
 
 /** Map and panel accent colors for patrol drone tasking mode. */
 export const ASSET_PATROL_MODE_COLORS = {
   patrol: PATROL_PATH_LINE_COLOR,
-  shadow: "#f59e0b",
+  shadow: "#8b5cf6",
   rejoin: "#818cf8",
 } as const;
+
+/** Dispatch drone body and phase stroke accent colors (S10.7). */
+export const ASSET_DISPATCH_BODY_COLOR = "#6366f1";
+export const ASSET_DISPATCH_STROKE_COLORS = {
+  enroute: "#c7d2fe",
+  intercepting: "#fbbf24",
+  trailing: "#4f46e5",
+  rtb: "#94a3b8",
+  at_base: "#64748b",
+} as const;
+
+export const ASSET_PATROL_STROKE_COLORS = {
+  patrol: "#64748b",
+  shadow: ASSET_PATROL_MODE_COLORS.shadow,
+  rejoin: ASSET_PATROL_MODE_COLORS.rejoin,
+} as const;
+
+export const ASSET_SELECTION_STROKE_COLOR = "#38bdf8";
+export const ASSET_DIVERTED_STROKE_COLOR = PATROL_PATH_LINE_COLOR;
+/** Ghost de-emphasis for non-matching assets when a specific status chip is active. */
+export const ASSET_GHOST_OPACITY = 0.65;
+export const ASSET_GHOST_RADIUS_SCALE = 0.85;
+export const ASSET_SELECTED_RADIUS_SCALE = 1.15;
+export const ASSET_SELECTED_STROKE_WIDTH = 3.5;
+
+/** On-screen square drone body size (px). */
+export const DRONE_MARKER_DIAMETER_PX = PATROL_ASSET_CIRCLE_RADIUS * 2;
+/** High-res SDF canvas for drone squares (same approach as heading chevrons). */
+export const DRONE_MARKER_SDF_LOGICAL_PX = 32;
+export const DRONE_MARKER_SDF_PIXEL_RATIO = 4;
+/** Scales the drone square icon down to {@link DRONE_MARKER_DIAMETER_PX}. */
+export const DRONE_MARKER_ICON_SIZE =
+  DRONE_MARKER_DIAMETER_PX / DRONE_MARKER_SDF_LOGICAL_PX;
+
 export const ASSET_HEADING_ICON_SIZE = 0.55;
-/** Screen pixels between the circle edge and the chevron wing base. */
+/** Screen pixels between the traffic circle edge and the chevron wing base. */
 export const ASSET_HEADING_GAP_PX = 2;
+/** Extra heading lift for square drone markers (corners sit closer to the chevron). */
+export const DRONE_HEADING_OFFSET_Y = -5;
+export const TRAFFIC_HEADING_OFFSET_Y = -2;
+/** High-res SDF canvas for heading chevrons (same V shape, sharper on screen). */
+export const HEADING_ICON_LOGICAL_PX = 48;
+export const HEADING_ICON_PIXEL_RATIO = 4;
 
 /** Pixel padding when fitting the map to the demo region. */
 export const MAP_FIT_PADDING = 48;
