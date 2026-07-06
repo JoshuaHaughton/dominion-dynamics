@@ -1,4 +1,4 @@
-import type { Asset, AssetZoneState, PatrolMode, ThreatLevel } from "@dominion-dynamics/shared";
+import type { Asset, AssetZoneState } from "@dominion-dynamics/shared";
 import { icaoCategoryLabel } from "@dominion-dynamics/shared";
 import {
   ASSET_PATROL_MODE_COLORS,
@@ -9,6 +9,10 @@ import {
   formatDispatchFocusField,
   formatDispatchFocusValue,
   formatDispatchPhase,
+  formatNearestZoneDistance,
+  formatPatrolModeLabel,
+  formatThreatLabel,
+  resolveAssetLabel,
 } from "./dispatchDisplayUtils.js";
 import styles from "./AssetInfoPanel.module.css";
 
@@ -19,22 +23,6 @@ type AssetInfoPanelProps = {
   onFollowingChange: (isFollowing: boolean) => void;
   onClose: () => void;
 };
-
-function formatThreat(threat: ThreatLevel): string {
-  return threat.charAt(0).toUpperCase() + threat.slice(1);
-}
-
-function formatPatrolMode(mode: PatrolMode): string {
-  if (mode === "shadow") {
-    return "Shadow";
-  }
-
-  if (mode === "rejoin") {
-    return "Rejoin";
-  }
-
-  return "Patrol";
-}
 
 function formatPatrolRoute(pathId: number | undefined): string {
   if (pathId === undefined) {
@@ -52,13 +40,7 @@ function formatShadowTarget(
     return "None";
   }
 
-  const target = assets.find((candidate) => candidate.id === shadowTargetId);
-
-  if (target?.callsign !== null && target?.callsign !== undefined) {
-    return target.callsign;
-  }
-
-  return shadowTargetId;
+  return resolveAssetLabel(shadowTargetId, assets);
 }
 
 function formatTte(zone: AssetZoneState): string {
@@ -78,22 +60,6 @@ function formatTte(zone: AssetZoneState): string {
   const seconds = Math.round(zone.zoneTteSeconds % 60);
 
   return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
-}
-
-function formatDistanceM(distanceM: number | null): string {
-  if (distanceM === null) {
-    return "No zones";
-  }
-
-  if (distanceM === 0) {
-    return "Inside zone";
-  }
-
-  if (distanceM >= 1000) {
-    return `${(distanceM / 1000).toFixed(1)} km`;
-  }
-
-  return `${Math.round(distanceM)} m`;
 }
 
 function formatSpeed(speed: number): string {
@@ -198,7 +164,7 @@ export function AssetInfoPanel({
             <div className={styles.row}>
               <dt>Mode</dt>
               <dd style={{ color: patrolModeColor }}>
-                {formatPatrolMode(route.mode)}
+                {formatPatrolModeLabel(route.mode)}
               </dd>
             </div>
             <div className={styles.row}>
@@ -244,7 +210,7 @@ export function AssetInfoPanel({
           <>
             <div className={styles.row}>
               <dt>Threat</dt>
-              <dd style={{ color: threatColor }}>{formatThreat(zone.threat)}</dd>
+              <dd style={{ color: threatColor }}>{formatThreatLabel(zone.threat)}</dd>
             </div>
             <div className={styles.row}>
               <dt>Zone TTE</dt>
@@ -252,7 +218,7 @@ export function AssetInfoPanel({
             </div>
             <div className={styles.row}>
               <dt>Nearest zone</dt>
-              <dd>{formatDistanceM(zone.nearestBoundaryM)}</dd>
+              <dd>{formatNearestZoneDistance(zone.nearestBoundaryM)}</dd>
             </div>
           </>
         ) : null}
