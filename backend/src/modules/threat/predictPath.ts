@@ -12,6 +12,8 @@ import { WARNING_WINDOW_SECONDS } from "./constants.js";
 type PredictPathOptions = {
   /** Draw a line to this point instead of forward projection (shadow target or rejoin snap). */
   lineEnd?: Pick<Asset, "lon" | "lat">;
+  /** Skip visible overlay (stationary, at base, patrol route already drawn). */
+  hidden?: boolean;
 };
 
 type MotionVector = Pick<Asset, "heading" | "speed">;
@@ -70,6 +72,10 @@ export function predictAssetPath(
   history: readonly AssetHistoryPoint[],
   options: PredictPathOptions = {},
 ): PredictedPathLine {
+  if (options.hidden) {
+    return lineToPoint(asset, asset);
+  }
+
   const lineEnd = options.lineEnd;
 
   // Shadow and rejoin both draw a line to a fixed endpoint instead of projecting forward.

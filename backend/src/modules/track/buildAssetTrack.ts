@@ -3,10 +3,11 @@ import type {
   SelectedTrackDelta,
 } from "@dominion-dynamics/shared";
 import { getPatrolDroneState } from "../patrol/droneStore.js";
-import { resolveChaseSteerPoint } from "../patrol/shadowChase.js";
 import { getAssetTrackHistory } from "../sim/assetTrackHistory.js";
 import { getAssetById } from "../sim/store.js";
 import { predictAssetPath } from "../threat/predictPath.js";
+import { resolvePredictionLineEnd } from "./resolvePredictionLineEnd.js";
+import { shouldShowPredictionLine } from "./shouldShowPredictionLine.js";
 
 function loadTrackContext(assetId: string) {
   const asset = getAssetById(assetId);
@@ -22,20 +23,28 @@ function loadTrackContext(assetId: string) {
 
   const droneState = getPatrolDroneState(assetId);
 
-  // Shadow: line to steer point (where the drone aims). Rejoin: line to path snap.
-  const shadowLineEnd = shadowTarget
-    ? resolveChaseSteerPoint(asset, shadowTarget)
-    : null;
-  const lineEnd =
-    shadowLineEnd ??
-    (asset.drone?.patrol?.mode === "rejoin" ? droneState?.rejoinTarget : null) ??
-    undefined;
+  const dispatchTargetId = asset.drone?.dispatch?.targetId;
+  const dispatchTarget =
+    dispatchTargetId !== undefined && dispatchTargetId.length > 0
+      ? (getAssetById(dispatchTargetId) ?? null)
+      : null;
+
+  const showPrediction = shouldShowPredictionLine(asset);
+  const lineEnd = showPrediction
+    ? resolvePredictionLineEnd({
+        asset,
+        shadowTarget,
+        dispatchTarget,
+        rejoinTarget: droneState?.rejoinTarget,
+      })
+    : undefined;
 
   return {
     asset,
     history,
     predictedPath: predictAssetPath(asset, history, {
       lineEnd,
+      hidden: !showPrediction,
     }),
   };
 }
