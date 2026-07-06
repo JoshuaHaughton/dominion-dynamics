@@ -32,6 +32,12 @@
   gap: 0.35rem;
 }
 
+.focusGroupWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .drawGroup {
   display: flex;
   flex-wrap: wrap;

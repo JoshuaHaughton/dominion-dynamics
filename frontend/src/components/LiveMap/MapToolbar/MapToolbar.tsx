@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from "framer-motion";
+import { useFadeMotionProps } from "../../../lib/motion/useFadeMotion.js";
 import styles from "./MapToolbar.module.css";
 
 type MapToolbarProps = {
@@ -43,6 +45,7 @@ export function MapToolbar({
   onBeginPatrolDraw,
   onFocusPatrolRoute,
 }: MapToolbarProps) {
+  const fadeMotion = useFadeMotionProps();
   const drawHint = resolveDrawHint({
     isDrawingZone,
     isDrawingPatrol,
@@ -74,40 +77,63 @@ export function MapToolbar({
             Draw patrol path
           </button>
         </div>
-        {hasPatrolPath ? (
-          <>
-            <span className={styles.toolbarDivider} aria-hidden="true" />
-            <div
-              className={styles.focusGroup}
-              role="group"
-              aria-label="Map focus shortcuts"
+        <AnimatePresence initial={false}>
+          {hasPatrolPath ? (
+            <motion.div
+              key="focus-patrol"
+              className={styles.focusGroupWrap}
+              {...fadeMotion}
             >
-              <button
-                type="button"
-                className={styles.focusButton}
-                onClick={onFocusPatrolRoute}
+              <span className={styles.toolbarDivider} aria-hidden="true" />
+              <div
+                className={styles.focusGroup}
+                role="group"
+                aria-label="Map focus shortcuts"
               >
-                Focus patrol route
-              </button>
-            </div>
-          </>
-        ) : null}
+                <button
+                  type="button"
+                  className={styles.focusButton}
+                  onClick={onFocusPatrolRoute}
+                >
+                  Focus patrol route
+                </button>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
-      {drawHint !== null ? (
-        <p className={styles.drawHint} role="status">
-          {drawHint}
-        </p>
-      ) : null}
-      {zoneDrawError !== null ? (
-        <p className={styles.error} role="alert">
-          {zoneDrawError}
-        </p>
-      ) : null}
-      {patrolDrawError !== null ? (
-        <p className={styles.error} role="alert">
-          {patrolDrawError}
-        </p>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {drawHint !== null ? (
+          <motion.p
+            key="draw-hint"
+            className={styles.drawHint}
+            role="status"
+            {...fadeMotion}
+          >
+            {drawHint}
+          </motion.p>
+        ) : null}
+        {zoneDrawError !== null ? (
+          <motion.p
+            key="zone-error"
+            className={styles.error}
+            role="alert"
+            {...fadeMotion}
+          >
+            {zoneDrawError}
+          </motion.p>
+        ) : null}
+        {patrolDrawError !== null ? (
+          <motion.p
+            key="patrol-error"
+            className={styles.error}
+            role="alert"
+            {...fadeMotion}
+          >
+            {patrolDrawError}
+          </motion.p>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

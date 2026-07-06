@@ -1,10 +1,11 @@
 import { useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { ZoneGeoJson } from "@dominion-dynamics/shared";
 import type { MapStyleId } from "../../lib/constants/mapStyles.js";
+import { useFadeMotionProps } from "../../lib/motion/useFadeMotion.js";
 import { useFeedStatusStore } from "../../lib/stores/feedStatusStore.js";
 import { useOperationsStore } from "../../lib/stores/operationsStore.js";
 import { AssetInfoPanel } from "../AssetInfoPanel/AssetInfoPanel.js";
-import { MapLoadingOverlay } from "../MapLoadingOverlay/MapLoadingOverlay.js";
 import { OperationsPanel } from "../OperationsPanel/OperationsPanel.js";
 import { useLiveAssets } from "./assets/useLiveAssets.js";
 import { usePatrolPath } from "./patrol/usePatrolPath.js";
@@ -16,6 +17,7 @@ import {
 import { MapToolbar } from "./MapToolbar/MapToolbar.js";
 import { useLiveMap } from "./map/useLiveMap.js";
 import { useMapKeyboardShortcuts } from "./map/useMapKeyboardShortcuts.js";
+import overlayStyles from "../MapLoadingOverlay/MapLoadingOverlay.module.css";
 import styles from "./LiveMap.module.css";
 
 type LiveMapProps = {
@@ -24,6 +26,7 @@ type LiveMapProps = {
 
 /** MapLibre map with live assets, restricted zones, and patrol route drawing. */
 export function LiveMap({ styleId }: LiveMapProps) {
+  const fadeMotion = useFadeMotionProps();
   const selectedAssetId = useOperationsStore((state) => state.selectedAssetId);
   const isFollowingCamera = useOperationsStore(
     (state) => state.isFollowingCamera,
@@ -149,19 +152,32 @@ export function LiveMap({ styleId }: LiveMapProps) {
         onSelectZone={handleSelectZone}
         onDeleteZone={removeZone}
       />
-      {selectedAsset !== null && (
-        <AssetInfoPanel
-          asset={selectedAsset}
-          assets={assets}
-          isFollowingCamera={isFollowingCamera}
-          onFollowingChange={setFollowingCamera}
-          onClose={() => {
-            setFollowingCamera(false);
-            selectAsset(null);
-          }}
-        />
-      )}
-      <MapLoadingOverlay visible={!isMapReady} />
+      <AnimatePresence initial={false}>
+        {!isMapReady ? (
+          <motion.div
+            key="map-loading"
+            className={overlayStyles.overlay}
+            aria-live="polite"
+            aria-busy="true"
+            {...fadeMotion}
+          >
+            <p className={overlayStyles.message}>Connecting to live feed…</p>
+          </motion.div>
+        ) : null}
+        {selectedAsset !== null ? (
+          <AssetInfoPanel
+            key={selectedAsset.id}
+            asset={selectedAsset}
+            assets={assets}
+            isFollowingCamera={isFollowingCamera}
+            onFollowingChange={setFollowingCamera}
+            onClose={() => {
+              setFollowingCamera(false);
+              selectAsset(null);
+            }}
+          />
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

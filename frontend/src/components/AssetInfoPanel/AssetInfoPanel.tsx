@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import type { Asset } from "@dominion-dynamics/shared";
 import { icaoCategoryLabel } from "@dominion-dynamics/shared";
 import {
@@ -18,6 +19,7 @@ import {
   formatThreatLabel,
   resolveAssetLabel,
 } from "../../lib/display/dispatchDisplayUtils.js";
+import { useFadeMotionProps } from "../../lib/motion/useFadeMotion.js";
 import styles from "./AssetInfoPanel.module.css";
 
 type AssetInfoPanelProps = {
@@ -64,6 +66,7 @@ export function AssetInfoPanel({
   onClose,
 }: AssetInfoPanelProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const fadeMotion = useFadeMotionProps();
 
   /** Move focus into the panel on open; hand it back on close. */
   useEffect(() => {
@@ -98,7 +101,11 @@ export function AssetInfoPanel({
       : "Traffic";
 
   return (
-    <aside className={styles.panel} aria-label="Asset details">
+    <motion.aside
+      className={styles.panel}
+      aria-label="Asset details"
+      {...fadeMotion}
+    >
       <div className={styles.header}>
         <h2 className={styles.title}>{entityLabel}</h2>
         <div className={styles.headerActions}>
@@ -236,6 +243,6 @@ export function AssetInfoPanel({
           </>
         ) : null}
       </dl>
-    </aside>
+    </motion.aside>
   );
 }
