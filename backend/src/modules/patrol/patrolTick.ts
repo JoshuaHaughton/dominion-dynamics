@@ -66,3 +66,10 @@ export function tickPatrolDrone({
 
   return patrolAssetFromState(next);
 }
+
+/** Advance every drone sim slot; returns wire assets for the live snapshot. */
+export function tickAllDrones(params: TickPatrolDroneParams): Asset[] {
+  const patrol = tickPatrolDrone(params);
+
+  return patrol ? [patrol] : [];
+}

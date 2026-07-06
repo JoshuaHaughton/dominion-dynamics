@@ -1,5 +1,5 @@
 import type { Asset, PathGeoJson } from "@dominion-dynamics/shared";
-import { isPatrolAsset } from "../sim/store.js";
+import { isDrone } from "../sim/store.js";
 import { stepAsset } from "../sim/movement.js";
 import { distanceM, headingToward } from "../../lib/geo/distanceAndHeading.js";
 import {
@@ -59,7 +59,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function isCriticalTrafficAsset(asset: Asset): boolean {
-  return !isPatrolAsset(asset) && asset.zone?.threat === "critical";
+  return !isDrone(asset) && asset.zone?.threat === "critical";
 }
 
 function stepTowardTarget(
@@ -101,7 +101,7 @@ export function findNearestCriticalAsset(
   let nearestM = Infinity;
 
   for (const asset of assets) {
-    if (isPatrolAsset(asset) || asset.zone?.threat !== "critical") {
+    if (isDrone(asset) || asset.zone?.threat !== "critical") {
       continue;
     }
 

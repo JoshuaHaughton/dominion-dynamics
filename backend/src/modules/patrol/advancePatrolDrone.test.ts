@@ -38,7 +38,7 @@ describe("advancePatrolDrone", () => {
     const state = createInitialPatrolDroneState(patrolPath, 1);
 
     expect(state.asset.id).toBe(PATROL_ASSET_ID);
-    expect(state.asset.role).toBe("patrol");
+    expect(state.asset.role).toBe("drone");
     expect(state.asset.lat).toBe(45.3);
     expect(state.asset.lon).toBe(-75.8);
     expect(state.mode).toBe("patrol");

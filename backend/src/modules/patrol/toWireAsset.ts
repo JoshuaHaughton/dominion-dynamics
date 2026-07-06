@@ -5,10 +5,15 @@ import type { PatrolDroneState } from "./types.js";
 export function patrolAssetFromState(state: PatrolDroneState): Asset {
   return {
     ...state.asset,
-    patrol: {
-      mode: state.mode,
-      shadowTargetId: state.shadowTargetId,
-      ...(state.pathId !== null ? { pathId: state.pathId } : {}),
+    role: "drone",
+    zone: null,
+    drone: {
+      origin: "patrol",
+      patrol: {
+        mode: state.mode,
+        shadowTargetId: state.shadowTargetId,
+        ...(state.pathId !== null ? { pathId: state.pathId } : {}),
+      },
     },
   };
 }

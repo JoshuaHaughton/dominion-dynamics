@@ -14,7 +14,7 @@ function loadTrackContext(assetId: string) {
 
   const history = getAssetTrackHistory(assetId);
 
-  const shadowTargetId = asset.patrol?.shadowTargetId;
+  const shadowTargetId = asset.drone?.patrol?.shadowTargetId;
   const shadowTarget =
     shadowTargetId !== undefined && shadowTargetId !== null
       ? getAssetById(shadowTargetId)
@@ -28,7 +28,7 @@ function loadTrackContext(assetId: string) {
     : null;
   const lineEnd =
     shadowLineEnd ??
-    (asset.patrol?.mode === "rejoin" ? droneState?.rejoinTarget : null) ??
+    (asset.drone?.patrol?.mode === "rejoin" ? droneState?.rejoinTarget : null) ??
     undefined;
 
   return {

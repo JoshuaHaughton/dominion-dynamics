@@ -1,5 +1,5 @@
 import type { Asset } from "@dominion-dynamics/shared";
-import { isPatrolAsset } from "../sim/store.js";
+import { isDrone } from "../sim/store.js";
 import { evaluateZoneThreat } from "./evaluateAsset.js";
 import type { CachedZone } from "./types.js";
 
@@ -9,7 +9,7 @@ export function enrichTrafficWithZoneThreat(
   zones: readonly CachedZone[],
 ): Asset[] {
   return assets.map((asset) => {
-    if (isPatrolAsset(asset)) {
+    if (isDrone(asset)) {
       return { ...asset, zone: null };
     }
 

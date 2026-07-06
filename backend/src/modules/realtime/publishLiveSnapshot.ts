@@ -1,13 +1,9 @@
-import { getAssetList, isPatrolAsset, setAssets } from "../sim/store.js";
+import { getAssetList, isDrone, setAssets } from "../sim/store.js";
 import { recordAssetTrackHistory } from "../sim/assetTrackHistory.js";
 import { enrichTrafficWithZoneThreat } from "../threat/enrichTrafficWithZoneThreat.js";
 import { getCachedZones } from "../threat/zoneGeometryCache.js";
 import type { Asset } from "@dominion-dynamics/shared";
 import { broadcastSnapshot } from "./ws.server.js";
-
-function trafficOnly(assets: readonly Asset[]): Asset[] {
-  return assets.filter((asset) => !isPatrolAsset(asset));
-}
 
 /** Push a fully-built snapshot to the store, history ring, and WS clients. */
 export function publishSnapshotAssets(assets: readonly Asset[]): Asset[] {
@@ -22,31 +18,34 @@ export function publishSnapshotAssets(assets: readonly Asset[]): Asset[] {
 
 type PublishLiveSnapshotParams = {
   traffic: readonly Asset[];
-  patrol?: Asset | null;
+  drones?: readonly Asset[];
   enrich?: boolean;
 };
 
-/** Enrich traffic when requested, merge patrol, and publish one live snapshot. */
+/** Enrich traffic when requested, merge drones, and publish one live snapshot. */
 export function publishLiveSnapshot({
   traffic,
-  patrol = null,
+  drones = [],
   enrich = false,
 }: PublishLiveSnapshotParams): Asset[] {
   const enriched = enrich
     ? enrichTrafficWithZoneThreat(traffic, getCachedZones())
     : [...traffic];
 
-  return publishSnapshotAssets(patrol ? [...enriched, patrol] : enriched);
+  return publishSnapshotAssets(
+    drones.length > 0 ? [...enriched, ...drones] : enriched,
+  );
 }
 
-/** Re-enrich stored traffic and keep the current patrol asset. */
+/** Re-enrich stored traffic and keep every drone in the snapshot. */
 export function republishLiveSnapshot(): Asset[] {
   const stored = getAssetList();
-  const patrol = stored.find(isPatrolAsset) ?? null;
+  const drones = stored.filter(isDrone);
+  const traffic = stored.filter((asset) => !isDrone(asset));
 
   return publishLiveSnapshot({
-    traffic: trafficOnly(stored),
-    patrol,
+    traffic,
+    drones,
     enrich: true,
   });
 }

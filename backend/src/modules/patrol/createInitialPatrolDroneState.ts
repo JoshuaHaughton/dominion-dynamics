@@ -30,7 +30,7 @@ export function createInitialPatrolDroneState(
       alt: PATROL_DRONE_ALT_M,
       heading: headingToward(startLon, startLat, nextLon, nextLat),
       speed: PATROL_DRONE_SPEED_MPS,
-      role: "patrol",
+      role: "drone",
       category: 14,
       callsign: "PATROL1",
       originCountry: null,

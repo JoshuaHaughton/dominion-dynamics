@@ -35,7 +35,7 @@ function deriveMotion(
   history: readonly AssetHistoryPoint[],
 ): MotionVector {
   const useInstantaneousMotion =
-    asset.role === "patrol" || history.length < 2 || asset.speed <= 0;
+    asset.role === "drone" || history.length < 2 || asset.speed <= 0;
 
   if (useInstantaneousMotion) {
     return { heading: asset.heading, speed: asset.speed };

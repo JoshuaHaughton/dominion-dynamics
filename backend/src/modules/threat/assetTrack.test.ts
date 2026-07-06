@@ -82,22 +82,27 @@ describe("asset track helpers", () => {
       ]);
     });
 
-    it("uses instantaneous heading and speed for patrol assets", () => {
-      const patrolAsset = testAsset({
+    it("uses instantaneous heading and speed for drones", () => {
+      const droneAsset = testAsset({
         id: "patrol-1",
-        role: "patrol",
+        role: "drone",
         lat: 45.35,
         lon: -75.7,
         alt: 500,
         heading: 180,
         speed: 80,
+        zone: null,
+        drone: {
+          origin: "patrol",
+          patrol: { mode: "patrol", shadowTargetId: null },
+        },
       });
       const history: AssetHistoryPoint[] = [
         { lat: 45.35, lon: -75.75, ts: 0 },
         { lat: 45.35, lon: -75.7, ts: 60_000 },
       ];
 
-      const path = predictAssetPath(patrolAsset, history);
+      const path = predictAssetPath(droneAsset, history);
 
       expect(path.coordinates[0]).toEqual([-75.7, 45.35]);
       expect(path.coordinates[1]?.[1]).toBeLessThan(45.35);
@@ -105,17 +110,22 @@ describe("asset track helpers", () => {
     });
 
     it("draws the prediction line to the chased asset while shadowing", () => {
-      const patrolAsset = testAsset({
+      const droneAsset = testAsset({
         id: "patrol-1",
-        role: "patrol",
+        role: "drone",
         lat: 45.35,
         lon: -75.7,
         alt: 500,
         heading: 90,
         speed: 80,
+        zone: null,
+        drone: {
+          origin: "patrol",
+          patrol: { mode: "shadow", shadowTargetId: "target-1" },
+        },
       });
 
-      const path = predictAssetPath(patrolAsset, [], {
+      const path = predictAssetPath(droneAsset, [], {
         lineEnd: { lat: 45.35, lon: -75.5 },
       });
 
@@ -126,18 +136,22 @@ describe("asset track helpers", () => {
     });
 
     it("draws the prediction line to the rejoin snap point while rejoining", () => {
-      const patrolAsset = testAsset({
+      const droneAsset = testAsset({
         id: "patrol-1",
-        role: "patrol",
+        role: "drone",
         lat: 45.35,
         lon: -75.7,
         alt: 500,
         heading: 90,
         speed: 300,
-        patrol: { mode: "rejoin", shadowTargetId: null },
+        zone: null,
+        drone: {
+          origin: "patrol",
+          patrol: { mode: "rejoin", shadowTargetId: null },
+        },
       });
 
-      const path = predictAssetPath(patrolAsset, [], {
+      const path = predictAssetPath(droneAsset, [], {
         lineEnd: { lat: 45.36, lon: -75.65 },
       });
 

@@ -72,7 +72,7 @@ describe("patrolTick", () => {
 
     const state = getPatrolDroneState(PATROL_ASSET_ID);
 
-    expect(state?.asset.role).toBe("patrol");
+    expect(state?.asset.role).toBe("drone");
     expect(state?.mode).toBe("patrol");
     expect(state?.asset.zone).toBeNull();
   });
@@ -88,8 +88,8 @@ describe("patrolTick", () => {
     const second = tickPatrolDrone({ liveAssets: [], deltaSeconds: 1, database });
 
     expect(first?.id).toBe(PATROL_ASSET_ID);
-    expect(first?.role).toBe("patrol");
-    expect(first?.patrol?.mode).toBe("patrol");
+    expect(first?.role).toBe("drone");
+    expect(first?.drone?.patrol?.mode).toBe("patrol");
     expect(second?.lat).not.toBe(first?.lat);
   });
 
