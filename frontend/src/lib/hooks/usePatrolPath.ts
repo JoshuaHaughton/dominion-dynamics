@@ -8,6 +8,7 @@ import { firstZodValidationMessage } from "../api/validationMessages.js";
 export function usePatrolPath() {
   const [patrolPath, setPatrolPath] = useState<PathGeoJson | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,6 +25,11 @@ export function usePatrolPath() {
           setError(
             err instanceof Error ? err.message : "Failed to load patrol path",
           );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoaded(true);
         }
       });
 
@@ -83,6 +89,7 @@ export function usePatrolPath() {
   return {
     patrolPath,
     isSaving,
+    isLoaded,
     error,
     addPatrolPathFromDraw,
     reportDrawError,

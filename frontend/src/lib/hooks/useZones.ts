@@ -1,7 +1,7 @@
+import { useCallback, useEffect, useState } from "react";
 import type { Zone, ZoneGeoJson } from "@dominion-dynamics/shared";
 import { CreateZoneRequestSchema } from "@dominion-dynamics/shared";
-import { useCallback, useEffect, useState } from "react";
-import { createZone, fetchZones } from "../api/clients/zonesApi.js";
+import { createZone, deleteZone, fetchZones } from "../api/clients/zonesApi.js";
 import { firstZodValidationMessage } from "../api/validationMessages.js";
 
 export type PendingZone = {
@@ -28,6 +28,7 @@ function nextZoneName(existingCount: number): string {
 export function useZones() {
   const [zones, setZones] = useState<ZoneView[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +44,11 @@ export function useZones() {
           setError(
             err instanceof Error ? err.message : "Failed to load zones",
           );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoaded(true);
         }
       });
 
@@ -110,9 +116,30 @@ export function useZones() {
     [persistPendingZone],
   );
 
+  const removeZone = useCallback(async (zoneId: number) => {
+    setError(null);
+
+    try {
+      await deleteZone(zoneId);
+      setZones((current) =>
+        current.filter((zone) => isPendingZone(zone) || zone.id !== zoneId),
+      );
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to delete zone");
+    }
+  }, []);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  return { zones, error, addZoneFromDraw, reportDrawError, clearError };
+  return {
+    zones,
+    error,
+    isLoaded,
+    addZoneFromDraw,
+    removeZone,
+    reportDrawError,
+    clearError,
+  };
 }

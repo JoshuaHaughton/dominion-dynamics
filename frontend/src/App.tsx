@@ -1,4 +1,5 @@
 import { LiveMap } from "./components/LiveMap/LiveMap.js";
+import { MapLoadingOverlay } from "./components/LiveMap/MapLoadingOverlay.js";
 import { MapStyleSelect } from "./components/MapStyleSelect/MapStyleSelect.js";
 import { useLiveAssets } from "./lib/hooks/useLiveAssets.js";
 import { useMapStyle } from "./lib/hooks/useMapStyle.js";
@@ -12,15 +13,28 @@ export function App() {
   const { assets, connected, lastUpdatedAt, trackDetail } =
     useLiveAssets(selectedAssetId);
   const { styleId, setStyleId } = useMapStyle();
-  const { zones, error: zoneDrawError, addZoneFromDraw, reportDrawError } =
-    useZones();
+  const {
+    zones,
+    error: zoneDrawError,
+    isLoaded: zonesLoaded,
+    addZoneFromDraw,
+    removeZone,
+    reportDrawError,
+  } = useZones();
   const {
     patrolPath,
     isSaving: isSavingPatrolPath,
+    isLoaded: patrolPathLoaded,
     error: patrolDrawError,
     addPatrolPathFromDraw,
     reportDrawError: reportPatrolDrawError,
   } = usePatrolPath();
+
+  const isMapReady =
+    connected &&
+    assets.length > 0 &&
+    zonesLoaded &&
+    patrolPathLoaded;
 
   return (
     <div className={styles.app}>
@@ -43,20 +57,24 @@ export function App() {
         </div>
       </header>
       <main className={styles.main}>
-        <LiveMap
-          assets={assets}
-          styleId={styleId}
-          zones={zones}
-          patrolPath={patrolPath}
-          trackDetail={trackDetail}
-          onZoneDrawn={addZoneFromDraw}
-          onPatrolPathDrawn={addPatrolPathFromDraw}
-          onZoneDrawError={reportDrawError}
-          onPatrolDrawError={reportPatrolDrawError}
-          zoneDrawError={zoneDrawError}
-          patrolDrawError={patrolDrawError}
-          isSavingPatrolPath={isSavingPatrolPath}
-        />
+        <div className={styles.mapShell}>
+          <LiveMap
+            assets={assets}
+            styleId={styleId}
+            zones={zones}
+            patrolPath={patrolPath}
+            trackDetail={trackDetail}
+            onZoneDrawn={addZoneFromDraw}
+            onPatrolPathDrawn={addPatrolPathFromDraw}
+            onZoneDelete={removeZone}
+            onZoneDrawError={reportDrawError}
+            onPatrolDrawError={reportPatrolDrawError}
+            zoneDrawError={zoneDrawError}
+            patrolDrawError={patrolDrawError}
+            isSavingPatrolPath={isSavingPatrolPath}
+          />
+          <MapLoadingOverlay visible={!isMapReady} />
+        </div>
       </main>
     </div>
   );
