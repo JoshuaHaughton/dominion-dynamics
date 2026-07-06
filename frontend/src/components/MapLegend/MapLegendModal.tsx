@@ -180,28 +180,8 @@ export function MapLegendModal() {
                     ring={DRONE_RING_COLORS.default}
                   />
                 }
-                label="Patrol"
-                detail="following the saved patrol path"
-              />
-              <LegendItem
-                swatch={
-                  <SquareSwatch
-                    fill={ASSET_PATROL_MODE_COLORS.shadow}
-                    ring={DRONE_RING_COLORS.criticalTarget}
-                  />
-                }
-                label="Shadow"
-                detail="trailing a breached track"
-              />
-              <LegendItem
-                swatch={
-                  <SquareSwatch
-                    fill={ASSET_PATROL_MODE_COLORS.rejoin}
-                    ring={DRONE_RING_COLORS.returning}
-                  />
-                }
-                label="Rejoin"
-                detail="returning to the patrol route"
+                label="Patrol drone"
+                detail="cyan square on the saved patrol path; shadow and rejoin keep the same fill"
               />
               <LegendItem
                 swatch={
@@ -210,8 +190,28 @@ export function MapLegendModal() {
                     ring={DRONE_RING_COLORS.default}
                   />
                 }
-                label="Dispatch"
-                detail="en route, intercepting, or trailing a target"
+                label="Dispatch drone"
+                detail="indigo square from the nearest airport; same fill for every phase"
+              />
+              <LegendItem
+                swatch={
+                  <SquareSwatch
+                    fill={ASSET_PATROL_MODE_COLORS.patrol}
+                    ring={DRONE_RING_COLORS.criticalTarget}
+                  />
+                }
+                label="Red ring"
+                detail="shadowing or intercepting a critical track"
+              />
+              <LegendItem
+                swatch={
+                  <SquareSwatch
+                    fill={ASSET_PATROL_MODE_COLORS.patrol}
+                    ring={DRONE_RING_COLORS.returning}
+                  />
+                }
+                label="Muted ring"
+                detail="rejoining the patrol route or dispatch RTB"
               />
             </ul>
           </section>
