@@ -1,47 +1,11 @@
-import Database from "better-sqlite3";
-import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import type Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
-import * as schema from "../db/schema.js";
-import { findAllZones, insertZone } from "./zoneRepository.js";
-
-function createTestDb(): {
-  database: BetterSQLite3Database<typeof schema>;
-  sqlite: Database.Database;
-} {
-  const sqlite = new Database(":memory:");
-
-  sqlite.exec(`
-    CREATE TABLE zones (
-      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-      name text NOT NULL,
-      geojson text NOT NULL,
-      created_at integer NOT NULL DEFAULT (unixepoch())
-    );
-  `);
-
-  return {
-    sqlite,
-    database: drizzle(sqlite, { schema }),
-  };
-}
+import { ottawaZonePolygon } from "@dominion-dynamics/shared/testing";
+import { createTestDb } from "../testFixtures/db.js";
+import { listZoneRows, insertZone } from "./zoneRepository.js";
 
 describe("zoneRepository", () => {
-  const validPolygon = {
-    type: "Feature" as const,
-    properties: {},
-    geometry: {
-      type: "Polygon" as const,
-      coordinates: [
-        [
-          [-75.8, 45.3],
-          [-75.6, 45.3],
-          [-75.6, 45.45],
-          [-75.8, 45.45],
-          [-75.8, 45.3],
-        ],
-      ],
-    },
-  };
+  const validPolygon = ottawaZonePolygon();
 
   let sqlite: Database.Database | undefined;
 
@@ -62,6 +26,6 @@ describe("zoneRepository", () => {
     expect(created.id).toBeTypeOf("number");
     expect(created.name).toBe("Zone 1");
     expect(created.geojson).toEqual(validPolygon);
-    expect(findAllZones(database)).toEqual([created]);
+    expect(listZoneRows(database)).toEqual([created]);
   });
 });

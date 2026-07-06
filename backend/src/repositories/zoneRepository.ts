@@ -1,24 +1,26 @@
 import type { CreateZoneRequest, Zone } from "@dominion-dynamics/shared";
+import { ZoneGeoJsonSchema } from "@dominion-dynamics/shared";
 import { eq } from "drizzle-orm";
-import { db } from "../db/index.js";
 import type { AppDatabase } from "../db/types.js";
 import { zones } from "../db/schema.js";
 
-/** Read all restricted zone rows from SQLite. */
-export function findAllZones(database: AppDatabase = db): Zone[] {
-  const rows = database.select().from(zones).all();
-
-  return rows.map((row) => ({
+function rowToZone(row: typeof zones.$inferSelect): Zone {
+  return {
     id: row.id,
     name: row.name,
-    geojson: JSON.parse(row.geojson) as Zone["geojson"],
-  }));
+    geojson: ZoneGeoJsonSchema.parse(JSON.parse(row.geojson)),
+  };
+}
+
+/** Read all restricted zone rows from SQLite. */
+export function listZoneRows(database: AppDatabase): Zone[] {
+  return database.select().from(zones).all().map(rowToZone);
 }
 
 /** Insert a restricted zone row and return the persisted record. */
 export function insertZone(
   input: CreateZoneRequest,
-  database: AppDatabase = db,
+  database: AppDatabase,
 ): Zone {
   const inserted = database
     .insert(zones)
@@ -29,18 +31,11 @@ export function insertZone(
     .returning()
     .get();
 
-  return {
-    id: inserted.id,
-    name: inserted.name,
-    geojson: JSON.parse(inserted.geojson) as Zone["geojson"],
-  };
+  return rowToZone(inserted);
 }
 
 /** Delete a restricted zone row by primary key. Returns false when missing. */
-export function deleteZoneById(
-  id: number,
-  database: AppDatabase = db,
-): boolean {
+export function deleteZoneById(id: number, database: AppDatabase): boolean {
   const result = database.delete(zones).where(eq(zones.id, id)).run();
 
   return result.changes > 0;
